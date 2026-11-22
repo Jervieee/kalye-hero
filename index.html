@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#131829" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Kalye Hero" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <title>KALYE HERO — PH Street Brawl &amp; Run</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Game Stage Frame -->
+    <div class="game-frame" id="gameFrame">
+      <canvas id="gameCanvas" width="1120" height="630"></canvas>
+
+      <!-- Top Arcade HUD (visible during gameplay) -->
+      <header class="hud hidden" id="hud">
+        <div class="hud-left">
+          <div class="hero-badge">
+            <img src="assets/hero_chibi.jpg" alt="Kalye Hero" class="hero-avatar" id="hudAvatar" onerror="this.style.display='none'" />
+            <div class="hero-bars">
+              <div class="hearts-row" id="hudHearts" aria-label="Health"></div>
+              <div class="energy-wrap" title="Punch Energy (Refills over time or grab Energy Drinks!)">
+                <span class="energy-icon">⚡</span>
+                <div class="energy-track">
+                  <div class="energy-fill" id="hudEnergyFill"></div>
+                </div>
+                <span class="energy-text" id="hudEnergyText">100</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="weapon-badge" id="weaponBadge">
+            <div class="weapon-icon" id="weaponIcon">✊</div>
+            <div class="weapon-info">
+              <div class="weapon-name" id="weaponName">FISTS ONLY</div>
+              <div class="weapon-ammo" id="weaponAmmo">Find a Gun Box!</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-center">
+          <div class="stage-pill" id="hudStage">STAGE 1 · BARANGAY KALYE</div>
+          <div class="progress-track">
+            <div class="progress-fill" id="hudProgress"></div>
+            <span class="progress-flag">🏁</span>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <div class="stat-pill coins-pill">
+            <span class="coin-glyph">₱</span>
+            <span id="hudCoins">0</span>
+          </div>
+          <div class="stat-pill score-pill">
+            <span class="stat-label">SCORE</span>
+            <span id="hudScore">00000</span>
+          </div>
+          <button class="icon-btn" id="btnSound" title="Toggle Sound &amp; Music">🔊</button>
+          <button class="icon-btn" id="btnPause" title="Pause (P)">⏸</button>
+        </div>
+      </header>
+
+      <!-- Boss HP Bar (Stage 3 Boss Arena) -->
+      <div class="boss-bar hidden" id="bossBar">
+        <div class="boss-title">🦹 BOSS MANDURUKOT — SNATCHER KING</div>
+        <div class="boss-track">
+          <div class="boss-fill" id="bossFill"></div>
+        </div>
+      </div>
+
+      <!-- Toast / Powerup Banner -->
+      <div class="toast-banner hidden" id="toastBanner"></div>
+
+      <!-- TITLE OVERLAY -->
+      <section class="overlay title-overlay" id="titleOverlay">
+        <div class="title-bg-wrap">
+          <img src="assets/ph_street_banner.jpg" alt="Philippine Streets" class="title-bg-img" onerror="this.style.display='none'" />
+          <div class="title-bg-scrim"></div>
+        </div>
+
+        <div class="title-content">
+          <div class="title-hero-card">
+            <img src="assets/hero_chibi.jpg" alt="Chibi Hero in Black Shirt and Maong Pants" class="title-hero-img" onerror="this.style.display='none'" />
+            <div class="hero-tag">BLACK SHIRT · MAONG PANTS · STREET JUSTICE</div>
+          </div>
+
+          <div class="title-main">
+            <div class="fiesta-flags" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p class="eyebrow">MARIO-INSPIRED PH STREET ACTION PLATFORMER</p>
+            <h1 class="game-logo">
+              <span class="logo-top">KALYE</span>
+              <span class="logo-bottom">HERO</span>
+            </h1>
+            <p class="subtitle">
+              Patrol the streets of Manila! Stomp thieves, build <strong>⚡ Energy to Punch</strong>, and crack open <strong>? Gun Boxes</strong> to blast away snatchers!
+            </p>
+
+            <div class="stage-selector" id="stageSelector">
+              <button class="stage-btn active" data-stage="0">1. Barangay Kalye</button>
+              <button class="stage-btn" data-stage="1">2. Divisoria Rush</button>
+              <button class="stage-btn" data-stage="2">3. Night Boss Showdown</button>
+            </div>
+
+            <div class="title-actions">
+              <button class="btn-primary pulse" id="btnStart">▶ PLAY NOW</button>
+              <button class="btn-secondary" id="btnHowTo">🎮 CONTROLS</button>
+              <button class="btn-install hidden" id="btnInstall">📲 INSTALL APP</button>
+            </div>
+
+            <div class="high-score-bar">
+              🏆 HIGH SCORE: <strong id="titleHighScore">00000</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTROLS / HOW TO PLAY MODAL -->
+      <section class="overlay modal-overlay hidden" id="howToOverlay">
+        <div class="modal-card">
+          <h2>🎮 HOW TO PLAY</h2>
+          <div class="controls-grid">
+            <div class="control-item"><kbd>A</kbd> <kbd>D</kbd> or <kbd>←</kbd> <kbd>→</kbd><span>Run Left / Right</span></div>
+            <div class="control-item"><kbd>W</kbd> / <kbd>↑</kbd> / <kbd>Space</kbd><span>Jump (Hold for higher!)</span></div>
+            <div class="control-item"><kbd>J</kbd> / <kbd>Z</kbd> / <kbd>F</kbd><span>⚡ Punch Thief (Uses Energy)</span></div>
+            <div class="control-item"><kbd>K</kbd> / <kbd>X</kbd> / <kbd>G</kbd><span>🔫 Shoot Gun (Needs Gun &amp; Ammo)</span></div>
+            <div class="control-item"><kbd>P</kbd> / <kbd>Esc</kbd><span>Pause Game</span></div>
+          </div>
+          <div class="tips-box">
+            <p><strong>💡 STREET TIPS:</strong></p>
+            <ul>
+              <li>Jump underneath glowing <strong>[?] Barangay Boxes</strong> to get <strong>Guns</strong>, <strong>⚡ Energy Drinks</strong>, <strong>Halo-Halo Hearts</strong>, and <strong>₱ Coins</strong>!</li>
+              <li>Punching spends <strong>⚡ Energy</strong>—collect lightning drinks or wait a moment to recharge.</li>
+              <li>Bounce high off <strong>Jeepney roofs</strong> and stomp thieves from above like Mario!</li>
+            </ul>
+          </div>
+          <button class="btn-primary" id="btnCloseHowTo">GOT IT!</button>
+        </div>
+      </section>
+
+      <!-- PAUSE OVERLAY -->
+      <section class="overlay modal-overlay hidden" id="pauseOverlay">
+        <div class="modal-card small-modal">
+          <h2>⏸ PAUSED</h2>
+          <p class="modal-sub">Catch your breath at the sari-sari store!</p>
+          <div class="modal-actions">
+            <button class="btn-primary" id="btnResume">▶ RESUME</button>
+            <button class="btn-secondary" id="btnRestartPause">↻ RESTART STAGE</button>
+            <button class="btn-ghost" id="btnQuitTitle">🏠 MAIN MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STAGE CLEAR OVERLAY -->
+      <section class="overlay modal-overlay hidden" id="stageClearOverlay">
+        <div class="modal-card small-modal">
+          <div class="victory-badge">🏁</div>
+          <h2 id="clearTitle">STAGE CLEAR!</h2>
+          <p class="modal-sub" id="clearSubtitle">The Barangay is safe!</p>
+          <div class="score-summary" id="clearStats"></div>
+          <div class="modal-actions">
+            <button class="btn-primary" id="btnNextStage">NEXT STREET ➔</button>
+            <button class="btn-secondary" id="btnReplayClear">↻ REPLAY</button>
+            <button class="btn-ghost" id="btnMenuClear">🏠 MAIN MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME OVER OVERLAY -->
+      <section class="overlay modal-overlay hidden" id="gameOverOverlay">
+        <div class="modal-card small-modal">
+          <div class="victory-badge">💥</div>
+          <h2>NAKO! KNOCKED OUT!</h2>
+          <p class="modal-sub">Those street thieves got away—get back up and stop them!</p>
+          <div class="score-summary" id="gameOverStats"></div>
+          <div class="modal-actions">
+            <button class="btn-primary" id="btnRetry">↻ TRY AGAIN</button>
+            <button class="btn-ghost" id="btnMenuOver">🏠 MAIN MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Touch / Mobile Arcade Controls -->
+      <div class="touch-controls hidden" id="touchControls">
+        <div class="touch-dpad">
+          <button class="touch-btn" data-key="left">◀</button>
+          <button class="touch-btn" data-key="right">▶</button>
+        </div>
+        <div class="touch-actions">
+          <button class="touch-btn punch-btn" data-key="punch">✊<small>PUNCH</small></button>
+          <button class="touch-btn shoot-btn" data-key="shoot">🔫<small>SHOOT</small></button>
+          <button class="touch-btn jump-btn" data-key="jump">▲<small>JUMP</small></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Quick Controls Bar (desktop reference) -->
+    <footer class="controls-bar">
+      <span><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> Move</span>
+      <span><kbd>W</kbd> / <kbd>Space</kbd> Jump</span>
+      <span><kbd>J</kbd> / <kbd>Z</kbd> ⚡ Punch</span>
+      <span><kbd>K</kbd> / <kbd>X</kbd> 🔫 Shoot</span>
+      <span><kbd>P</kbd> Pause</span>
+      <button class="touch-toggle" id="btnToggleTouch">📱 Touch Pad</button>
+    </footer>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
