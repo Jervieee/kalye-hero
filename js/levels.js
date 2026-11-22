@@ -80,11 +80,13 @@ const Levels = (() => {
       ...coinRow(210, 488, 3),
       { x: 560, y: 488, type: 'energy' },
       ...coinArc(855, 360, 5, 38),
-      ...coinRow(1045, 330, 4, 34),
+      { x: 1120, y: 325, type: 'cash' },
+      ...coinRow(1045, 330, 3, 34),
       ...coinArc(1315, 420, 4, 38),
       ...coinRow(1710, 315, 3, 40),
       ...coinArc(1990, 350, 5, 40),
-      ...coinRow(2205, 305, 4, 42),
+      { x: 2290, y: 300, type: 'cash' },
+      ...coinRow(2205, 305, 3, 38),
       ...coinArc(2540, 340, 4, 40),
       ...coinRow(3245, 310, 4, 36)
     ];
@@ -272,7 +274,108 @@ const Levels = (() => {
     };
   }
 
-  const builders = [buildStage1, buildStage2, buildStage3];
+  function buildStage4() {
+    // STAGE 4: MALACAÑANG, MANILA — CROCODILE BARONG THIEVES & DON BUWAYA!
+    const platforms = [
+      { x: 0, y: GROUND_Y, w: 1120, h: 90, style: 'palace' },
+      { x: 1250, y: GROUND_Y, w: 1020, h: 90, style: 'palace' },
+      // Grand Malacañang Courtyard Boss Arena!
+      { x: 2400, y: GROUND_Y, w: 1680, h: 90, style: 'palace' },
+
+      // Bouncy Black VIP Palace SUVs & Ceremonial Jeepney
+      { x: 640, y: GROUND_Y - 76, w: 190, h: 76, style: 'suv', bouncy: true },
+      { x: 1620, y: GROUND_Y - 76, w: 190, h: 76, style: 'suv', bouncy: true },
+      { x: 2630, y: GROUND_Y - 76, w: 185, h: 76, style: 'suv', bouncy: true },
+
+      // White & Gold Palace Marble Balconies
+      { x: 920, y: 380, w: 185, h: 24, style: 'marble' },
+      { x: 1360, y: 365, w: 195, h: 24, style: 'marble' },
+      { x: 1900, y: 350, w: 220, h: 24, style: 'marble' },
+      { x: 2260, y: 420, w: 130, h: 24, style: 'marble' },
+      // Courtyard Boss Tactical Balconies
+      { x: 2920, y: 385, w: 175, h: 24, style: 'marble' },
+      { x: 3310, y: 385, w: 175, h: 24, style: 'marble' }
+    ];
+
+    const blocks = [
+      // Opening Palace Supply Boxes (Gun + Energy + Cash!)
+      { x: 260, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'gun' },
+      { x: 304, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'cash' },
+      { x: 348, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'energy' },
+      { x: 392, y: 410, size: BLOCK_SIZE, type: 'crate' },
+
+      // Balcony 1 & 2
+      { x: 990, y: 255, size: BLOCK_SIZE, type: 'question', reward: 'cash' },
+      { x: 1425, y: 240, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 1469, y: 240, size: BLOCK_SIZE, type: 'question', reward: 'energy' },
+
+      // Balcony 3 Treasure Stash
+      { x: 1965, y: 225, size: BLOCK_SIZE, type: 'question', reward: 'cash' },
+      { x: 2009, y: 225, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+
+      // Malacañang Boss Courtyard Emergency Resupply Boxes!
+      { x: 2980, y: 260, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 3160, y: 325, size: BLOCK_SIZE, type: 'question', reward: 'energy' },
+      { x: 3375, y: 260, size: BLOCK_SIZE, type: 'question', reward: 'heart' }
+    ];
+
+    const pickups = [
+      // Opening Coins & Cash Trail!
+      ...coinRow(160, 488, 3),
+      { x: 470, y: 488, type: 'cash' },
+      { x: 540, y: 488, type: 'energy' },
+
+      // Over VIP SUV 1
+      ...coinArc(735, 345, 5, 38),
+      { x: 960, y: 335, type: 'cash' },
+      ...coinRow(1005, 335, 3, 34),
+
+      // Over Gap 1
+      ...coinArc(1185, 405, 4, 38),
+
+      // Mid Palace Boulevard Coins & Cash!
+      { x: 1390, y: 320, type: 'cash' },
+      ...coinRow(1440, 320, 3, 34),
+      ...coinArc(1715, 345, 5, 38),
+      { x: 1945, y: 305, type: 'cash' },
+      { x: 2025, y: 305, type: 'cash' },
+
+      // Over Gap 2 into Malacañang Courtyard
+      ...coinArc(2325, 355, 4, 38),
+      { x: 2510, y: 488, type: 'energy' },
+      { x: 2560, y: 488, type: 'cash' },
+      { x: 3530, y: 488, type: 'energy' }
+    ];
+
+    const enemies = [
+      // Crocodile-Headed Thieves in Barong Tagalog!
+      { x: 520, y: GROUND_Y - 56, type: 'croc_thief' },
+      { x: 960, y: 380 - 56, type: 'croc_vip' },
+      { x: 1030, y: GROUND_Y - 56, type: 'croc_thief' },
+      { x: 1390, y: GROUND_Y - 56, type: 'croc_thief' },
+      { x: 1470, y: 365 - 56, type: 'croc_vip' },
+      { x: 1850, y: GROUND_Y - 56, type: 'croc_thief' },
+      { x: 2010, y: 350 - 56, type: 'croc_vip' },
+      { x: 2150, y: GROUND_Y - 56, type: 'croc_thief' },
+      // THE PALACE BOSS: DON BUWAYA (Giant Crocodile in Barong!)
+      { x: 3260, y: GROUND_Y - 90, type: 'croc_boss', arenaMinX: 2540, arenaMaxX: 3580 }
+    ];
+
+    return {
+      index: 3,
+      name: 'STAGE 4 · MALACAÑANG MANILA',
+      theme: 'malacanang',
+      width: 4080,
+      goalX: 3840,
+      bossStage: true,
+      platforms,
+      blocks,
+      pickups,
+      enemies
+    };
+  }
+
+  const builders = [buildStage1, buildStage2, buildStage3, buildStage4];
 
   return {
     GROUND_Y,

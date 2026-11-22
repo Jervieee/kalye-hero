@@ -48,8 +48,10 @@
   const hudStage = document.getElementById('hudStage');
   const hudProgress = document.getElementById('hudProgress');
   const hudCoins = document.getElementById('hudCoins');
+  const hudCash = document.getElementById('hudCash');
   const hudScore = document.getElementById('hudScore');
   const bossBar = document.getElementById('bossBar');
+  const bossTitle = document.getElementById('bossTitle');
   const bossFill = document.getElementById('bossFill');
   const toastBanner = document.getElementById('toastBanner');
 
@@ -80,6 +82,7 @@
   let level = null;
   let score = 0;
   let coins = 0;
+  let cash = 0;
   let thievesDefeated = 0;
   let highScore = 0;
   try {
@@ -189,17 +192,24 @@
     };
   }
 
+  function isBossEnemy(e) {
+    return e.type === 'boss' || e.type === 'croc_boss';
+  }
+
   function spawnEnemyInstance(def) {
-    const isBoss = def.type === 'boss';
+    const isBoss = def.type === 'boss' || def.type === 'croc_boss';
+    const isCrocBoss = def.type === 'croc_boss';
+    const isCrocVip = def.type === 'croc_vip';
+    const isCroc = def.type === 'croc_thief';
     const isThug = def.type === 'thug';
     const isRunner = def.type === 'runner';
-    const maxHp = isBoss ? 16 : isThug ? 2 : 1;
+    const maxHp = isCrocBoss ? 20 : isBoss ? 16 : isCrocVip ? 3 : isThug || isCroc ? 2 : 1;
     return {
       x: def.x,
       y: def.y,
-      w: isBoss ? 56 : isThug ? 40 : 34,
-      h: isBoss ? 84 : isThug ? 58 : 52,
-      vx: isRunner ? -155 : isBoss ? -120 : -85,
+      w: isBoss ? 60 : isThug || isCrocVip ? 42 : isCroc ? 38 : 34,
+      h: isBoss ? 88 : isThug || isCrocVip ? 60 : isCroc ? 56 : 52,
+      vx: isRunner ? -155 : isBoss ? -125 : isCroc ? -105 : -85,
       vy: 0,
       facing: -1,
       type: def.type,
@@ -250,8 +260,10 @@
       showToast('⚡ Punch Thieves [J] · Crack [?] Boxes for Guns!', 3.0);
     } else if (index === 1) {
       showToast('🌇 Divisoria Rush! Watch out for Bottle-Throwing Thugs!', 2.8);
-    } else {
+    } else if (index === 2) {
       showToast('🌙 Midnight Showdown! Defeat Boss Mandurukot!', 2.8);
+    } else {
+      showToast('🏛️ Malacañang, Manila! Stop the Crocodile Barong Thieves & Grab the Cash!', 3.4);
     }
   }
 
@@ -259,6 +271,7 @@
     SoundFX.unlock();
     score = 0;
     coins = 0;
+    cash = 0;
     thievesDefeated = 0;
     loadStage(stageIdx, false);
     mode = 'playing';
@@ -310,8 +323,9 @@
       weaponAmmo.textContent = 'Find a [?] Gun Box!';
     }
 
-    // Coins & Score
+    // Coins, Cash & Score
     hudCoins.textContent = String(coins);
+    if (hudCash) hudCash.textContent = `₱${cash.toLocaleString()}`;
     hudScore.textContent = String(score).padStart(5, '0');
 
     // Stage progress
@@ -394,10 +408,12 @@
 
   function defeatOrDamageEnemy(e, dmg, knockDir, source = 'punch') {
     if (e.dead) return;
+    const isBoss = isBossEnemy(e);
+    const isCroc = e.type === 'croc_thief' || e.type === 'croc_vip' || e.type === 'croc_boss';
     e.hp -= dmg;
     e.hurtFlash = 0.14;
-    e.vx = knockDir * (e.type === 'boss' ? 140 : 240);
-    if (e.onGround && e.type !== 'boss') e.vy = -210;
+    e.vx = knockDir * (isBoss ? 140 : 240);
+    if (e.onGround && !isBoss) e.vy = -210;
 
     const comicWords = source === 'punch'
       ? ['PAK!', 'BOOGSH!', 'SUNTUK!', 'BAM!']
@@ -412,34 +428,43 @@
       e.vy = -340;
       e.vx = knockDir * 210;
       thievesDefeated++;
-      const pts = e.type === 'boss' ? 2000 : e.type === 'thug' ? 350 : 200;
+      const pts = e.type === 'croc_boss' ? 3000 : isBoss ? 2000 : e.type === 'croc_vip' ? 500 : isCroc || e.type === 'thug' ? 350 : 200;
       score += pts;
       SoundFX.enemyKO();
-      addShake(e.type === 'boss' ? 12 : 5, e.type === 'boss' ? 0.35 : 0.12);
-      hitStop = e.type === 'boss' ? 0.09 : 0.035;
-      addFloatText(e.x + e.w / 2, e.y - 10, `${word} +${pts}`, '#fde047', e.type === 'boss' ? 24 : 18);
-      spawnParticles(e.x + e.w / 2, e.y + e.h / 2, '#facc15', e.type === 'boss' ? 32 : 14, 260);
-      spawnParticles(e.x + e.w / 2, e.y + e.h / 2, '#ef4444', 10, 200);
+      addShake(isBoss ? 12 : 5, isBoss ? 0.35 : 0.12);
+      hitStop = isBoss ? 0.09 : 0.035;
+      addFloatText(e.x + e.w / 2, e.y - 10, `${word} +${pts}`, '#fde047', isBoss ? 24 : 18);
+      spawnParticles(e.x + e.w / 2, e.y + e.h / 2, '#facc15', isBoss ? 32 : 14, 260);
+      spawnParticles(e.x + e.w / 2, e.y + e.h / 2, isCroc ? '#22c55e' : '#ef4444', 12, 200);
 
-      // Thief drops stolen Peso Coins (and sometimes an Energy Drink!)
-      const dropCount = e.type === 'boss' ? 8 : 2;
+      // Thief drops stolen Peso Coins, Cash Bundles (especially Croc Barong thieves!), and Energy!
+      const dropCount = isBoss ? 10 : isCroc ? 3 : 2;
       for (let i = 0; i < dropCount; i++) {
+        let dropType = 'coin';
+        if (i === 0 && isCroc) dropType = 'cash';
+        else if (isBoss && i % 2 === 1) dropType = 'cash';
+        else if (i === 1 && Math.random() < 0.38) dropType = 'energy';
         pickups.push({
           x: e.x + e.w / 2 - 12,
           y: e.y + 10,
           w: 28,
           h: 28,
-          vx: (Math.random() - 0.5) * 210,
-          vy: -250 - Math.random() * 140,
-          type: i === 0 && Math.random() < 0.38 ? 'energy' : 'coin',
+          vx: (Math.random() - 0.5) * 230,
+          vy: -250 - Math.random() * 150,
+          type: dropType,
           fromBlock: true,
           collected: false
         });
       }
 
-      if (e.type === 'boss') {
+      if (isBoss) {
         bossBar.classList.add('hidden');
-        showToast('🏆 BOSS MANDURUKOT DEFEATED! Grab the Barangay Flag!', 3.4);
+        showToast(
+          e.type === 'croc_boss'
+            ? '🏆 DON BUWAYA DEFEATED! Collect the Cash & Claim the Malacañang Flag!'
+            : '🏆 BOSS MANDURUKOT DEFEATED! Grab the Barangay Flag!',
+          3.6
+        );
       }
     } else {
       SoundFX.punchHit();
@@ -460,14 +485,16 @@
 
     const isLast = currentStageIndex >= Levels.count - 1;
     document.getElementById('clearTitle').textContent = isLast
-      ? '🏆 MANILA STREETS SAVED!'
-      : '🏁 BARANGAY STAGE CLEAR!';
+      ? '🏛️ MALACAÑANG & MANILA SAVED!'
+      : '🏁 STAGE CLEAR!';
     document.getElementById('clearSubtitle').textContent = isLast
-      ? 'You defeated Boss Mandurukot and protected the whole kalye!'
+      ? 'You defeated Don Buwaya & the Crocodile Barong Thieves and recovered the public cash!'
+      : currentStageIndex === 2
+      ? 'Boss Mandurukot is down! Next up: Malacañang, Manila!'
       : 'Thieves sent packing! Ready for the next street?';
     document.getElementById('clearStats').innerHTML = `
       <div><span>SCORE</span><strong>${String(score).padStart(5, '0')}</strong></div>
-      <div><span>PESO COINS</span><strong>₱${coins}</strong></div>
+      <div><span>COINS &amp; CASH</span><strong>🪙${coins} · ₱${cash.toLocaleString()}</strong></div>
       <div><span>THIEVES STOPPED</span><strong>${thievesDefeated}</strong></div>
       <div><span>HP BONUS</span><strong>+${player.hp * 100}</strong></div>
     `;
@@ -483,7 +510,7 @@
     SoundFX.gameOver();
     document.getElementById('gameOverStats').innerHTML = `
       <div><span>FINAL SCORE</span><strong>${String(score).padStart(5, '0')}</strong></div>
-      <div><span>PESO COINS</span><strong>₱${coins}</strong></div>
+      <div><span>COINS &amp; CASH</span><strong>🪙${coins} · ₱${cash.toLocaleString()}</strong></div>
       <div><span>THIEVES STOPPED</span><strong>${thievesDefeated}</strong></div>
       <div><span>HIGH SCORE</span><strong>${String(highScore).padStart(5, '0')}</strong></div>
     `;
@@ -525,12 +552,17 @@
     camX += (targetCam - camX) * Math.min(1, dt * 8.5);
 
     // Check Goal Flagpole!
-    const activeBoss = enemies.find((e) => e.type === 'boss' && !e.dead);
+    const activeBoss = enemies.find((e) => isBossEnemy(e) && !e.dead);
     if (!goalCleared && player.x + player.w >= level.goalX - 18) {
       if (activeBoss) {
-        // Must beat Boss Mandurukot first!
+        // Must beat the Stage Boss first!
         player.x = level.goalX - player.w - 20;
-        showToast('🦹 Defeat Boss Mandurukot before claiming the Flag!', 1.8);
+        showToast(
+          activeBoss.type === 'croc_boss'
+            ? '🐊 Defeat Don Buwaya before claiming the Malacañang Flag!'
+            : '🦹 Defeat Boss Mandurukot before claiming the Flag!',
+          1.8
+        );
       } else {
         triggerStageClear();
       }
@@ -722,9 +754,9 @@
       }
     }
 
-    // Street ground solid walls horizontal collision
+    // Street / Palace ground solid walls horizontal collision
     for (const plat of platforms) {
-      if (plat.style !== 'street') continue;
+      if (plat.style !== 'street' && plat.style !== 'palace') continue;
       if (rectOverlap(p, plat)) {
         if (p.vx > 0) p.x = plat.x - p.w;
         else if (p.vx < 0) p.x = plat.x + plat.w;
@@ -791,13 +823,14 @@
       if (player.hp <= 0) {
         triggerGameOver();
       } else {
-        // Respawn safely on nearest street segment to the left
+        // Respawn safely on nearest street/palace segment to the left
         let safeX = Math.max(60, p.x - 190);
         for (const plat of platforms) {
-          if (plat.style === 'street' && safeX >= plat.x && safeX <= plat.x + plat.w - 40) {
+          const isGround = plat.style === 'street' || plat.style === 'palace';
+          if (isGround && safeX >= plat.x && safeX <= plat.x + plat.w - 40) {
             break;
           }
-          if (plat.style === 'street' && plat.x < p.x) {
+          if (isGround && plat.x < p.x) {
             safeX = Math.min(plat.x + plat.w - 70, Math.max(plat.x + 30, p.x - 160));
           }
         }
@@ -860,6 +893,14 @@
             player.hp++;
             showToast('₱30 Coins Bonus! +1 Heart ❤️', 2.0);
           }
+        } else if (item.type === 'cash') {
+          cash += 1000;
+          score += 500;
+          player.energy = Math.min(player.maxEnergy, player.energy + 15);
+          SoundFX.cash();
+          addFloatText(player.x + 17, player.y - 12, '+₱1,000 CASH! 💵', '#34d399', 18);
+          spawnParticles(item.x + 14, item.y + 14, '#34d399', 14, 190);
+          spawnParticles(item.x + 14, item.y + 14, '#facc15', 6, 150);
         } else if (item.type === 'energy') {
           player.energy = Math.min(player.maxEnergy, player.energy + 60);
           score += 120;
@@ -947,39 +988,46 @@
       }
 
       // Only activate enemies reasonably close to camera
-      if (Math.abs(e.x - player.x) > W * 1.15 && e.type !== 'boss') continue;
+      if (Math.abs(e.x - player.x) > W * 1.15 && !isBossEnemy(e)) continue;
 
       const dx = player.x - e.x;
       const dist = Math.abs(dx);
 
-      if (e.type === 'boss') {
-        if (player.x > 2240) {
+      if (isBossEnemy(e)) {
+        const triggerX = e.type === 'croc_boss' ? 2420 : 2240;
+        if (player.x > triggerX) {
           bossBar.classList.remove('hidden');
+          if (bossTitle) {
+            bossTitle.textContent = e.type === 'croc_boss'
+              ? '🐊 DON BUWAYA — MALACAÑANG CROC IN BARONG'
+              : '🦹 BOSS MANDURUKOT — SNATCHER KING';
+          }
           bossFill.style.width = `${Math.max(0, (e.hp / e.maxHp) * 100)}%`;
 
-          // Boss AI: chase, leap-slam, and toss loot-bombs!
+          // Boss AI: chase, leap-slam, and toss loot-bombs / cash briefcases!
           e.facing = dx >= 0 ? 1 : -1;
-          const speed = e.hp <= 7 ? 175 : 130;
+          const enraged = e.hp <= e.maxHp * 0.45;
+          const speed = enraged ? 185 : 135;
           e.vx += (e.facing * speed - e.vx) * Math.min(1, dt * 4);
 
           e.bossJumpTimer -= dt;
           if (e.bossJumpTimer <= 0 && e.onGround) {
-            e.vy = -610;
+            e.vy = -620;
             e.onGround = false;
-            e.bossJumpTimer = e.hp <= 7 ? 1.8 : 2.6;
+            e.bossJumpTimer = enraged ? 1.7 : 2.5;
           }
 
           e.aiTimer -= dt;
-          if (e.aiTimer <= 0 && dist < 560) {
-            e.aiTimer = e.hp <= 7 ? 1.65 : 2.3;
+          if (e.aiTimer <= 0 && dist < 580) {
+            e.aiTimer = enraged ? 1.55 : 2.2;
             enemyProjectiles.push({
               x: e.x + e.w / 2,
               y: e.y + 24,
-              w: 18,
-              h: 18,
-              vx: e.facing * 310,
-              vy: -240,
-              kind: 'sack',
+              w: 20,
+              h: 16,
+              vx: e.facing * 320,
+              vy: -250,
+              kind: e.type === 'croc_boss' ? 'briefcase' : 'sack',
               life: 2.6
             });
           }
@@ -996,24 +1044,33 @@
             e.aiTimer = 1.6;
           }
         }
-      } else if (e.type === 'thug') {
-        if (dist < 430) {
+      } else if (e.type === 'thug' || e.type === 'croc_vip') {
+        if (dist < 440) {
           e.facing = dx >= 0 ? 1 : -1;
-          e.vx = dist > 180 ? e.facing * 65 : 0;
+          e.vx = dist > 180 ? e.facing * 72 : 0;
           e.aiTimer -= dt;
-          if (e.aiTimer <= 0 && dist < 410) {
-            e.aiTimer = 2.4;
+          if (e.aiTimer <= 0 && dist < 420) {
+            e.aiTimer = e.type === 'croc_vip' ? 2.15 : 2.4;
             enemyProjectiles.push({
               x: e.x + e.w / 2,
               y: e.y + 18,
-              w: 14,
+              w: e.type === 'croc_vip' ? 18 : 14,
               h: 14,
-              vx: e.facing * 265,
-              vy: -220,
-              kind: 'bottle',
-              life: 2.4
+              vx: e.facing * 275,
+              vy: -225,
+              kind: e.type === 'croc_vip' ? 'briefcase' : 'bottle',
+              life: 2.5
             });
           }
+        }
+      } else if (e.type === 'croc_thief') {
+        // Crocodile Barong Thief patrols and snaps forward aggressively!
+        if (dist < 310 && Math.abs(player.y - e.y) < 90) {
+          e.facing = dx >= 0 ? 1 : -1;
+          e.vx = e.facing * 145;
+        } else {
+          if (Math.abs(e.vx) < 30) e.vx = e.facing * 100;
+          e.facing = Math.sign(e.vx) || -1;
         }
       } else {
         // Snatcher patrol + slight chase when close
@@ -1034,7 +1091,7 @@
       e.onGround = false;
 
       // Boss arena bounds
-      if (e.type === 'boss') {
+      if (isBossEnemy(e)) {
         if (e.x < e.arenaMinX) { e.x = e.arenaMinX; e.vx = Math.abs(e.vx); }
         if (e.x + e.w > e.arenaMaxX) { e.x = e.arenaMaxX - e.w; e.vx = -Math.abs(e.vx); }
       }
@@ -1052,7 +1109,7 @@
         }
       }
 
-      if (standingPlat && e.type !== 'boss') {
+      if (standingPlat && !isBossEnemy(e)) {
         // Turn around cleanly at platform/street edges so thieves don't suicide into pits
         if (e.x <= standingPlat.x + 6 && e.vx < 0) {
           e.vx = Math.abs(e.vx);
@@ -1158,8 +1215,8 @@
       Sprites.drawPlatform(ctx, plat);
     }
 
-    // Barangay Goal Flagpole
-    Sprites.drawGoalFlag(ctx, level.goalX, Levels.GROUND_Y, worldTime, goalCleared);
+    // Barangay / Malacañang Goal Flagpole
+    Sprites.drawGoalFlag(ctx, level.goalX, Levels.GROUND_Y, worldTime, goalCleared, level.theme);
 
     // ? Blocks & Wooden Crates
     for (const b of blocks) {
@@ -1213,6 +1270,16 @@
         ctx.fillStyle = '#22c55e';
         ctx.fillRect(-4, -9, 8, 18);
         ctx.strokeRect(-4, -9, 8, 18);
+      } else if (pr.kind === 'briefcase') {
+        // Spinning Cash-Stuffed Executive Briefcase!
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-10, -7, 20, 14);
+        ctx.strokeRect(-10, -7, 20, 14);
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(-7, -10, 6, 4);
+        ctx.fillRect(1, -10, 6, 4);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(-2, -1, 4, 3);
       } else {
         ctx.fillStyle = '#d6b47c';
         ctx.beginPath();

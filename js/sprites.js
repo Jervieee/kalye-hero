@@ -410,7 +410,327 @@ const Sprites = (() => {
   }
 
   // ==================== THIEF ENEMIES ====================
+  function drawCrocEnemy(ctx, e, time) {
+    ctx.save();
+    const cx = e.x + e.w / 2;
+    const bottom = e.y + e.h;
+    ctx.translate(cx, bottom);
+
+    if (e.dead) {
+      ctx.rotate(e.deathSpin || 0);
+      ctx.globalAlpha = Math.max(0, e.deathTimer / 0.55);
+    }
+
+    const isBoss = e.type === 'croc_boss';
+    const isVip = e.type === 'croc_vip';
+    const scale = isBoss ? 1.58 : isVip ? 1.15 : 1.04;
+    ctx.scale(e.facing * scale, scale);
+
+    if (e.hurtFlash > 0) {
+      ctx.filter = 'brightness(1.85)';
+    }
+
+    const step = Math.sin(time * (isBoss ? 10 : 12) + e.seed);
+    const bob = e.onGround ? Math.abs(step) * -3 : 0;
+    const chomp = Math.max(0, Math.sin(time * 7 + e.seed)) * 3.5;
+
+    // Ground shadow
+    if (e.onGround && !e.dead) {
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, -1, 17, 4.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Swinging Green Crocodile Tail behind Barong!
+    ctx.save();
+    ctx.translate(-10, -15 + bob);
+    ctx.rotate(Math.sin(time * 6 + e.seed) * 0.16);
+    ctx.fillStyle = '#16a34a';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(0, -3);
+    ctx.quadraticCurveTo(-14, -7, -21, 1);
+    ctx.quadraticCurveTo(-13, 6, 0, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Tail ridge scales
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(-13, -5, 4, 3);
+    ctx.fillRect(-8, -5, 4, 3);
+    ctx.restore();
+
+    // Bulging stolen Cash & Peso sack on back
+    ctx.save();
+    ctx.translate(-13, -27 + bob);
+    ctx.rotate(-0.18 + step * 0.06);
+    ctx.fillStyle = '#d6b47c';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.3;
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 9.5, 11, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Cash bills poking out top of bag!
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(-5, -12, 7, 6);
+    ctx.strokeRect(-5, -12, 7, 6);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(0, -13, 7, 6);
+    ctx.strokeRect(0, -13, 7, 6);
+    ctx.fillStyle = '#78350f';
+    ctx.font = 'bold 10px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('₱', 0, 6);
+    ctx.restore();
+
+    // Formal Black Slacks & Shiny Leather Shoes
+    function drawFormalLeg(ox, angle) {
+      ctx.save();
+      ctx.translate(ox, -17 + bob);
+      ctx.rotate(angle);
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.3;
+      roundRect(ctx, -4.5, 0, 9, 13, 3);
+      ctx.fill();
+      ctx.stroke();
+      // Shiny black dress shoe
+      ctx.fillStyle = '#1f2937';
+      roundRect(ctx, -4, 11, 12, 5.5, 2.5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(1, 12.2, 4, 1.5);
+      ctx.restore();
+    }
+    drawFormalLeg(-5, step * 0.45);
+    drawFormalLeg(5, -step * 0.45);
+
+    // ---- TORSO: CLASSIC CREAM/IVORY BARONG TAGALOG! ----
+    ctx.save();
+    ctx.translate(0, -29 + bob);
+    // White undershirt silhouette underneath sheer Barong
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, -11, -2, 22, 16, 4);
+    ctx.fill();
+
+    // Cream / Piña Barong Tagalog body (untucked formal hem!)
+    ctx.fillStyle = isBoss ? '#fef3c7' : '#fdf8e6';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.6;
+    roundRect(ctx, -12.5, -4, 25, 21, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    // Traditional Barong Tagalog embroidered front chest panel (U-shaped calado!)
+    ctx.fillStyle = isBoss ? '#f59e0b' : '#e2c286';
+    roundRect(ctx, -6, -2, 12, 13, 2.5);
+    ctx.fill();
+    ctx.strokeStyle = isBoss ? '#b45309' : '#c09853';
+    ctx.lineWidth = 1.4;
+    ctx.strokeRect(-5.5, -1.5, 11, 12);
+
+    // Center button placket & diamond embroidery stitches
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(0, -2);
+    ctx.lineTo(0, 12);
+    ctx.stroke();
+    ctx.fillStyle = '#fffbeb';
+    for (let by = 1; by <= 9; by += 4) {
+      ctx.beginPath();
+      ctx.arc(0, by, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Crisp Chinese/Standing Barong Collar
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2;
+    roundRect(ctx, -7, -6.5, 14, 4.5, 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Boss VIP sash & gold pin
+    if (isBoss) {
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-10, -2);
+      ctx.lineTo(9, 14);
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(6, 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // ---- CROCODILE HEAD (BUWAYA!) ----
+    ctx.save();
+    ctx.translate(2, -44 + bob);
+
+    // Back of green croc skull
+    ctx.fillStyle = '#22c55e';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.7;
+    ctx.beginPath();
+    ctx.ellipse(-3, 0, 13, 12.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Lower jaw (animated chomp!)
+    ctx.save();
+    ctx.translate(2, 5);
+    ctx.rotate(chomp * 0.045);
+    ctx.fillStyle = '#86efac';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.3;
+    roundRect(ctx, -4, -1, 22, 6.5, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Upper Crocodile Snout (long scaly cartoon muzzle!)
+    ctx.fillStyle = '#22c55e';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(-4, -8);
+    ctx.quadraticCurveTo(8, -11, 22, -4);
+    ctx.quadraticCurveTo(26, 0, 22, 4.5);
+    ctx.lineTo(-3, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Crocodile Nostril bump at tip of snout
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.arc(19.5, -2, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sharp White Zig-Zag Cartoon Croc Teeth!
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.4;
+    for (let tx = 4; tx <= 18; tx += 5) {
+      ctx.beginPath();
+      ctx.moveTo(tx, 4);
+      ctx.lineTo(tx + 2.5, 8.5 + chomp * 0.3);
+      ctx.lineTo(tx + 5, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Scaly forehead bumps
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.arc(-8, -10, 3, 0, Math.PI * 2);
+    ctx.arc(-2, -11, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black burglar eye-mask / VIP dark shades
+    ctx.fillStyle = '#111827';
+    if (isVip) {
+      // Dark politician VIP sunglasses!
+      roundRect(ctx, -6, -7.5, 19, 7, 2.5);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(-3, -6, 5, 2);
+      ctx.fillRect(5, -6, 5, 2);
+    } else {
+      // Classic thief domino mask over croc eyes!
+      roundRect(ctx, -9, -8, 21, 7.5, 3.5);
+      ctx.fill();
+      // Sneaky yellow reptile eyes!
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.ellipse(-2, -4.3, 3, 2.6, 0, 0, Math.PI * 2);
+      ctx.ellipse(6.5, -4.3, 3, 2.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Vertical reptile slit pupils!
+      ctx.fillStyle = isBoss ? '#dc2626' : '#111827';
+      ctx.fillRect(-2.3, -6.3, 1.5, 4);
+      ctx.fillRect(6.2, -6.3, 1.5, 4);
+    }
+
+    // Golden Crown on Don Buwaya Boss!
+    if (isBoss) {
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.3;
+      ctx.beginPath();
+      ctx.moveTo(-11, -11);
+      ctx.lineTo(-13, -22);
+      ctx.lineTo(-6, -16);
+      ctx.lineTo(-1, -25);
+      ctx.lineTo(4, -16);
+      ctx.lineTo(10, -21);
+      ctx.lineTo(8, -11);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ---- FRONT BARONG SLEEVE + CASH BRIEFCASE! ----
+    ctx.save();
+    ctx.translate(7, -25 + bob);
+    ctx.rotate(-0.2 + step * 0.25);
+    // Ivory Barong sleeve
+    ctx.fillStyle = isBoss ? '#fef3c7' : '#fdf8e6';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.2;
+    roundRect(ctx, -3, -2, 8, 12, 3.5);
+    ctx.fill();
+    ctx.stroke();
+    // Green croc hand
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(1, 10, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Executive Black Briefcase bursting with Cash!
+    ctx.translate(3, 11);
+    ctx.fillStyle = '#1e293b';
+    roundRect(ctx, -6, 0, 16, 12, 2.5);
+    ctx.fill();
+    ctx.stroke();
+    // Cash sticking out of briefcase
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(-4, -3, 6, 4);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(3, -3, 6, 4);
+    // Gold briefcase clasp
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 3, 4, 2.5);
+    ctx.restore();
+
+    // Mini HP bar for non-boss crocs when damaged
+    if (!e.dead && !isBoss && e.maxHp > 1 && e.hp < e.maxHp) {
+      ctx.scale(e.facing, 1);
+      const bw = 32;
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(-bw / 2, -68, bw, 6);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(-bw / 2 + 1, -67, (bw - 2) * (e.hp / e.maxHp), 4);
+    }
+
+    ctx.restore();
+  }
+
   function drawEnemy(ctx, e, time) {
+    if (e.type === 'croc_thief' || e.type === 'croc_vip' || e.type === 'croc_boss') {
+      drawCrocEnemy(ctx, e, time);
+      return;
+    }
     ctx.save();
     const cx = e.x + e.w / 2;
     const bottom = e.y + e.h;
@@ -653,6 +973,12 @@ const Sprites = (() => {
       sky.addColorStop(0, '#090d1f');
       sky.addColorStop(0.55, '#1e1b4b');
       sky.addColorStop(1, '#312e81');
+    } else if (theme === 'malacanang') {
+      // Grand Ceremonial Manila Sky over Malacañang!
+      sky.addColorStop(0, '#1d4ed8');
+      sky.addColorStop(0.42, '#38bdf8');
+      sky.addColorStop(0.82, '#fde68a');
+      sky.addColorStop(1, '#fef3c7');
     } else {
       // Sunny Manila Kalye
       sky.addColorStop(0, '#2563eb');
@@ -719,7 +1045,12 @@ const Sprites = (() => {
       }
     }
 
-    // 3. Midground Philippine Neighborhood Houses & Shops (0.38x parallax)
+    // 3. Midground Philippine Neighborhood Houses OR Iconic Malacañang Palace (0.38x parallax)
+    if (theme === 'malacanang') {
+      drawMalacanangBackground(ctx, width, height, camX, time);
+      return;
+    }
+
     const midScroll = camX * 0.38;
     const shopSpacing = 320;
     const startIdx = Math.floor(midScroll / shopSpacing) - 1;
@@ -783,6 +1114,199 @@ const Sprites = (() => {
         ctx.stroke();
       }
     }
+  }
+
+  function drawMalacanangBackground(ctx, width, height, camX, time) {
+    const groundY = height - 92;
+
+    // Shimmering Pasig River band behind the palace grounds
+    ctx.fillStyle = '#0ea5e9';
+    ctx.fillRect(0, groundY - 48, width, 54);
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    for (let rx = -((camX * 0.25) % 90); rx < width + 90; rx += 90) {
+      ctx.fillRect(rx, groundY - 34, 42, 4);
+      ctx.fillRect(rx + 24, groundY - 22, 30, 3);
+    }
+
+    // Iconic Malacañang Palace White Neoclassical Wings & Grand Portico (0.35x parallax)
+    const palaceSpacing = 540;
+    const pScroll = camX * 0.35;
+    const startIdx = Math.floor(pScroll / palaceSpacing) - 1;
+
+    for (let i = startIdx; i < startIdx + 4; i++) {
+      const px = i * palaceSpacing - pScroll;
+      const py = groundY - 235;
+      const pw = 450;
+
+      // Tropical Acacia / Palm trees flanking the palace
+      drawPalmTree(ctx, px - 36, groundY, time + i);
+      drawPalmTree(ctx, px + pw + 32, groundY, time + i + 2);
+
+      // Main Neoclassical White-Cream Palace Facade
+      ctx.fillStyle = '#fffbeb';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3;
+      ctx.fillRect(px, py + 32, pw, 205);
+      ctx.strokeRect(px, py + 32, pw, 205);
+
+      // Ornate Roof Balustrade & Golden Trim
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(px - 8, py + 24, pw + 16, 14);
+      ctx.strokeRect(px - 8, py + 24, pw + 16, 14);
+
+      // Central Grand Triangular Pediment + Seal
+      ctx.fillStyle = '#fffbeb';
+      ctx.beginPath();
+      ctx.moveTo(px + 115, py + 24);
+      ctx.lineTo(px + pw / 2, py - 24);
+      ctx.lineTo(px + pw - 115, py + 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Golden Presidential-Style Sun Seal inside Pediment
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(px + pw / 2, py + 4, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Palace Sign Plaque ("MALACAÑANG · MANILA")
+      ctx.fillStyle = '#1e3a8a';
+      roundRect(ctx, px + pw / 2 - 96, py + 42, 192, 24, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 12px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MALACAÑANG · MANILA', px + pw / 2, py + 58);
+
+      // Stately Colonial Arched Windows along upper floor
+      for (let w = 0; w < 6; w++) {
+        const wx = px + 26 + w * 69;
+        if (w === 2 || w === 3) continue; // Center portico columns sit here
+        ctx.fillStyle = '#1e3a8a';
+        roundRect(ctx, wx, py + 76, 36, 54, 16);
+        ctx.fill();
+        ctx.stroke();
+        // Warm interior chandelier glow
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(wx + 6, py + 86, 24, 34);
+      }
+
+      // Grand White Roman Columns supporting the Portico
+      for (let c = 0; c < 4; c++) {
+        const colX = px + 148 + c * 46;
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(colX, py + 72, 14, 165);
+        ctx.strokeRect(colX, py + 72, 14, 165);
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(colX - 3, py + 70, 20, 7);
+        ctx.strokeRect(colX - 3, py + 70, 20, 7);
+      }
+
+      // Red Ceremonial Carpet & Grand Entrance Arch
+      ctx.fillStyle = '#7f1d1d';
+      roundRect(ctx, px + pw / 2 - 32, py + 150, 64, 86, 26);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(px + pw / 2 - 26, groundY - 22);
+      ctx.lineTo(px + pw / 2 + 26, groundY - 22);
+      ctx.lineTo(px + pw / 2 + 44, groundY + 4);
+      ctx.lineTo(px + pw / 2 - 44, groundY + 4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Waving Philippine Flag atop Palace Pediment!
+      const fPoleX = px + pw / 2;
+      const fPoleTop = py - 74;
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(fPoleX - 2, fPoleTop, 4, 52);
+      const wave = Math.sin(time * 5 + i) * 3;
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(fPoleX + 2, fPoleTop + 2, 34, 11 + wave * 0.2);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(fPoleX + 2, fPoleTop + 13, 34, 11 + wave * 0.2);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(fPoleX + 2, fPoleTop + 2);
+      ctx.lineTo(fPoleX + 16, fPoleTop + 13);
+      ctx.lineTo(fPoleX + 2, fPoleTop + 24);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Ornate Wrought-Iron Malacañang Perimeter Fence + Heritage Manila Globe Lamps (0.65x parallax)
+    const fenceScroll = camX * 0.65;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, groundY - 58, width, 5);
+    ctx.fillRect(0, groundY - 14, width, 14);
+    for (let fx = -(fenceScroll % 24); fx < width + 24; fx += 24) {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(fx, groundY - 62, 4, 62);
+      // Gold spear finial on fence bars
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(fx + 2, groundY - 70);
+      ctx.lineTo(fx - 2, groundY - 61);
+      ctx.lineTo(fx + 6, groundY - 61);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Classic Green Manila Heritage Streetlamps + J.P. Laurel St Sign
+    const lampSpacing = 360;
+    const lStart = Math.floor(fenceScroll / lampSpacing) - 1;
+    for (let i = lStart; i < lStart + 6; i++) {
+      const lx = i * lampSpacing - fenceScroll;
+      ctx.fillStyle = '#14532d';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.2;
+      ctx.fillRect(lx - 4, groundY - 190, 8, 190);
+      ctx.strokeRect(lx - 4, groundY - 190, 8, 190);
+      // Twin heritage white globe lights
+      [-16, 16].forEach((gx) => {
+        ctx.fillStyle = '#fef9c3';
+        ctx.beginPath();
+        ctx.arc(lx + gx, groundY - 192, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Manila Street Sign every other lamp
+      if (Math.abs(i) % 2 === 0) {
+        ctx.fillStyle = '#15803d';
+        roundRect(ctx, lx - 66, groundY - 148, 132, 22, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9.5px Fredoka, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('J.P. LAUREL · MANILA', lx, groundY - 134);
+      }
+    }
+  }
+
+  function drawPalmTree(ctx, x, groundY, phase) {
+    ctx.save();
+    // Trunk
+    ctx.fillStyle = '#92400e';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.2;
+    ctx.fillRect(x - 6, groundY - 125, 12, 125);
+    ctx.strokeRect(x - 6, groundY - 125, 12, 125);
+    // Lush tropical canopy
+    const sway = Math.sin(phase * 2) * 3;
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.arc(x + sway, groundY - 134, 34, 0, Math.PI * 2);
+    ctx.arc(x - 24 + sway, groundY - 120, 24, 0, Math.PI * 2);
+    ctx.arc(x + 24 + sway, groundY - 120, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawCloud(ctx, x, y, color) {
@@ -946,6 +1470,52 @@ const Sprites = (() => {
       return;
     }
 
+    if (style === 'suv') {
+      drawVipSuvPlatform(ctx, x, y, w, h);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'palace') {
+      // Malacañang Heritage Marble & Cobblestone Boulevard!
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(x, y, w, 16);
+      // Crimson & Gold Ceremonial Curb
+      for (let cx = x; cx < x + w; cx += 48) {
+        ctx.fillStyle = Math.floor(cx / 48) % 2 === 0 ? '#dc2626' : '#facc15';
+        ctx.fillRect(cx, y + 10, Math.min(48, x + w - cx), 8);
+      }
+      // Polished Heritage Stone Road
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(x, y + 18, w, h - 18);
+      // Decorative gold center dashes
+      ctx.fillStyle = '#fde047';
+      for (let lx = x + 22; lx < x + w - 20; lx += 74) {
+        ctx.fillRect(lx, y + 44, 36, 6);
+      }
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, w, h);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'marble') {
+      // Ornate White & Gold Palace Balcony Platform
+      ctx.fillStyle = '#fffbeb';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3;
+      roundRect(ctx, x, y, w, h, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(x + 4, y + 3, w - 8, 6);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(x + 6, y + h - 7, w - 12, 4);
+      ctx.restore();
+      return;
+    }
+
     if (style === 'street') {
       // Concrete Philippine sidewalk curb + dark asphalt kalye road!
       // Curb top strip (yellow/black Manila sidewalk curb paint)
@@ -1105,6 +1675,58 @@ const Sprites = (() => {
     });
   }
 
+  function drawVipSuvPlatform(ctx, x, y, w, h) {
+    // Glossy Black VIP Palace SUV (bouncy roof!)
+    ctx.fillStyle = '#111827';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3;
+    roundRect(ctx, x + 6, y + 4, w - 12, h - 16, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    // Tinted VIP windows
+    ctx.fillStyle = '#334155';
+    roundRect(ctx, x + 22, y + 12, w - 58, 22, 5);
+    ctx.fill();
+    ctx.stroke();
+    // Window reflection glint
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillRect(x + 30, y + 15, 22, 5);
+
+    // Gold VIP trim + Plate "VIP-8"
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(x + 12, y + 40, w - 24, 5);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x + w / 2 - 24, y + 46, 48, 13);
+    ctx.strokeRect(x + w / 2 - 24, y + 46, 48, 13);
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 9.5px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('VIP · 8', x + w / 2, y + 56);
+
+    // Flashing Red & Blue Siren Bar on Roof (Bouncy!)
+    ctx.fillStyle = '#ef4444';
+    roundRect(ctx, x + w / 2 - 24, y - 4, 22, 8, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#3b82f6';
+    roundRect(ctx, x + w / 2 + 2, y - 4, 22, 8, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    // Chrome Wheels
+    [x + 34, x + w - 34].forEach((wx) => {
+      ctx.fillStyle = '#090d16';
+      ctx.beginPath();
+      ctx.arc(wx, y + h - 8, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.arc(wx, y + h - 8, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
   // ==================== MARIO-STYLE ? BLOCKS & BREAKABLE CRATES ====================
   function drawBlock(ctx, b, time) {
     ctx.save();
@@ -1206,6 +1828,36 @@ const Sprites = (() => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('₱', 0, 1);
+    } else if (item.type === 'cash') {
+      // Sparkling Stack of Philippine Cash Bills (₱1,000 Bundle!)
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.34)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 21, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.rotate(Math.sin(time * 4 + item.x) * 0.1);
+      // Stacked shadow bill
+      ctx.fillStyle = '#15803d';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.2;
+      roundRect(ctx, -14, -7, 28, 16, 3);
+      ctx.fill();
+      ctx.stroke();
+      // Top crisp Philippine Blue-Green Cash Bill
+      ctx.fillStyle = '#34d399';
+      roundRect(ctx, -16, -10, 28, 16, 3);
+      ctx.fill();
+      ctx.stroke();
+      // Golden Bank Currency Strap
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-5, -10, 10, 16);
+      ctx.strokeRect(-5, -10, 10, 16);
+      // Peso glyph
+      ctx.fillStyle = '#064e3b';
+      ctx.font = 'bold 12px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('₱', 0, -1.5);
     } else if (item.type === 'energy') {
       // Glowing Energy Drink / Lightning Kape Can for Punch Power!
       ctx.fillStyle = 'rgba(253, 224, 71, 0.32)';
@@ -1286,8 +1938,8 @@ const Sprites = (() => {
     ctx.restore();
   }
 
-  // ==================== BARANGAY GOAL FLAGPOLE ====================
-  function drawGoalFlag(ctx, goalX, groundY, time, cleared) {
+  // ==================== BARANGAY / MALACAÑANG GOAL FLAGPOLE ====================
+  function drawGoalFlag(ctx, goalX, groundY, time, cleared, theme = 'day') {
     ctx.save();
     // Base pedestal
     ctx.fillStyle = '#475569';
@@ -1347,18 +1999,19 @@ const Sprites = (() => {
     ctx.arc(goalX + 16, flagY + 24, 6, 0, Math.PI * 2);
     ctx.fill();
 
-    // Little Barangay Outpost Arch behind flag
-    ctx.fillStyle = '#1e3a8a';
-    roundRect(ctx, goalX + 66, groundY - 125, 110, 125, 10);
+    // Little Barangay Outpost or Malacañang Gate Arch behind flag
+    const isPalace = theme === 'malacanang';
+    ctx.fillStyle = isPalace ? '#fffbeb' : '#1e3a8a';
+    roundRect(ctx, goalX + 66, groundY - 125, 118, 125, 10);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(goalX + 74, groundY - 114, 94, 24);
-    ctx.strokeRect(goalX + 74, groundY - 114, 94, 24);
-    ctx.fillStyle = '#111827';
+    ctx.fillStyle = isPalace ? '#dc2626' : '#facc15';
+    ctx.fillRect(goalX + 74, groundY - 114, 102, 24);
+    ctx.strokeRect(goalX + 74, groundY - 114, 102, 24);
+    ctx.fillStyle = isPalace ? '#fde047' : '#111827';
     ctx.font = 'bold 11px Fredoka, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('BARANGAY HQ', goalX + 121, groundY - 98);
+    ctx.fillText(isPalace ? 'MALACAÑANG' : 'BARANGAY HQ', goalX + 125, groundY - 98);
 
     // Door
     ctx.fillStyle = '#0f172a';

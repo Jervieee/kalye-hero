@@ -126,6 +126,11 @@ const SoundFX = (() => {
       playTone(987.77, 0.08, 'square', 0.1);
       playTone(1318.51, 0.18, 'square', 0.1, null, 0.07);
     },
+    cash() {
+      playTone(880, 0.07, 'triangle', 0.13);
+      playTone(1174.66, 0.08, 'square', 0.11, null, 0.06);
+      playTone(1567.98, 0.18, 'square', 0.12, null, 0.13);
+    },
     blockBump() {
       playTone(190, 0.09, 'triangle', 0.16, 110);
     },

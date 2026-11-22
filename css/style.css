@@ -281,6 +281,16 @@ body {
   border: 2px solid #b45309;
 }
 
+.cash-pill {
+  color: #6ee7b7;
+  border-color: #065f46;
+}
+
+.cash-glyph {
+  font-size: 14px;
+  line-height: 1;
+}
+
 .stat-label {
   font-size: 10px;
   color: #94a3b8;
@@ -578,6 +588,17 @@ body {
   color: #fff;
   border-color: var(--sun-gold);
   transform: translateY(-1px);
+}
+
+.stage-btn.malacanang-btn {
+  border-color: #22c55e;
+  color: #bbf7d0;
+}
+
+.stage-btn.malacanang-btn.active {
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+  color: #fff;
+  border-color: var(--sun-gold);
 }
 
 .title-actions {
@@ -932,8 +953,10 @@ kbd {
 
   .hud-right {
     grid-area: right;
-    gap: 5px;
+    gap: 4px;
     align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .hud-center {

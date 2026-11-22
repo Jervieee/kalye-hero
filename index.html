@@ -7,14 +7,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Kalye Hero" />
-  <link rel="manifest" href="manifest.webmanifest?v=4" />
+  <link rel="manifest" href="manifest.webmanifest?v=5" />
   <link rel="icon" type="image/png" href="assets/icon-192.png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <title>KALYE HERO — PH Street Brawl &amp; Run</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
 </head>
 <body>
   <div class="app-shell">
@@ -57,9 +57,13 @@
         </div>
 
         <div class="hud-right">
-          <div class="stat-pill coins-pill">
+          <div class="stat-pill coins-pill" title="Peso Coins">
             <span class="coin-glyph">₱</span>
             <span id="hudCoins">0</span>
+          </div>
+          <div class="stat-pill cash-pill" title="Recovered Cash">
+            <span class="cash-glyph">💵</span>
+            <span id="hudCash">₱0</span>
           </div>
           <div class="stat-pill score-pill">
             <span class="stat-label">SCORE</span>
@@ -70,9 +74,9 @@
         </div>
       </header>
 
-      <!-- Boss HP Bar (Stage 3 Boss Arena) -->
+      <!-- Boss HP Bar (Stage 3 & 4 Boss Arenas) -->
       <div class="boss-bar hidden" id="bossBar">
-        <div class="boss-title">🦹 BOSS MANDURUKOT — SNATCHER KING</div>
+        <div class="boss-title" id="bossTitle">🦹 BOSS MANDURUKOT — SNATCHER KING</div>
         <div class="boss-track">
           <div class="boss-fill" id="bossFill"></div>
         </div>
@@ -110,7 +114,8 @@
             <div class="stage-selector" id="stageSelector">
               <button class="stage-btn active" data-stage="0">1. Barangay Kalye</button>
               <button class="stage-btn" data-stage="1">2. Divisoria Rush</button>
-              <button class="stage-btn" data-stage="2">3. Night Boss Showdown</button>
+              <button class="stage-btn" data-stage="2">3. Night Boss</button>
+              <button class="stage-btn malacanang-btn" data-stage="3">🐊 4. Malacañang Manila</button>
             </div>
 
             <div class="title-actions">
@@ -216,9 +221,9 @@
     </footer>
   </div>
 
-  <script src="js/audio.js?v=4"></script>
-  <script src="js/sprites.js?v=4"></script>
-  <script src="js/levels.js?v=4"></script>
-  <script src="js/game.js?v=4"></script>
+  <script src="js/audio.js?v=5"></script>
+  <script src="js/sprites.js?v=5"></script>
+  <script src="js/levels.js?v=5"></script>
+  <script src="js/game.js?v=5"></script>
 </body>
 </html>
