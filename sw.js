@@ -1,13 +1,13 @@
-const CACHE_NAME = 'kalye-hero-v2';
+const CACHE_NAME = 'kalye-hero-v3';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
-  './css/style.css',
-  './js/audio.js',
-  './js/sprites.js',
-  './js/levels.js',
-  './js/game.js',
+  './manifest.webmanifest?v=3',
+  './css/style.css?v=3',
+  './js/audio.js?v=3',
+  './js/sprites.js?v=3',
+  './js/levels.js?v=3',
+  './js/game.js?v=3',
   './assets/hero_chibi.jpg',
   './assets/ph_street_banner.jpg',
   './assets/icon-192.png',
@@ -16,7 +16,15 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        ASSETS.map((url) =>
+          fetch(new Request(url, { cache: 'reload' }))
+            .then((res) => (res.ok ? cache.put(url, res) : null))
+            .catch(() => null)
+        )
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 
@@ -28,20 +36,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Network-first so updates always appear immediately; falls back to cache when offline
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((res) => {
-          if (res && res.status === 200 && res.type === 'basic') {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match('./index.html'));
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
 });
