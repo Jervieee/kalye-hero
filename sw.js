@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kalye-hero-v1';
+const CACHE_NAME = 'kalye-hero-v2';
 const ASSETS = [
   './',
   './index.html',

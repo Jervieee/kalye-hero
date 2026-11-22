@@ -2,8 +2,39 @@
 (() => {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
-  const W = canvas.width;
-  const H = canvas.height;
+  let W = canvas.width;
+  const H = 630;
+
+  let manualTouchOverride = null;
+  function isMobileViewport() {
+    return (
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.innerWidth <= 960 ||
+      window.innerHeight <= 560
+    );
+  }
+
+  function syncTouchControlsVisibility() {
+    const shouldShow =
+      mode === 'playing' &&
+      (manualTouchOverride !== null ? manualTouchOverride : isMobileViewport());
+    touchControls.classList.toggle('hidden', !shouldShow);
+  }
+
+  function resizeGameCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const aspect = rect.width / rect.height;
+    // Keep vertical world height fixed at 630px; adapt horizontal viewport width so mobile never squishes!
+    const targetW = Math.max(460, Math.min(1120, Math.round(H * aspect)));
+    if (canvas.width !== targetW || canvas.height !== H) {
+      canvas.width = targetW;
+      canvas.height = H;
+      W = targetW;
+    }
+    syncTouchControlsVisibility();
+  }
 
   // DOM References
   const hud = document.getElementById('hud');
@@ -233,6 +264,8 @@
     mode = 'playing';
     hideAllOverlays();
     hud.classList.remove('hidden');
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
     SoundFX.startBGM();
   }
 
@@ -441,6 +474,7 @@
     const nextBtn = document.getElementById('btnNextStage');
     nextBtn.classList.toggle('hidden', isLast);
     stageClearOverlay.classList.remove('hidden');
+    syncTouchControlsVisibility();
   }
 
   function triggerGameOver() {
@@ -454,6 +488,7 @@
       <div><span>HIGH SCORE</span><strong>${String(highScore).padStart(5, '0')}</strong></div>
     `;
     gameOverOverlay.classList.remove('hidden');
+    syncTouchControlsVisibility();
   }
 
   // ==================== UPDATE LOOP ====================
@@ -1281,6 +1316,7 @@
     if (mode === 'playing') {
       mode = 'paused';
       pauseOverlay.classList.remove('hidden');
+      syncTouchControlsVisibility();
     }
   });
 
@@ -1288,6 +1324,8 @@
     if (mode === 'paused') {
       mode = 'playing';
       pauseOverlay.classList.add('hidden');
+      syncTouchControlsVisibility();
+      requestAnimationFrame(resizeGameCanvas);
     }
   });
 
@@ -1295,6 +1333,8 @@
     loadStage(currentStageIndex, false);
     mode = 'playing';
     hideAllOverlays();
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
     SoundFX.startBGM();
   });
 
@@ -1306,6 +1346,7 @@
     bossBar.classList.add('hidden');
     toastBanner.classList.add('hidden');
     titleOverlay.classList.remove('hidden');
+    syncTouchControlsVisibility();
     updateHighScoreUI();
   }
 
@@ -1318,6 +1359,8 @@
       loadStage(currentStageIndex + 1, true);
       mode = 'playing';
       hideAllOverlays();
+      syncTouchControlsVisibility();
+      requestAnimationFrame(resizeGameCanvas);
       SoundFX.startBGM();
     }
   });
@@ -1326,6 +1369,8 @@
     loadStage(currentStageIndex, false);
     mode = 'playing';
     hideAllOverlays();
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
     SoundFX.startBGM();
   });
 
@@ -1333,6 +1378,8 @@
     loadStage(currentStageIndex, false);
     mode = 'playing';
     hideAllOverlays();
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
     SoundFX.startBGM();
   });
 
@@ -1343,13 +1390,15 @@
     btnSound.textContent = muted ? '🔇' : '🔊';
   });
 
-  // Touch Controls Toggle + Multi-touch Handlers
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (isTouchDevice) {
-    touchControls.classList.remove('hidden');
-  }
+  // Touch Controls Toggle + Responsive Resize Handlers
+  window.addEventListener('resize', resizeGameCanvas);
+  window.addEventListener('orientationchange', () => setTimeout(resizeGameCanvas, 120));
+  resizeGameCanvas();
+
   document.getElementById('btnToggleTouch').addEventListener('click', () => {
-    touchControls.classList.toggle('hidden');
+    const currentlyHidden = touchControls.classList.contains('hidden');
+    manualTouchOverride = currentlyHidden;
+    syncTouchControlsVisibility();
   });
 
   touchControls.querySelectorAll('.touch-btn').forEach((btn) => {
