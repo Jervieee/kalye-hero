@@ -905,6 +905,7 @@ kbd {
 
   /* Dock compact mobile HUD cleanly above the game viewport */
   .hud {
+    order: -1;
     position: relative;
     top: auto;
     left: auto;

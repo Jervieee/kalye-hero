@@ -1,13 +1,13 @@
-const CACHE_NAME = 'kalye-hero-v3';
+const CACHE_NAME = 'kalye-hero-v4';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest?v=3',
-  './css/style.css?v=3',
-  './js/audio.js?v=3',
-  './js/sprites.js?v=3',
-  './js/levels.js?v=3',
-  './js/game.js?v=3',
+  './manifest.webmanifest?v=4',
+  './css/style.css?v=4',
+  './js/audio.js?v=4',
+  './js/sprites.js?v=4',
+  './js/levels.js?v=4',
+  './js/game.js?v=4',
   './assets/hero_chibi.jpg',
   './assets/ph_street_banner.jpg',
   './assets/icon-192.png',
