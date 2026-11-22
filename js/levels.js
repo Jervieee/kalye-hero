@@ -77,17 +77,20 @@ const Levels = (() => {
     ];
 
     const pickups = [
-      ...coinRow(210, 488, 3),
+      { x: 185, y: 488, type: 'gun' },
+      ...coinRow(245, 488, 3),
       { x: 560, y: 488, type: 'energy' },
       ...coinArc(855, 360, 5, 38),
       { x: 1120, y: 325, type: 'cash' },
       ...coinRow(1045, 330, 3, 34),
       ...coinArc(1315, 420, 4, 38),
+      { x: 1475, y: 488, type: 'gun' },
       ...coinRow(1710, 315, 3, 40),
       ...coinArc(1990, 350, 5, 40),
       { x: 2290, y: 300, type: 'cash' },
       ...coinRow(2205, 305, 3, 38),
       ...coinArc(2540, 340, 4, 40),
+      { x: 2700, y: 488, type: 'blaster' },
       ...coinRow(3245, 310, 4, 36)
     ];
 
@@ -162,12 +165,15 @@ const Levels = (() => {
     ];
 
     const pickups = [
-      ...coinRow(180, 488, 3),
+      { x: 165, y: 488, type: 'gun' },
+      ...coinRow(220, 488, 3),
       ...coinArc(635, 355, 5, 38),
       ...coinArc(1030, 395, 4, 38),
+      { x: 1295, y: 488, type: 'blaster' },
       ...coinRow(1655, 285, 4, 42),
       ...coinArc(2045, 340, 4, 38),
       ...coinArc(2540, 350, 5, 40),
+      { x: 2690, y: 488, type: 'gun' },
       ...coinRow(2770, 300, 4, 42),
       { x: 3100, y: 370, type: 'energy' },
       ...coinArc(3515, 350, 5, 38)
@@ -240,12 +246,15 @@ const Levels = (() => {
     ];
 
     const pickups = [
-      ...coinRow(180, 488, 3),
+      { x: 165, y: 488, type: 'blaster' },
+      ...coinRow(220, 488, 3),
       ...coinArc(675, 355, 5, 38),
       ...coinArc(1115, 395, 4, 38),
+      { x: 1380, y: 488, type: 'gun' },
       ...coinRow(1320, 320, 4, 40),
       ...coinArc(2165, 395, 4, 38),
       { x: 2460, y: 488, type: 'energy' },
+      { x: 2520, y: 488, type: 'blaster' },
       { x: 3220, y: 488, type: 'energy' }
     ];
 
@@ -320,8 +329,9 @@ const Levels = (() => {
     ];
 
     const pickups = [
-      // Opening Coins & Cash Trail!
-      ...coinRow(160, 488, 3),
+      // Opening Baril + Coins & Cash Trail!
+      { x: 155, y: 488, type: 'blaster' },
+      ...coinRow(210, 488, 3),
       { x: 470, y: 488, type: 'cash' },
       { x: 540, y: 488, type: 'energy' },
 
@@ -333,7 +343,8 @@ const Levels = (() => {
       // Over Gap 1
       ...coinArc(1185, 405, 4, 38),
 
-      // Mid Palace Boulevard Coins & Cash!
+      // Mid Palace Boulevard Coins, Baril & Cash!
+      { x: 1310, y: 488, type: 'gun' },
       { x: 1390, y: 320, type: 'cash' },
       ...coinRow(1440, 320, 3, 34),
       ...coinArc(1715, 345, 5, 38),
@@ -344,6 +355,7 @@ const Levels = (() => {
       ...coinArc(2325, 355, 4, 38),
       { x: 2510, y: 488, type: 'energy' },
       { x: 2560, y: 488, type: 'cash' },
+      { x: 2610, y: 488, type: 'blaster' },
       { x: 3530, y: 488, type: 'energy' }
     ];
 

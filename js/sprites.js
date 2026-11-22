@@ -33,6 +33,7 @@ const Sprites = (() => {
     const punchProgress = p.punchTimer > 0 ? p.punchTimer / p.punchDuration : 0;
     const isPunching = punchProgress > 0;
     const isShooting = p.shootFlashTimer > 0;
+    const isJersey = p.outfit === 'jersey';
 
     // Ground shadow
     if (p.onGround) {
@@ -40,6 +41,13 @@ const Sprites = (() => {
       ctx.beginPath();
       ctx.ellipse(0, -1, 18, 5, 0, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Double-jump somersault spin!
+    if (p.doubleJumpTimer > 0) {
+      ctx.translate(0, -28);
+      ctx.rotate((1 - p.doubleJumpTimer / 0.34) * Math.PI * 2);
+      ctx.translate(0, 28);
     }
 
     // Subtle golden energy aura when energy is full
@@ -57,57 +65,71 @@ const Sprites = (() => {
     const lean = isPunching ? 0.16 : moving ? 0.08 : 0;
     ctx.rotate(lean);
 
-    // ---- BACK ARM (black t-shirt sleeve + tan forearm) ----
+    // ---- BACK ARM (black t-shirt sleeve OR sleeveless jersey shoulder + tan forearm) ----
     ctx.save();
     const backArmSwing = p.onGround ? -walkPhase * 0.6 : -0.5;
     ctx.translate(-7, -26 + bob);
     ctx.rotate(backArmSwing);
-    // Sleeve
-    ctx.fillStyle = '#18181b';
+    ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
     ctx.strokeStyle = INK;
     ctx.lineWidth = 2.4;
     roundRect(ctx, -5, -2, 9, 10, 4);
     ctx.fill();
     ctx.stroke();
-    // Forearm & hand
     ctx.fillStyle = '#f2b88a';
     roundRect(ctx, -4, 6, 7, 8, 3.5);
     ctx.fill();
     ctx.stroke();
     ctx.restore();
 
-    // ---- LEGS: BLUE MAONG DENIM PANTS + CUFFS + SNEAKERS ----
+    // ---- LEGS: MAONG PANTS OR BLACK SHORTS + SNEAKERS ----
     const leftLegAngle = p.onGround ? walkPhase * 0.55 : -0.35;
     const rightLegAngle = p.onGround ? -walkPhase * 0.55 : 0.45;
 
-    function drawMaongLeg(offsetX, angle, isFront) {
+    function drawHeroLeg(offsetX, angle, isFront) {
       ctx.save();
       ctx.translate(offsetX, -19 + bob);
       ctx.rotate(angle);
 
-      // Denim pants leg
-      ctx.fillStyle = isFront ? '#2563eb' : '#1d4ed8';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 2.5;
-      roundRect(ctx, -6, 0, 12, 13, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      // Denim gold side stitching
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(2, 2);
-      ctx.lineTo(2, 9);
-      ctx.stroke();
-
-      // Cuffed maong hem (classic folded jeans cuff!)
-      ctx.fillStyle = '#93c5fd';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 2;
-      roundRect(ctx, -6.5, 9.5, 13, 4, 2);
-      ctx.fill();
-      ctx.stroke();
+      if (isJersey) {
+        // Black basketball shorts leg
+        ctx.fillStyle = isFront ? '#18181b' : '#09090b';
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.4;
+        roundRect(ctx, -6.5, 0, 13, 8.5, 3);
+        ctx.fill();
+        ctx.stroke();
+        // White side stripe on black shorts
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(2, 1.5, 2.2, 6);
+        // Tan lower calf
+        ctx.fillStyle = '#f2b88a';
+        roundRect(ctx, -4.5, 7.5, 9, 6.5, 3);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        // Denim pants leg
+        ctx.fillStyle = isFront ? '#2563eb' : '#1d4ed8';
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.5;
+        roundRect(ctx, -6, 0, 12, 13, 4);
+        ctx.fill();
+        ctx.stroke();
+        // Denim gold side stitching
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(2, 2);
+        ctx.lineTo(2, 9);
+        ctx.stroke();
+        // Cuffed maong hem
+        ctx.fillStyle = '#93c5fd';
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2;
+        roundRect(ctx, -6.5, 9.5, 13, 4, 2);
+        ctx.fill();
+        ctx.stroke();
+      }
 
       // White sneaker with red accent
       ctx.fillStyle = '#f8fafc';
@@ -123,41 +145,77 @@ const Sprites = (() => {
       ctx.restore();
     }
 
-    drawMaongLeg(-5, leftLegAngle, false);
-    drawMaongLeg(5, rightLegAngle, true);
+    drawHeroLeg(-5, leftLegAngle, false);
+    drawHeroLeg(5, rightLegAngle, true);
 
-    // ---- TORSO: BLACK T-SHIRT + MAONG WAISTBAND ----
+    // ---- TORSO: BLACK SHIRT OR YELLOW #8 JERSEY ----
     ctx.save();
     ctx.translate(0, -29 + bob);
 
-    // Maong denim belt/waistband peek
-    ctx.fillStyle = '#1e40af';
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 2.4;
-    roundRect(ctx, -11.5, 9, 23, 6, 3);
-    ctx.fill();
-    ctx.stroke();
+    if (isJersey) {
+      // Black shorts waistband
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.3;
+      roundRect(ctx, -11.5, 9, 23, 6, 3);
+      ctx.fill();
+      ctx.stroke();
 
-    // Black crew-neck t-shirt body
-    ctx.fillStyle = '#18181b';
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 2.8;
-    roundRect(ctx, -12.5, -5, 25, 17, 6);
-    ctx.fill();
-    ctx.stroke();
+      // Bright Yellow Basketball Jersey!
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.8;
+      roundRect(ctx, -12.5, -5, 25, 17, 6);
+      ctx.fill();
+      ctx.stroke();
 
-    // Subtle fabric highlight on black shirt so folds read clearly
-    ctx.fillStyle = '#334155';
-    ctx.beginPath();
-    ctx.ellipse(-4, 1, 5, 2.2, -0.3, 0, Math.PI * 2);
-    ctx.fill();
+      // Red jersey V-neck & armhole trim
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-5.5, -4.5);
+      ctx.lineTo(0, 0.5);
+      ctx.lineTo(5.5, -4.5);
+      ctx.stroke();
 
-    // Crew-neck collar
-    ctx.strokeStyle = '#3f3f46';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, -4, 5.5, 0.15, Math.PI - 0.15);
-    ctx.stroke();
+      // Jersey number "8"
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.2;
+      ctx.font = 'bold 10px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.strokeText('8', 1, 9.5);
+      ctx.fillText('8', 1, 9.5);
+    } else {
+      // Maong denim belt/waistband peek
+      ctx.fillStyle = '#1e40af';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      roundRect(ctx, -11.5, 9, 23, 6, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      // Black crew-neck t-shirt body
+      ctx.fillStyle = '#18181b';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.8;
+      roundRect(ctx, -12.5, -5, 25, 17, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Subtle fabric highlight on black shirt
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.ellipse(-4, 1, 5, 2.2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crew-neck collar
+      ctx.strokeStyle = '#3f3f46';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -4, 5.5, 0.15, Math.PI - 0.15);
+      ctx.stroke();
+    }
     ctx.restore();
 
     // ---- CHIBI HEAD ----
@@ -245,32 +303,104 @@ const Sprites = (() => {
       ctx.stroke();
     }
 
-    // Spiky cartoon dark hair
-    ctx.fillStyle = '#18181b';
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 2.8;
-    ctx.beginPath();
-    ctx.moveTo(-17, 1);
-    ctx.quadraticCurveTo(-20, -11, -10, -15);
-    ctx.lineTo(-12, -21);
-    ctx.lineTo(-3, -17);
-    ctx.lineTo(2, -23);
-    ctx.lineTo(7, -17);
-    ctx.lineTo(15, -20);
-    ctx.lineTo(14, -12);
-    ctx.quadraticCurveTo(20, -9, 16, -2);
-    ctx.quadraticCurveTo(10, -10, 4, -7);
-    ctx.quadraticCurveTo(-2, -12, -7, -6);
-    ctx.quadraticCurveTo(-13, -9, -15, 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    if (isJersey) {
+      // Hair tufts peeking out from under the BACKWARD CAP!
+      ctx.fillStyle = '#18181b';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-16, 2);
+      ctx.lineTo(-19, -4);
+      ctx.lineTo(-13, -7);
+      ctx.lineTo(-12, 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
 
-    // Hair highlight shine
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    ctx.beginPath();
-    ctx.ellipse(-2, -13, 6, 2.2, -0.2, 0, Math.PI * 2);
-    ctx.fill();
+      // Backward Cap Brim/Visor sticking out the BACK!
+      ctx.fillStyle = '#1f2937';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(-13, -7);
+      ctx.quadraticCurveTo(-27, -6, -28, -1);
+      ctx.quadraticCurveTo(-22, 1, -13, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Red & Black Snapback Cap Dome
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(0, -5, 16.5, Math.PI + 0.1, -0.05);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Back panel darker accent
+      ctx.fillStyle = '#1f2937';
+      ctx.beginPath();
+      ctx.arc(0, -5, 16.2, Math.PI + 0.1, Math.PI * 1.42);
+      ctx.lineTo(-2, -5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Cap top button
+      ctx.fillStyle = '#1f2937';
+      ctx.beginPath();
+      ctx.arc(0, -22, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Signature FRONT snapback cutout & strap (the back of the cap worn in FRONT!)
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(7, -8, 5.2, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Little spiky hair tuft poking through front snapback hole
+      ctx.fillStyle = '#27272a';
+      ctx.beginPath();
+      ctx.moveTo(4, -9);
+      ctx.lineTo(7, -14);
+      ctx.lineTo(10, -9);
+      ctx.closePath();
+      ctx.fill();
+      // Snapback strap bar across the forehead
+      ctx.fillStyle = '#475569';
+      roundRect(ctx, 1, -9.5, 12, 3.8, 1.5);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      // Spiky cartoon dark hair
+      ctx.fillStyle = '#18181b';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(-17, 1);
+      ctx.quadraticCurveTo(-20, -11, -10, -15);
+      ctx.lineTo(-12, -21);
+      ctx.lineTo(-3, -17);
+      ctx.lineTo(2, -23);
+      ctx.lineTo(7, -17);
+      ctx.lineTo(15, -20);
+      ctx.lineTo(14, -12);
+      ctx.quadraticCurveTo(20, -9, 16, -2);
+      ctx.quadraticCurveTo(10, -10, 4, -7);
+      ctx.quadraticCurveTo(-2, -12, -7, -6);
+      ctx.quadraticCurveTo(-13, -9, -15, 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Hair highlight shine
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath();
+      ctx.ellipse(-2, -13, 6, 2.2, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
 
     // ---- FRONT ARM: PUNCHING OR HOLDING OBTAINED GUN OR RUNNING ----
@@ -280,8 +410,8 @@ const Sprites = (() => {
     if (isPunching) {
       // Extended energy-charged cartoon punch!
       const thrust = Math.sin(punchProgress * Math.PI) * 24;
-      // Black sleeve
-      ctx.fillStyle = '#18181b';
+      // Sleeve or bare arm
+      ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.4;
       roundRect(ctx, -3, -4, 11, 9, 4);
@@ -324,7 +454,7 @@ const Sprites = (() => {
       ctx.translate(recoil, 0);
 
       // Sleeve + arm holding gun
-      ctx.fillStyle = '#18181b';
+      ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.4;
       roundRect(ctx, -3, -3, 10, 8, 4);
@@ -393,7 +523,7 @@ const Sprites = (() => {
       // Normal arm swing
       const armSwing = p.onGround ? walkPhase * 0.65 : -0.6;
       ctx.rotate(armSwing);
-      ctx.fillStyle = '#18181b';
+      ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.4;
       roundRect(ctx, -4, -2, 9, 10, 4);
@@ -2022,8 +2152,82 @@ const Sprites = (() => {
     ctx.restore();
   }
 
+  function drawJeepDriverChibi(ctx, x, y, scale = 1, happy = true) {
+    // Mini chibi driver inside the Jeepney cabin: Yellow Jersey + Backward Cap!
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+
+    // Yellow jersey shoulders
+    ctx.fillStyle = '#facc15';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.2;
+    roundRect(ctx, -10, 4, 20, 13, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-4, 4);
+    ctx.lineTo(0, 8);
+    ctx.lineTo(4, 4);
+    ctx.stroke();
+
+    // Chibi head
+    ctx.fillStyle = '#f5be93';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.3;
+    ctx.beginPath();
+    ctx.ellipse(0, -5, 11.5, 10.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Eyes
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(0, -5, 1.8, 0, Math.PI * 2);
+    ctx.arc(6, -5, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Grin
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    if (happy) ctx.arc(3, -1.5, 3.2, 0.15, Math.PI - 0.15);
+    else ctx.arc(3, 1, 2.5, Math.PI + 0.2, -0.2);
+    ctx.stroke();
+
+    // Backward cap brim pointing back!
+    ctx.fillStyle = '#1f2937';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-8, -10);
+    ctx.quadraticCurveTo(-19, -9, -19, -5);
+    ctx.lineTo(-9, -7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Red cap dome
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(0, -9.5, 11.5, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Front snapback strap (back of cap in front!)
+    ctx.fillStyle = '#475569';
+    roundRect(ctx, 1, -13, 8, 3, 1);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   return {
     drawHero,
+    drawJeepDriverChibi,
     drawEnemy,
     drawBackground,
     drawPlatform,

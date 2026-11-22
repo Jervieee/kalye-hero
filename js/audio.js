@@ -119,6 +119,30 @@ const SoundFX = (() => {
     jump() {
       playTone(260, 0.16, 'square', 0.11, 620);
     },
+    doubleJump() {
+      playTone(420, 0.12, 'triangle', 0.13, 860);
+      playTone(640, 0.14, 'square', 0.09, 1080, 0.05);
+    },
+    horn() {
+      // Classic Philippine Jeepney "BEEP-BEEP / POT-POT!"
+      playTone(466.16, 0.11, 'sawtooth', 0.13);
+      playTone(587.33, 0.11, 'square', 0.09);
+      playTone(466.16, 0.16, 'sawtooth', 0.13, null, 0.14);
+      playTone(587.33, 0.16, 'square', 0.09, null, 0.14);
+    },
+    board() {
+      playTone(523.25, 0.08, 'triangle', 0.12);
+      playTone(783.99, 0.12, 'triangle', 0.12, null, 0.07);
+    },
+    farePaid() {
+      playTone(783.99, 0.07, 'square', 0.1);
+      playTone(1046.5, 0.08, 'square', 0.11, null, 0.06);
+      playTone(1318.51, 0.18, 'square', 0.12, null, 0.12);
+    },
+    angry() {
+      playTone(220, 0.12, 'sawtooth', 0.14, 150);
+      playTone(170, 0.18, 'sawtooth', 0.15, 95, 0.11);
+    },
     bounce() {
       playTone(220, 0.22, 'triangle', 0.16, 840);
     },

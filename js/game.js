@@ -16,10 +16,14 @@
   }
 
   function syncTouchControlsVisibility() {
-    const shouldShow =
+    const showAny =
       mode === 'playing' &&
       (manualTouchOverride !== null ? manualTouchOverride : isMobileViewport());
-    touchControls.classList.toggle('hidden', !shouldShow);
+    const isJeep = activeGameMode === 'jeep';
+    touchControls.classList.toggle('hidden', !showAny || isJeep);
+    if (jeepTouchControls) {
+      jeepTouchControls.classList.toggle('hidden', !showAny || !isJeep);
+    }
   }
 
   function resizeGameCanvas() {
@@ -38,6 +42,15 @@
 
   // DOM References
   const hud = document.getElementById('hud');
+  const hudAvatar = document.getElementById('hudAvatar');
+  const jeepHud = document.getElementById('jeepHud');
+  const jeepMoodRow = document.getElementById('jeepMoodRow');
+  const jeepSeatsText = document.getElementById('jeepSeatsText');
+  const jeepPaxChips = document.getElementById('jeepPaxChips');
+  const jeepNextStation = document.getElementById('jeepNextStation');
+  const jeepProgress = document.getElementById('jeepProgress');
+  const jeepFare = document.getElementById('jeepFare');
+  const jeepServed = document.getElementById('jeepServed');
   const hudHearts = document.getElementById('hudHearts');
   const hudEnergyFill = document.getElementById('hudEnergyFill');
   const hudEnergyText = document.getElementById('hudEnergyText');
@@ -61,9 +74,17 @@
   const stageClearOverlay = document.getElementById('stageClearOverlay');
   const gameOverOverlay = document.getElementById('gameOverOverlay');
   const touchControls = document.getElementById('touchControls');
+  const jeepTouchControls = document.getElementById('jeepTouchControls');
   const titleHighScore = document.getElementById('titleHighScore');
+  const titleBestFare = document.getElementById('titleBestFare');
+  const titleHeroImg = document.getElementById('titleHeroImg');
+  const titleHeroTag = document.getElementById('titleHeroTag');
+  const streetModePanel = document.getElementById('streetModePanel');
+  const jeepModePanel = document.getElementById('jeepModePanel');
+  const btnStart = document.getElementById('btnStart');
 
   const STORAGE_KEY = 'kalye_hero_high_score_v1';
+  const FARE_STORAGE_KEY = 'kalye_hero_best_fare_v1';
 
   // Physics Constants
   const GRAVITY = 1760;
@@ -72,11 +93,15 @@
   const MOVE_FRICTION = 1850;
   const MAX_SPEED = 315;
   const JUMP_VEL = -675;
+  const DOUBLE_JUMP_VEL = -615;
   const BOUNCE_VEL = -830;
   const PUNCH_COST = 22;
 
   // Game State
   let mode = 'title'; // title | playing | paused | clear | gameover
+  let selectedGameMode = 'street'; // 'street' | 'jeep'
+  let activeGameMode = 'street';
+  let selectedOutfit = 'classic'; // 'classic' | 'jersey'
   let selectedStage = 0;
   let currentStageIndex = 0;
   let level = null;
@@ -85,8 +110,10 @@
   let cash = 0;
   let thievesDefeated = 0;
   let highScore = 0;
+  let bestFare = 0;
   try {
     highScore = Number(localStorage.getItem(STORAGE_KEY) || 0);
+    bestFare = Number(localStorage.getItem(FARE_STORAGE_KEY) || 0);
   } catch (_) {}
   let camX = 0;
   let worldTime = 0;
@@ -117,6 +144,11 @@
     shootPressed: false
   };
 
+  const jeepKeys = {
+    gas: false,
+    brake: false
+  };
+
   function updateHighScoreUI() {
     if (score > highScore) {
       highScore = score;
@@ -125,6 +157,7 @@
       } catch (_) {}
     }
     titleHighScore.textContent = String(highScore).padStart(5, '0');
+    if (titleBestFare) titleBestFare.textContent = `₱${bestFare.toLocaleString()}`;
   }
   updateHighScoreUI();
 
@@ -175,6 +208,9 @@
       onGround: false,
       coyoteTimer: 0,
       jumpBuffer: 0,
+      jumpsRemaining: 2,
+      doubleJumpTimer: 0,
+      outfit: selectedOutfit,
       hp: prevHp,
       maxHp: 5,
       energy: 100,
@@ -269,16 +305,104 @@
 
   function startGame(stageIdx = selectedStage) {
     SoundFX.unlock();
+    if (selectedGameMode === 'jeep') {
+      startJeepRide();
+      return;
+    }
+    activeGameMode = 'street';
+    JeepRide.stop();
     score = 0;
     coins = 0;
     cash = 0;
     thievesDefeated = 0;
+    if (hudAvatar) {
+      hudAvatar.src = selectedOutfit === 'jersey' ? 'assets/hero_jeep_jersey.jpg' : 'assets/hero_chibi.jpg';
+    }
     loadStage(stageIdx, false);
     mode = 'playing';
     hideAllOverlays();
+    jeepHud.classList.add('hidden');
     hud.classList.remove('hidden');
     syncTouchControlsVisibility();
     requestAnimationFrame(resizeGameCanvas);
+    SoundFX.startBGM();
+  }
+
+  function updateJeepHUD(info) {
+    // Angry / Happy strikes display
+    let moodIcons = '';
+    for (let i = 0; i < info.maxAngry; i++) {
+      moodIcons += i < info.angryCount ? '😠' : '😊';
+    }
+    jeepMoodRow.textContent = moodIcons;
+    jeepSeatsText.textContent = `👥 ${info.passengers.length}/${info.maxSeats} PASAHERO${info.combo >= 2 ? ` · x${info.combo} SUKI!` : ''}`;
+    jeepNextStation.textContent = info.dropHere > 0
+      ? `🛑 STOP: ${info.nextStation} (${info.dropHere} PAX · ${info.nextStationDist}m)`
+      : `🚏 NEXT: ${info.nextStation} (${info.nextStationDist}m)`;
+    jeepProgress.style.width = `${info.progress}%`;
+    jeepFare.textContent = `₱${info.fareEarned.toLocaleString()}`;
+    jeepServed.textContent = String(info.happyServed);
+
+    // Compact destination chips for onboard pasaheros!
+    jeepPaxChips.innerHTML = info.passengers
+      .slice(0, 4)
+      .map((p) => {
+        const cls = p.patience < 35 ? 'danger' : p.patience < 65 ? 'warn' : '';
+        const face = p.patience < 35 ? '😠' : p.patience < 65 ? '😐' : '😊';
+        return `<span class="pax-chip ${cls}">${p.destName.split(' ')[0]} ${face}</span>`;
+      })
+      .join('');
+  }
+
+  function startJeepRide() {
+    activeGameMode = 'jeep';
+    mode = 'playing';
+    hideAllOverlays();
+    hud.classList.add('hidden');
+    bossBar.classList.add('hidden');
+    jeepHud.classList.remove('hidden');
+    jeepKeys.gas = false;
+    jeepKeys.brake = false;
+
+    JeepRide.start(updateJeepHUD, (result) => {
+      mode = result.won ? 'clear' : 'gameover';
+      if (result.fareEarned > bestFare) {
+        bestFare = result.fareEarned;
+        try {
+          localStorage.setItem(FARE_STORAGE_KEY, String(bestFare));
+        } catch (_) {}
+      }
+      updateHighScoreUI();
+      syncTouchControlsVisibility();
+
+      if (result.won) {
+        document.getElementById('clearBadge').textContent = '🚐';
+        document.getElementById('clearTitle').textContent = '🏆 KING OF EDSA!';
+        document.getElementById('clearSubtitle').textContent = `Full EDSA route complete! ${'⭐'.repeat(result.stars)} Driver Rating!`;
+        document.getElementById('clearStats').innerHTML = `
+          <div><span>TOTAL BAYAD</span><strong>₱${result.fareEarned.toLocaleString()}</strong></div>
+          <div><span>HAPPY PASAHEROS</span><strong>${result.happyServed} 😊</strong></div>
+          <div><span>DRIVER RATING</span><strong>${'⭐'.repeat(result.stars)}</strong></div>
+          <div><span>BEST EDSA FARE</span><strong>₱${bestFare.toLocaleString()}</strong></div>
+        `;
+        document.getElementById('btnNextStage').classList.add('hidden');
+        stageClearOverlay.classList.remove('hidden');
+      } else {
+        document.getElementById('gameOverTitle').textContent = '😠 NAWALAN NG PASAHERO!';
+        document.getElementById('gameOverSub').textContent = '3 pasaheros got angry! Slow down at stations & dodge EDSA traffic!';
+        document.getElementById('gameOverStats').innerHTML = `
+          <div><span>FARE EARNED</span><strong>₱${result.fareEarned.toLocaleString()}</strong></div>
+          <div><span>HAPPY PASAHEROS</span><strong>${result.happyServed} 😊</strong></div>
+          <div><span>ANGRY STRIKES</span><strong>${result.angryCount}/3 😠</strong></div>
+          <div><span>BEST EDSA FARE</span><strong>₱${bestFare.toLocaleString()}</strong></div>
+        `;
+        gameOverOverlay.classList.remove('hidden');
+      }
+    });
+
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
+    showToast('🚐 EDSA Jeep Ride! Pull into bottom lane & hold 🛑 STOP at stations!', 3.2);
     SoundFX.startBGM();
   }
 
@@ -437,13 +561,15 @@
       spawnParticles(e.x + e.w / 2, e.y + e.h / 2, '#facc15', isBoss ? 32 : 14, 260);
       spawnParticles(e.x + e.w / 2, e.y + e.h / 2, isCroc ? '#22c55e' : '#ef4444', 12, 200);
 
-      // Thief drops stolen Peso Coins, Cash Bundles (especially Croc Barong thieves!), and Energy!
+      // Thief drops stolen Peso Coins, Cash Bundles, Energy, AND easy Baril/Ammo when low!
+      const needsGun = !player.weapon || player.ammo < 7;
       const dropCount = isBoss ? 10 : isCroc ? 3 : 2;
       for (let i = 0; i < dropCount; i++) {
         let dropType = 'coin';
-        if (i === 0 && isCroc) dropType = 'cash';
+        if (i === 0 && needsGun && Math.random() < 0.5) dropType = Math.random() < 0.35 ? 'blaster' : 'gun';
+        else if (i === 0 && isCroc) dropType = 'cash';
         else if (isBoss && i % 2 === 1) dropType = 'cash';
-        else if (i === 1 && Math.random() < 0.38) dropType = 'energy';
+        else if (i === 1 && Math.random() < 0.4) dropType = 'energy';
         pickups.push({
           x: e.x + e.w / 2 - 12,
           y: e.y + 10,
@@ -484,6 +610,7 @@
     SoundFX.stageClear();
 
     const isLast = currentStageIndex >= Levels.count - 1;
+    document.getElementById('clearBadge').textContent = '🏁';
     document.getElementById('clearTitle').textContent = isLast
       ? '🏛️ MALACAÑANG & MANILA SAVED!'
       : '🏁 STAGE CLEAR!';
@@ -508,6 +635,8 @@
     mode = 'gameover';
     updateHighScoreUI();
     SoundFX.gameOver();
+    document.getElementById('gameOverTitle').textContent = 'NAKO! KNOCKED OUT!';
+    document.getElementById('gameOverSub').textContent = 'Those street thieves got away—get back up and stop them!';
     document.getElementById('gameOverStats').innerHTML = `
       <div><span>FINAL SCORE</span><strong>${String(score).padStart(5, '0')}</strong></div>
       <div><span>COINS &amp; CASH</span><strong>🪙${coins} · ₱${cash.toLocaleString()}</strong></div>
@@ -533,6 +662,11 @@
     }
 
     if (mode !== 'playing') return;
+
+    if (activeGameMode === 'jeep') {
+      JeepRide.update(dt, W, jeepKeys);
+      return;
+    }
 
     if (hitStop > 0) {
       hitStop -= dt;
@@ -579,6 +713,7 @@
     if (p.shootCooldown > 0) p.shootCooldown -= dt;
     if (p.shootFlashTimer > 0) p.shootFlashTimer -= dt;
     if (p.noEnergyHintCooldown > 0) p.noEnergyHintCooldown -= dt;
+    if (p.doubleJumpTimer > 0) p.doubleJumpTimer = Math.max(0, p.doubleJumpTimer - dt);
 
     // Passive energy recharge (for punching!)
     if (p.punchTimer <= 0 && p.energy < p.maxEnergy) {
@@ -597,9 +732,13 @@
       else p.vx -= Math.sign(p.vx) * decel;
     }
 
-    // Coyote time + Jump buffer (authentic crisp Mario feel!)
-    if (p.onGround) p.coyoteTimer = 0.11;
-    else p.coyoteTimer = Math.max(0, p.coyoteTimer - dt);
+    // Coyote time + Jump buffer + DOUBLE JUMP!
+    if (p.onGround) {
+      p.coyoteTimer = 0.11;
+      p.jumpsRemaining = 2;
+    } else {
+      p.coyoteTimer = Math.max(0, p.coyoteTimer - dt);
+    }
 
     if (keys.jumpPressed) {
       p.jumpBuffer = 0.12;
@@ -608,13 +747,26 @@
       p.jumpBuffer = Math.max(0, p.jumpBuffer - dt);
     }
 
-    if (p.jumpBuffer > 0 && p.coyoteTimer > 0) {
-      p.vy = JUMP_VEL;
-      p.onGround = false;
-      p.coyoteTimer = 0;
-      p.jumpBuffer = 0;
-      SoundFX.jump();
-      spawnParticles(p.x + p.w / 2, p.y + p.h, '#e2e8f0', 6, 110);
+    if (p.jumpBuffer > 0) {
+      if (p.coyoteTimer > 0) {
+        // First Jump
+        p.vy = JUMP_VEL;
+        p.onGround = false;
+        p.coyoteTimer = 0;
+        p.jumpBuffer = 0;
+        p.jumpsRemaining = 1;
+        SoundFX.jump();
+        spawnParticles(p.x + p.w / 2, p.y + p.h, '#e2e8f0', 6, 110);
+      } else if (p.jumpsRemaining > 0) {
+        // Mid-Air DOUBLE JUMP!
+        p.vy = DOUBLE_JUMP_VEL;
+        p.jumpsRemaining = 0;
+        p.jumpBuffer = 0;
+        p.doubleJumpTimer = 0.34;
+        SoundFX.doubleJump();
+        spawnParticles(p.x + p.w / 2, p.y + p.h, '#fde047', 10, 165);
+        addFloatText(p.x + 17, p.y + p.h, 'DOUBLE JUMP!', '#38bdf8', 13);
+      }
     }
 
     // Variable jump height (release jump early for short hop)
@@ -779,6 +931,7 @@
         if (plat.bouncy) {
           p.vy = BOUNCE_VEL;
           p.onGround = false;
+          p.jumpsRemaining = 2;
           SoundFX.bounce();
           addFloatText(p.x + 17, plat.y - 12, 'BOING!', '#fde047', 16);
           spawnParticles(p.x + p.w / 2, plat.y, '#fde047', 8, 150);
@@ -909,24 +1062,24 @@
           spawnParticles(item.x + 14, item.y + 14, '#fde047', 14, 190);
         } else if (item.type === 'gun') {
           if (player.weapon === 'blaster') {
-            player.ammo += 8;
-            showToast('💥 Spread Blaster Ammo +8!', 1.8);
+            player.ammo += 12;
+            showToast('💥 Spread Blaster Ammo +12!', 1.8);
           } else {
             player.weapon = 'pistol';
-            player.ammo += 14;
-            showToast('🔫 OBTAINED STREET PISTOL! Press [K] or [X] to Shoot!', 2.6);
+            player.ammo += 20;
+            showToast('🔫 BARIL GET! Street Pistol (+20 Ammo) · Press [K] to Shoot!', 2.4);
           }
           score += 200;
           SoundFX.powerup();
-          addFloatText(player.x + 17, player.y - 12, '🔫 GUN GET!', '#60a5fa', 18);
+          addFloatText(player.x + 17, player.y - 12, '🔫 BARIL +20!', '#60a5fa', 18);
           spawnParticles(item.x + 14, item.y + 14, '#60a5fa', 16, 200);
         } else if (item.type === 'blaster') {
           player.weapon = 'blaster';
-          player.ammo += 10;
+          player.ammo += 16;
           score += 300;
           SoundFX.powerup();
-          showToast('💥 OBTAINED 3-WAY SPREAD BLASTER! Press [K] or [X]!', 2.6);
-          addFloatText(player.x + 17, player.y - 12, '💥 SPREAD BLASTER!', '#f87171', 18);
+          showToast('💥 3-WAY SPREAD BARIL (+16 Ammo)! Press [K] to Blast!', 2.4);
+          addFloatText(player.x + 17, player.y - 12, '💥 SPREAD BARIL!', '#f87171', 18);
           spawnParticles(item.x + 14, item.y + 14, '#ef4444', 18, 220);
         } else if (item.type === 'heart') {
           player.hp = Math.min(player.maxHp, player.hp + 1);
@@ -1133,8 +1286,9 @@
         const playerAbove = player.y + player.h - player.vy * dt <= e.y + 22;
 
         if (playerFalling && playerAbove) {
-          // Classic Mario head-stomp!
+          // Classic Mario head-stomp! (Also refreshes mid-air double jump!)
           player.vy = -510;
+          player.jumpsRemaining = 1;
           SoundFX.stomp();
           defeatOrDamageEnemy(e, e.type === 'boss' ? 2 : 2, player.facing, 'stomp');
         } else {
@@ -1190,6 +1344,10 @@
   // ==================== RENDER LOOP ====================
   function render() {
     ctx.clearRect(0, 0, W, H);
+    if (activeGameMode === 'jeep' && JeepRide.isActive()) {
+      JeepRide.render(ctx, W);
+      return;
+    }
     if (!level) {
       Sprites.drawBackground(ctx, W, H, worldTime * 28, 'day', worldTime);
       return;
@@ -1332,38 +1490,89 @@
       e.preventDefault();
     }
 
-    if (code === 'KeyA' || code === 'ArrowLeft') keys.left = true;
-    if (code === 'KeyD' || code === 'ArrowRight') keys.right = true;
+    if (activeGameMode === 'jeep' && mode === 'playing') {
+      if ((code === 'KeyW' || code === 'ArrowUp') && !e.repeat) JeepRide.moveLane(-1);
+      if ((code === 'KeyS' || code === 'ArrowDown') && !e.repeat) JeepRide.moveLane(1);
+      if (code === 'KeyD' || code === 'ArrowRight') jeepKeys.gas = true;
+      if (code === 'KeyA' || code === 'ArrowLeft' || code === 'Space') jeepKeys.brake = true;
+      if ((code === 'KeyJ' || code === 'KeyK' || code === 'KeyH' || code === 'KeyZ' || code === 'KeyX') && !e.repeat) {
+        JeepRide.honkHorn();
+      }
+    } else {
+      if (code === 'KeyA' || code === 'ArrowLeft') keys.left = true;
+      if (code === 'KeyD' || code === 'ArrowRight') keys.right = true;
 
-    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') {
-      if (!keys.jump) keys.jumpPressed = true;
-      keys.jump = true;
-    }
+      if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') {
+        if (!keys.jump) keys.jumpPressed = true;
+        keys.jump = true;
+      }
 
-    if (code === 'KeyJ' || code === 'KeyZ' || code === 'KeyF') {
-      if (!e.repeat) keys.punchPressed = true;
-    }
+      if (code === 'KeyJ' || code === 'KeyZ' || code === 'KeyF') {
+        if (!e.repeat) keys.punchPressed = true;
+      }
 
-    if (code === 'KeyK' || code === 'KeyX' || code === 'KeyG') {
-      if (!e.repeat) keys.shootPressed = true;
+      if (code === 'KeyK' || code === 'KeyX' || code === 'KeyG') {
+        if (!e.repeat) keys.shootPressed = true;
+      }
     }
 
     if ((code === 'KeyP' || code === 'Escape') && !e.repeat) {
       if (mode === 'playing') {
         mode = 'paused';
+        if (activeGameMode === 'jeep') JeepRide.setPaused(true);
         pauseOverlay.classList.remove('hidden');
+        syncTouchControlsVisibility();
       } else if (mode === 'paused') {
         mode = 'playing';
+        if (activeGameMode === 'jeep') JeepRide.setPaused(false);
         pauseOverlay.classList.add('hidden');
+        syncTouchControlsVisibility();
       }
     }
   });
 
   window.addEventListener('keyup', (e) => {
     const code = e.code;
-    if (code === 'KeyA' || code === 'ArrowLeft') keys.left = false;
-    if (code === 'KeyD' || code === 'ArrowRight') keys.right = false;
-    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') keys.jump = false;
+    if (code === 'KeyA' || code === 'ArrowLeft') { keys.left = false; jeepKeys.brake = false; }
+    if (code === 'KeyD' || code === 'ArrowRight') { keys.right = false; jeepKeys.gas = false; }
+    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') { keys.jump = false; jeepKeys.brake = false; }
+  });
+
+  function syncTitleShowcase() {
+    const showJersey = selectedGameMode === 'jeep' || selectedOutfit === 'jersey';
+    if (titleHeroImg) {
+      titleHeroImg.src = showJersey ? 'assets/hero_jeep_jersey.jpg' : 'assets/hero_chibi.jpg';
+    }
+    if (titleHeroTag) {
+      titleHeroTag.textContent = showJersey
+        ? 'YELLOW #8 JERSEY · BLACK SHORTS · BACKWARD CAP'
+        : 'BLACK SHIRT · MAONG PANTS · STREET JUSTICE';
+    }
+    if (btnStart) {
+      btnStart.textContent = selectedGameMode === 'jeep' ? '🚐 DRIVE EDSA NOW!' : '▶ PLAY NOW';
+    }
+  }
+
+  // Mode Switcher (Street Patrol vs The Jeep Ride EDSA)
+  document.querySelectorAll('.mode-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      selectedGameMode = tab.dataset.mode || 'street';
+      streetModePanel.classList.toggle('hidden', selectedGameMode !== 'street');
+      jeepModePanel.classList.toggle('hidden', selectedGameMode !== 'jeep');
+      syncTitleShowcase();
+    });
+  });
+
+  // Outfit Toggle (Classic Black Shirt vs Yellow Jersey + Backward Cap)
+  document.querySelectorAll('.outfit-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.outfit-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedOutfit = btn.dataset.outfit || 'classic';
+      syncTitleShowcase();
+    });
   });
 
   // Stage selection pills
@@ -1375,41 +1584,53 @@
     });
   });
 
-  document.getElementById('btnStart').addEventListener('click', () => startGame(selectedStage));
+  btnStart.addEventListener('click', () => startGame(selectedStage));
   document.getElementById('btnHowTo').addEventListener('click', () => howToOverlay.classList.remove('hidden'));
   document.getElementById('btnCloseHowTo').addEventListener('click', () => howToOverlay.classList.add('hidden'));
 
-  document.getElementById('btnPause').addEventListener('click', () => {
+  function pauseGame() {
     if (mode === 'playing') {
       mode = 'paused';
+      if (activeGameMode === 'jeep') JeepRide.setPaused(true);
       pauseOverlay.classList.remove('hidden');
       syncTouchControlsVisibility();
     }
-  });
+  }
+  document.getElementById('btnPause').addEventListener('click', pauseGame);
+  document.getElementById('btnPauseJeep').addEventListener('click', pauseGame);
 
   document.getElementById('btnResume').addEventListener('click', () => {
     if (mode === 'paused') {
       mode = 'playing';
+      if (activeGameMode === 'jeep') JeepRide.setPaused(false);
       pauseOverlay.classList.add('hidden');
       syncTouchControlsVisibility();
       requestAnimationFrame(resizeGameCanvas);
     }
   });
 
-  document.getElementById('btnRestartPause').addEventListener('click', () => {
+  function restartCurrentMode() {
+    if (activeGameMode === 'jeep') {
+      startJeepRide();
+      return;
+    }
     loadStage(currentStageIndex, false);
     mode = 'playing';
     hideAllOverlays();
     syncTouchControlsVisibility();
     requestAnimationFrame(resizeGameCanvas);
     SoundFX.startBGM();
-  });
+  }
+
+  document.getElementById('btnRestartPause').addEventListener('click', restartCurrentMode);
 
   function returnToTitle() {
     SoundFX.stopBGM();
+    JeepRide.stop();
     mode = 'title';
     hideAllOverlays();
     hud.classList.add('hidden');
+    jeepHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     toastBanner.classList.add('hidden');
     titleOverlay.classList.remove('hidden');
@@ -1432,30 +1653,20 @@
     }
   });
 
-  document.getElementById('btnReplayClear').addEventListener('click', () => {
-    loadStage(currentStageIndex, false);
-    mode = 'playing';
-    hideAllOverlays();
-    syncTouchControlsVisibility();
-    requestAnimationFrame(resizeGameCanvas);
-    SoundFX.startBGM();
-  });
-
-  document.getElementById('btnRetry').addEventListener('click', () => {
-    loadStage(currentStageIndex, false);
-    mode = 'playing';
-    hideAllOverlays();
-    syncTouchControlsVisibility();
-    requestAnimationFrame(resizeGameCanvas);
-    SoundFX.startBGM();
-  });
+  document.getElementById('btnReplayClear').addEventListener('click', restartCurrentMode);
+  document.getElementById('btnRetry').addEventListener('click', restartCurrentMode);
 
   const btnSound = document.getElementById('btnSound');
-  btnSound.addEventListener('click', () => {
+  const btnSoundJeep = document.getElementById('btnSoundJeep');
+  function toggleGameSound() {
     SoundFX.unlock();
     const muted = SoundFX.toggleMute();
-    btnSound.textContent = muted ? '🔇' : '🔊';
-  });
+    const icon = muted ? '🔇' : '🔊';
+    btnSound.textContent = icon;
+    if (btnSoundJeep) btnSoundJeep.textContent = icon;
+  }
+  btnSound.addEventListener('click', toggleGameSound);
+  if (btnSoundJeep) btnSoundJeep.addEventListener('click', toggleGameSound);
 
   // Touch Controls Toggle + Responsive Resize Handlers
   window.addEventListener('resize', resizeGameCanvas);
@@ -1463,10 +1674,37 @@
   resizeGameCanvas();
 
   document.getElementById('btnToggleTouch').addEventListener('click', () => {
-    const currentlyHidden = touchControls.classList.contains('hidden');
+    const activePad = activeGameMode === 'jeep' ? jeepTouchControls : touchControls;
+    const currentlyHidden = activePad.classList.contains('hidden');
     manualTouchOverride = currentlyHidden;
     syncTouchControlsVisibility();
   });
+
+  // Jeep Ride Touch Controls!
+  if (jeepTouchControls) {
+    jeepTouchControls.querySelectorAll('.touch-btn').forEach((btn) => {
+      const action = btn.dataset.jeep;
+      const press = (ev) => {
+        ev.preventDefault();
+        btn.classList.add('pressed');
+        if (action === 'up') JeepRide.moveLane(-1);
+        if (action === 'down') JeepRide.moveLane(1);
+        if (action === 'brake') jeepKeys.brake = true;
+        if (action === 'gas') jeepKeys.gas = true;
+        if (action === 'horn') JeepRide.honkHorn();
+      };
+      const release = (ev) => {
+        ev.preventDefault();
+        btn.classList.remove('pressed');
+        if (action === 'brake') jeepKeys.brake = false;
+        if (action === 'gas') jeepKeys.gas = false;
+      };
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('pointerleave', release);
+    });
+  }
 
   touchControls.querySelectorAll('.touch-btn').forEach((btn) => {
     const action = btn.dataset.key;
