@@ -143,6 +143,22 @@ const SoundFX = (() => {
       playTone(220, 0.12, 'sawtooth', 0.14, 150);
       playTone(170, 0.18, 'sawtooth', 0.15, 95, 0.11);
     },
+    sizzle() {
+      playNoise(0.16, 0.09, 1800);
+      playTone(340, 0.08, 'triangle', 0.08, 480);
+    },
+    dishReady() {
+      playTone(659.25, 0.08, 'triangle', 0.11);
+      playTone(987.77, 0.14, 'triangle', 0.12, null, 0.07);
+    },
+    serveHappy() {
+      playTone(587.33, 0.07, 'square', 0.1);
+      playTone(880, 0.08, 'square', 0.11, null, 0.06);
+      playTone(1174.66, 0.16, 'square', 0.11, null, 0.12);
+    },
+    trashDish() {
+      playTone(240, 0.1, 'sawtooth', 0.08, 120);
+    },
     bounce() {
       playTone(220, 0.22, 'triangle', 0.16, 840);
     },

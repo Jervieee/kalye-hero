@@ -635,6 +635,122 @@ body {
   border-color: #ffffff;
 }
 
+.mode-tab.karen-tab.active {
+  background: linear-gradient(180deg, #f97316 0%, #c2410c 100%);
+  color: #ffffff;
+  border-color: var(--sun-gold);
+}
+
+.karen-goals-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.karen-goal-chip {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: #1e293b;
+  border: 2px solid #334155;
+  color: #fde047;
+}
+
+.karen-goal-chip.cash-goal {
+  color: #6ee7b7;
+  border-color: #065f46;
+}
+
+.karen-goal-chip.done {
+  background: #065f46;
+  color: #ffffff;
+  border-color: #34d399;
+}
+
+.timer-pill {
+  color: #fde047;
+  border-color: #ca8a04;
+}
+
+.timer-pill.urgent {
+  background: #991b1b;
+  border-color: #ef4444;
+  color: #ffffff;
+  animation: btnPulse 0.7s infinite;
+}
+
+.trash-btn {
+  background: #fecaca;
+}
+
+/* ==================== VIRTUAL THUMB JOYSTICK ==================== */
+.joystick-zone {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joystick-base {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.95) 75%);
+  border: 3.5px solid #475569;
+  box-shadow:
+    inset 0 4px 12px rgba(0, 0, 0, 0.65),
+    0 5px 0 rgba(0, 0, 0, 0.65);
+  touch-action: none;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joystick-base.active {
+  border-color: var(--sun-gold);
+  cursor: grabbing;
+}
+
+.joystick-base.jeep-joy {
+  border-color: #facc15;
+}
+
+.joy-arrow {
+  position: absolute;
+  font-size: 11px;
+  color: rgba(203, 213, 225, 0.55);
+  pointer-events: none;
+}
+
+.joy-up { top: 6px; left: 50%; transform: translateX(-50%); }
+.joy-down { bottom: 6px; left: 50%; transform: translateX(-50%); }
+.joy-left { left: 8px; top: 50%; transform: translateY(-50%); }
+.joy-right { right: 8px; top: 50%; transform: translateY(-50%); }
+
+.joystick-knob {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fde047 0%, #f59e0b 55%, #b45309 100%);
+  border: 3px solid #111827;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.55),
+    inset 0 2px 4px rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  transform: translate(0px, 0px);
+  transition: transform 0.06s ease-out;
+}
+
+.joystick-base.active .joystick-knob {
+  transition: none;
+  filter: brightness(1.08);
+}
+
 .mode-panel {
   display: flex;
   flex-direction: column;
@@ -1222,6 +1338,16 @@ kbd {
 
   .touch-dpad {
     gap: 12px;
+  }
+
+  .joystick-base {
+    width: 102px;
+    height: 102px;
+  }
+
+  .joystick-knob {
+    width: 44px;
+    height: 44px;
   }
 
   .touch-actions {

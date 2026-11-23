@@ -408,9 +408,11 @@ const JeepRide = (() => {
     // Responsive jeep X anchor so portrait & widescreen both have generous forward vision
     jeep.x = viewW < 640 ? 48 : 96;
 
-    // Speed control (Gas vs Brake/Stop!)
-    const braking = controls.brake;
-    const gassing = controls.gas;
+    // Speed control (Gas vs Brake/Stop, supporting both buttons & joystick X!)
+    const joyX = controls.joyX || 0;
+    const joyY = controls.joyY || 0;
+    const braking = controls.brake || joyX < -0.45;
+    const gassing = controls.gas || joyX > 0.45;
     const baseCruise = turboTimer > 0 ? 355 : 235;
     if (braking) {
       targetSpeed = 0;
@@ -427,10 +429,24 @@ const JeepRide = (() => {
     // Advance EDSA distance (scaled so 7100m takes ~85-100 fun seconds!)
     distance += speed * dt * 0.34;
 
-    // Smooth lane vertical glide
-    const targetY = LANE_Y[jeep.lane];
-    jeep.y += (targetY - jeep.y) * Math.min(1, dt * 13);
-    jeep.tilt *= 0.88;
+    // Smooth virtual joystick steering OR discrete lane glide!
+    if (Math.abs(joyY) > 0.14) {
+      const steerSpeed = 310;
+      jeep.y = Math.max(LANE_Y[0], Math.min(LANE_Y[2], jeep.y + joyY * steerSpeed * dt));
+      jeep.tilt = joyY * 0.11;
+      // Keep jeep.lane synced to whichever EDSA lane the jeepney is currently in
+      let closest = 0;
+      let bestD = Infinity;
+      for (let l = 0; l < 3; l++) {
+        const d = Math.abs(jeep.y - LANE_Y[l]);
+        if (d < bestD) { bestD = d; closest = l; }
+      }
+      jeep.lane = closest;
+    } else {
+      const targetY = LANE_Y[jeep.lane];
+      jeep.y += (targetY - jeep.y) * Math.min(1, dt * 13);
+      jeep.tilt *= 0.88;
+    }
 
     // Animated overhead MRT-3 train
     mrtX -= (170 + speed * 0.25) * dt;

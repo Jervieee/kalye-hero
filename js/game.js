@@ -18,6 +18,7 @@
   function syncTouchControlsVisibility() {
     const showAny =
       mode === 'playing' &&
+      activeGameMode !== 'karenderya' &&
       (manualTouchOverride !== null ? manualTouchOverride : isMobileViewport());
     const isJeep = activeGameMode === 'jeep';
     touchControls.classList.toggle('hidden', !showAny || isJeep);
@@ -51,6 +52,12 @@
   const jeepProgress = document.getElementById('jeepProgress');
   const jeepFare = document.getElementById('jeepFare');
   const jeepServed = document.getElementById('jeepServed');
+  const karenderyaHud = document.getElementById('karenderyaHud');
+  const karenLevelName = document.getElementById('karenLevelName');
+  const karenCustGoal = document.getElementById('karenCustGoal');
+  const karenSalesGoal = document.getElementById('karenSalesGoal');
+  const karenTimerPill = document.getElementById('karenTimerPill');
+  const karenTimer = document.getElementById('karenTimer');
   const hudHearts = document.getElementById('hudHearts');
   const hudEnergyFill = document.getElementById('hudEnergyFill');
   const hudEnergyText = document.getElementById('hudEnergyText');
@@ -81,6 +88,7 @@
   const titleHeroTag = document.getElementById('titleHeroTag');
   const streetModePanel = document.getElementById('streetModePanel');
   const jeepModePanel = document.getElementById('jeepModePanel');
+  const karenderyaModePanel = document.getElementById('karenderyaModePanel');
   const btnStart = document.getElementById('btnStart');
 
   const STORAGE_KEY = 'kalye_hero_high_score_v1';
@@ -99,10 +107,11 @@
 
   // Game State
   let mode = 'title'; // title | playing | paused | clear | gameover
-  let selectedGameMode = 'street'; // 'street' | 'jeep'
+  let selectedGameMode = 'street'; // 'street' | 'jeep' | 'karenderya'
   let activeGameMode = 'street';
   let selectedOutfit = 'classic'; // 'classic' | 'jersey'
   let selectedStage = 0;
+  let selectedKarenLevel = 0;
   let currentStageIndex = 0;
   let level = null;
   let score = 0;
@@ -146,7 +155,9 @@
 
   const jeepKeys = {
     gas: false,
-    brake: false
+    brake: false,
+    joyX: 0,
+    joyY: 0
   };
 
   function updateHighScoreUI() {
@@ -309,8 +320,13 @@
       startJeepRide();
       return;
     }
+    if (selectedGameMode === 'karenderya') {
+      startKarenderya(selectedKarenLevel);
+      return;
+    }
     activeGameMode = 'street';
     JeepRide.stop();
+    Karenderya.stop();
     score = 0;
     coins = 0;
     cash = 0;
@@ -322,9 +338,71 @@
     mode = 'playing';
     hideAllOverlays();
     jeepHud.classList.add('hidden');
+    karenderyaHud.classList.add('hidden');
     hud.classList.remove('hidden');
     syncTouchControlsVisibility();
     requestAnimationFrame(resizeGameCanvas);
+    SoundFX.startBGM();
+  }
+
+  function updateKarenHUD(info) {
+    karenLevelName.textContent = info.levelName;
+    karenCustGoal.textContent = `👥 ${info.customersServed}/${info.customerGoal}`;
+    karenCustGoal.classList.toggle('done', info.customersServed >= info.customerGoal);
+    karenSalesGoal.textContent = `💵 ₱${info.sales.toLocaleString()} / ₱${info.salesGoal.toLocaleString()}`;
+    karenSalesGoal.classList.toggle('done', info.sales >= info.salesGoal);
+    karenTimer.textContent = `${info.timeLeft}s`;
+    karenTimerPill.classList.toggle('urgent', info.timeLeft <= 15);
+  }
+
+  function startKarenderya(lvlIndex = selectedKarenLevel) {
+    selectedKarenLevel = lvlIndex;
+    activeGameMode = 'karenderya';
+    JeepRide.stop();
+    mode = 'playing';
+    hideAllOverlays();
+    hud.classList.add('hidden');
+    jeepHud.classList.add('hidden');
+    bossBar.classList.add('hidden');
+    karenderyaHud.classList.remove('hidden');
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
+
+    Karenderya.start(lvlIndex, updateKarenHUD, (result) => {
+      mode = result.won ? 'clear' : 'gameover';
+      syncTouchControlsVisibility();
+      if (result.won) {
+        document.getElementById('clearBadge').textContent = '🍲';
+        document.getElementById('clearTitle').textContent = result.isLastLevel
+          ? '🏆 MASTER KUSINERO!'
+          : '🍲 KARENDERYA LEVEL CLEAR!';
+        document.getElementById('clearSubtitle').textContent = result.isLastLevel
+          ? 'Aling Tessa, Aling Loring, Madam Baby & Jeo Ong loved every dish!'
+          : 'Goals crushed! Ready for the next Karenderya rush?';
+        document.getElementById('clearStats').innerHTML = `
+          <div><span>TOTAL SALES</span><strong>₱${result.sales.toLocaleString()} / ₱${result.salesGoal.toLocaleString()}</strong></div>
+          <div><span>CUSTOMERS</span><strong>${result.customersServed}/${result.customerGoal} 😊</strong></div>
+          <div><span>TIME LEFT</span><strong>${result.timeLeft}s ⏱️</strong></div>
+          <div><span>RATING</span><strong>${'⭐'.repeat(result.stars)}</strong></div>
+        `;
+        const nextBtn = document.getElementById('btnNextStage');
+        nextBtn.textContent = 'NEXT KARENDERYA LVL ➔';
+        nextBtn.classList.toggle('hidden', result.isLastLevel);
+        stageClearOverlay.classList.remove('hidden');
+      } else {
+        document.getElementById('gameOverTitle').textContent = "⏰ TIME'S UP MANONG!";
+        document.getElementById('gameOverSub').textContent = 'Almost! Serve customers faster to hit both goals before time runs out!';
+        document.getElementById('gameOverStats').innerHTML = `
+          <div><span>SALES</span><strong>₱${result.sales.toLocaleString()} / ₱${result.salesGoal.toLocaleString()}</strong></div>
+          <div><span>CUSTOMERS</span><strong>${result.customersServed}/${result.customerGoal}</strong></div>
+          <div><span>LEVEL</span><strong>Level ${result.levelIdx + 1}</strong></div>
+          <div><span>TIP</span><strong>Cook &amp; Plate Fast!</strong></div>
+        `;
+        gameOverOverlay.classList.remove('hidden');
+      }
+    });
+
+    showToast('🍲 Tap Dishes at bottom to Plate/Cook, then Tap Customers to Serve!', 3.2);
     SoundFX.startBGM();
   }
 
@@ -356,13 +434,17 @@
 
   function startJeepRide() {
     activeGameMode = 'jeep';
+    Karenderya.stop();
     mode = 'playing';
     hideAllOverlays();
     hud.classList.add('hidden');
+    karenderyaHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     jeepHud.classList.remove('hidden');
     jeepKeys.gas = false;
     jeepKeys.brake = false;
+    jeepKeys.joyX = 0;
+    jeepKeys.joyY = 0;
 
     JeepRide.start(updateJeepHUD, (result) => {
       mode = result.won ? 'clear' : 'gameover';
@@ -665,6 +747,10 @@
 
     if (activeGameMode === 'jeep') {
       JeepRide.update(dt, W, jeepKeys);
+      return;
+    }
+    if (activeGameMode === 'karenderya') {
+      Karenderya.update(dt, W);
       return;
     }
 
@@ -1348,6 +1434,10 @@
       JeepRide.render(ctx, W);
       return;
     }
+    if (activeGameMode === 'karenderya' && Karenderya.isActive()) {
+      Karenderya.render(ctx, W);
+      return;
+    }
     if (!level) {
       Sprites.drawBackground(ctx, W, H, worldTime * 28, 'day', worldTime);
       return;
@@ -1490,7 +1580,18 @@
       e.preventDefault();
     }
 
-    if (activeGameMode === 'jeep' && mode === 'playing') {
+    if (activeGameMode === 'karenderya' && mode === 'playing') {
+      if (!e.repeat) {
+        if (code === 'Digit1') Karenderya.interactDish('adobo');
+        if (code === 'Digit2') Karenderya.interactDish('sinigang');
+        if (code === 'Digit3') Karenderya.interactDish('kanin');
+        if (code === 'Digit4') Karenderya.interactDish('halohalo');
+        if (code === 'KeyQ') Karenderya.serveSeat(0);
+        if (code === 'KeyW') Karenderya.serveSeat(1);
+        if (code === 'KeyE') Karenderya.serveSeat(2);
+        if (code === 'KeyC') Karenderya.clearTray();
+      }
+    } else if (activeGameMode === 'jeep' && mode === 'playing') {
       if ((code === 'KeyW' || code === 'ArrowUp') && !e.repeat) JeepRide.moveLane(-1);
       if ((code === 'KeyS' || code === 'ArrowDown') && !e.repeat) JeepRide.moveLane(1);
       if (code === 'KeyD' || code === 'ArrowRight') jeepKeys.gas = true;
@@ -1520,11 +1621,13 @@
       if (mode === 'playing') {
         mode = 'paused';
         if (activeGameMode === 'jeep') JeepRide.setPaused(true);
+        if (activeGameMode === 'karenderya') Karenderya.setPaused(true);
         pauseOverlay.classList.remove('hidden');
         syncTouchControlsVisibility();
       } else if (mode === 'paused') {
         mode = 'playing';
         if (activeGameMode === 'jeep') JeepRide.setPaused(false);
+        if (activeGameMode === 'karenderya') Karenderya.setPaused(false);
         pauseOverlay.classList.add('hidden');
         syncTouchControlsVisibility();
       }
@@ -1539,6 +1642,12 @@
   });
 
   function syncTitleShowcase() {
+    if (selectedGameMode === 'karenderya') {
+      if (titleHeroImg) titleHeroImg.src = 'assets/hero_manong_cook.jpg';
+      if (titleHeroTag) titleHeroTag.textContent = 'MANONG CHEF · WHITE SHIRT & SHOULDER TOWEL';
+      if (btnStart) btnStart.textContent = '🍲 COOK & SERVE NOW!';
+      return;
+    }
     const showJersey = selectedGameMode === 'jeep' || selectedOutfit === 'jersey';
     if (titleHeroImg) {
       titleHeroImg.src = showJersey ? 'assets/hero_jeep_jersey.jpg' : 'assets/hero_chibi.jpg';
@@ -1553,7 +1662,7 @@
     }
   }
 
-  // Mode Switcher (Street Patrol vs The Jeep Ride EDSA)
+  // Mode Switcher (Street Patrol vs The Jeep Ride EDSA vs Karenderya Mania)
   document.querySelectorAll('.mode-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.mode-tab').forEach((t) => t.classList.remove('active'));
@@ -1561,6 +1670,9 @@
       selectedGameMode = tab.dataset.mode || 'street';
       streetModePanel.classList.toggle('hidden', selectedGameMode !== 'street');
       jeepModePanel.classList.toggle('hidden', selectedGameMode !== 'jeep');
+      if (karenderyaModePanel) {
+        karenderyaModePanel.classList.toggle('hidden', selectedGameMode !== 'karenderya');
+      }
       syncTitleShowcase();
     });
   });
@@ -1575,12 +1687,21 @@
     });
   });
 
-  // Stage selection pills
-  document.querySelectorAll('.stage-btn').forEach((btn) => {
+  // Street Patrol Stage selection pills
+  document.querySelectorAll('#stageSelector .stage-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.stage-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('#stageSelector .stage-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       selectedStage = Number(btn.dataset.stage || 0);
+    });
+  });
+
+  // Karenderya Level selection pills
+  document.querySelectorAll('#karenLevelSelector .karen-lvl-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#karenLevelSelector .karen-lvl-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedKarenLevel = Number(btn.dataset.klvl || 0);
     });
   });
 
@@ -1592,17 +1713,24 @@
     if (mode === 'playing') {
       mode = 'paused';
       if (activeGameMode === 'jeep') JeepRide.setPaused(true);
+      if (activeGameMode === 'karenderya') Karenderya.setPaused(true);
       pauseOverlay.classList.remove('hidden');
       syncTouchControlsVisibility();
     }
   }
   document.getElementById('btnPause').addEventListener('click', pauseGame);
   document.getElementById('btnPauseJeep').addEventListener('click', pauseGame);
+  const btnPauseKaren = document.getElementById('btnPauseKaren');
+  if (btnPauseKaren) btnPauseKaren.addEventListener('click', pauseGame);
+
+  const btnClearTray = document.getElementById('btnClearTray');
+  if (btnClearTray) btnClearTray.addEventListener('click', () => Karenderya.clearTray());
 
   document.getElementById('btnResume').addEventListener('click', () => {
     if (mode === 'paused') {
       mode = 'playing';
       if (activeGameMode === 'jeep') JeepRide.setPaused(false);
+      if (activeGameMode === 'karenderya') Karenderya.setPaused(false);
       pauseOverlay.classList.add('hidden');
       syncTouchControlsVisibility();
       requestAnimationFrame(resizeGameCanvas);
@@ -1612,6 +1740,10 @@
   function restartCurrentMode() {
     if (activeGameMode === 'jeep') {
       startJeepRide();
+      return;
+    }
+    if (activeGameMode === 'karenderya') {
+      startKarenderya(selectedKarenLevel);
       return;
     }
     loadStage(currentStageIndex, false);
@@ -1627,10 +1759,12 @@
   function returnToTitle() {
     SoundFX.stopBGM();
     JeepRide.stop();
+    Karenderya.stop();
     mode = 'title';
     hideAllOverlays();
     hud.classList.add('hidden');
     jeepHud.classList.add('hidden');
+    karenderyaHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     toastBanner.classList.add('hidden');
     titleOverlay.classList.remove('hidden');
@@ -1643,7 +1777,14 @@
   document.getElementById('btnMenuOver').addEventListener('click', returnToTitle);
 
   document.getElementById('btnNextStage').addEventListener('click', () => {
+    if (activeGameMode === 'karenderya') {
+      if (selectedKarenLevel + 1 < Karenderya.LEVELS.length) {
+        startKarenderya(selectedKarenLevel + 1);
+      }
+      return;
+    }
     if (currentStageIndex + 1 < Levels.count) {
+      document.getElementById('btnNextStage').textContent = 'NEXT STREET ➔';
       loadStage(currentStageIndex + 1, true);
       mode = 'playing';
       hideAllOverlays();
@@ -1658,15 +1799,122 @@
 
   const btnSound = document.getElementById('btnSound');
   const btnSoundJeep = document.getElementById('btnSoundJeep');
+  const btnSoundKaren = document.getElementById('btnSoundKaren');
   function toggleGameSound() {
     SoundFX.unlock();
     const muted = SoundFX.toggleMute();
     const icon = muted ? '🔇' : '🔊';
     btnSound.textContent = icon;
     if (btnSoundJeep) btnSoundJeep.textContent = icon;
+    if (btnSoundKaren) btnSoundKaren.textContent = icon;
   }
   btnSound.addEventListener('click', toggleGameSound);
   if (btnSoundJeep) btnSoundJeep.addEventListener('click', toggleGameSound);
+  if (btnSoundKaren) btnSoundKaren.addEventListener('click', toggleGameSound);
+
+  // Direct Canvas Pointer Handler for Karenderya Mania (Tap Pots & Customers!)
+  canvas.addEventListener('pointerdown', (ev) => {
+    if (activeGameMode !== 'karenderya' || mode !== 'playing') return;
+    ev.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const cx = ((ev.clientX - rect.left) / rect.width) * W;
+    const cy = ((ev.clientY - rect.top) / rect.height) * H;
+    Karenderya.handleCanvasPointer(cx, cy);
+  });
+
+  // Reusable Virtual Thumb Joystick Helper (Pointer-captured, smooth on mobile & desktop!)
+  function bindVirtualJoystick(baseEl, knobEl, onMove, onRelease) {
+    if (!baseEl || !knobEl) return;
+    let pointerId = null;
+
+    function updateStick(clientX, clientY) {
+      const rect = baseEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const maxR = rect.width * 0.34;
+      let dx = clientX - cx;
+      let dy = clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist > maxR) {
+        dx = (dx / dist) * maxR;
+        dy = (dy / dist) * maxR;
+      }
+      knobEl.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+      onMove(dx / maxR, dy / maxR);
+    }
+
+    function resetStick() {
+      pointerId = null;
+      baseEl.classList.remove('active');
+      knobEl.style.transform = 'translate(0px, 0px)';
+      onRelease();
+    }
+
+    baseEl.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault();
+      pointerId = ev.pointerId;
+      baseEl.classList.add('active');
+      if (baseEl.setPointerCapture) {
+        try { baseEl.setPointerCapture(pointerId); } catch (_) {}
+      }
+      updateStick(ev.clientX, ev.clientY);
+    });
+
+    baseEl.addEventListener('pointermove', (ev) => {
+      if (ev.pointerId !== pointerId) return;
+      ev.preventDefault();
+      updateStick(ev.clientX, ev.clientY);
+    });
+
+    const end = (ev) => {
+      if (ev.pointerId !== pointerId) return;
+      ev.preventDefault();
+      resetStick();
+    };
+    baseEl.addEventListener('pointerup', end);
+    baseEl.addEventListener('pointercancel', end);
+  }
+
+  // Bind Street Patrol Virtual Joystick (Left/Right run + Up-flick Jump!)
+  let streetJoyJumpLatched = false;
+  bindVirtualJoystick(
+    document.getElementById('streetJoystick'),
+    document.getElementById('streetJoyKnob'),
+    (nx, ny) => {
+      keys.left = nx < -0.24;
+      keys.right = nx > 0.24;
+      if (ny < -0.62) {
+        if (!streetJoyJumpLatched) {
+          keys.jumpPressed = true;
+          streetJoyJumpLatched = true;
+        }
+        keys.jump = true;
+      } else {
+        streetJoyJumpLatched = false;
+        keys.jump = false;
+      }
+    },
+    () => {
+      keys.left = false;
+      keys.right = false;
+      keys.jump = false;
+      streetJoyJumpLatched = false;
+    }
+  );
+
+  // Bind The Jeep Ride (EDSA) Virtual Joystick (Smooth Up/Down EDSA Steering + Left Brake / Right Gas!)
+  bindVirtualJoystick(
+    document.getElementById('jeepJoystick'),
+    document.getElementById('jeepJoyKnob'),
+    (nx, ny) => {
+      jeepKeys.joyX = nx;
+      jeepKeys.joyY = ny;
+    },
+    () => {
+      jeepKeys.joyX = 0;
+      jeepKeys.joyY = 0;
+    }
+  );
 
   // Touch Controls Toggle + Responsive Resize Handlers
   window.addEventListener('resize', resizeGameCanvas);
@@ -1680,15 +1928,13 @@
     syncTouchControlsVisibility();
   });
 
-  // Jeep Ride Touch Controls!
+  // Jeep Ride Pedal & Horn Touch Buttons!
   if (jeepTouchControls) {
     jeepTouchControls.querySelectorAll('.touch-btn').forEach((btn) => {
       const action = btn.dataset.jeep;
       const press = (ev) => {
         ev.preventDefault();
         btn.classList.add('pressed');
-        if (action === 'up') JeepRide.moveLane(-1);
-        if (action === 'down') JeepRide.moveLane(1);
         if (action === 'brake') jeepKeys.brake = true;
         if (action === 'gas') jeepKeys.gas = true;
         if (action === 'horn') JeepRide.honkHorn();
