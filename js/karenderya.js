@@ -194,12 +194,12 @@ const Karenderya = (() => {
   }
 
   function getSeatX(seatIndex, W) {
-    return W * (0.2 + seatIndex * 0.3);
+    return W * (0.18 + seatIndex * 0.32);
   }
 
   function getStationRect(idx, W) {
-    const margin = Math.max(12, W * 0.03);
-    const gap = Math.max(8, W * 0.018);
+    const margin = Math.max(6, Math.min(14, W * 0.02));
+    const gap = Math.max(5, Math.min(10, W * 0.015));
     const totalW = W - margin * 2 - gap * 3;
     const w = totalW / 4;
     return {
@@ -1228,45 +1228,46 @@ const Karenderya = (() => {
     ctx.stroke();
 
     // Dish Emoji Icon
-    ctx.font = '34px sans-serif';
+    const compact = W < 440;
+    ctx.font = compact ? '28px sans-serif' : '34px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(cfg.emoji, r.x + r.w / 2, r.y + 34);
+    ctx.fillText(cfg.emoji, r.x + r.w / 2, r.y + 32);
 
     // Dish Name + Price
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${W < 520 ? 11 : 13}px Fredoka, sans-serif`;
-    ctx.fillText(cfg.name, r.x + r.w / 2, r.y + 66);
+    ctx.font = `bold ${compact ? 10 : W < 540 ? 11.5 : 13}px Fredoka, sans-serif`;
+    ctx.fillText(cfg.name, r.x + r.w / 2, r.y + 64);
     ctx.fillStyle = '#fde047';
-    ctx.font = 'bold 11px Nunito, sans-serif';
-    ctx.fillText(`₱${cfg.price}`, r.x + r.w / 2, r.y + 82);
+    ctx.font = `bold ${compact ? 10 : 11}px Nunito, sans-serif`;
+    ctx.fillText(`₱${cfg.price}`, r.x + r.w / 2, r.y + 80);
 
     // Cooking Progress Bar OR Servings Badge
     if (st.cooking) {
-      const bw = r.w - 18;
+      const bw = r.w - 10;
       ctx.fillStyle = '#0f172a';
-      roundRect(ctx, r.x + 9, r.y + 96, bw, 14, 7);
+      roundRect(ctx, r.x + 5, r.y + 96, bw, 14, 7);
       ctx.fill();
       ctx.fillStyle = '#f97316';
-      roundRect(ctx, r.x + 9, r.y + 96, bw * Math.min(1, st.cookProgress / cfg.cookTime), 14, 7);
+      roundRect(ctx, r.x + 5, r.y + 96, bw * Math.min(1, st.cookProgress / cfg.cookTime), 14, 7);
       ctx.fill();
       ctx.fillStyle = '#fff';
-      ctx.font = 'bold 9.5px Fredoka, sans-serif';
-      ctx.fillText('COOKING...', r.x + r.w / 2, r.y + 103);
+      ctx.font = `bold ${compact ? 8 : 9.5}px Fredoka, sans-serif`;
+      ctx.fillText('COOKING', r.x + r.w / 2, r.y + 103);
     } else if (st.servings > 0) {
       ctx.fillStyle = '#10b981';
-      roundRect(ctx, r.x + 10, r.y + 94, r.w - 20, 18, 8);
+      roundRect(ctx, r.x + 5, r.y + 94, r.w - 10, 18, 8);
       ctx.fill();
       ctx.fillStyle = '#052e16';
-      ctx.font = 'bold 10.5px Fredoka, sans-serif';
+      ctx.font = `bold ${compact ? 8.5 : 10.5}px Fredoka, sans-serif`;
       ctx.fillText(`PLATE (${st.servings})`, r.x + r.w / 2, r.y + 103);
     } else {
       ctx.fillStyle = '#f59e0b';
-      roundRect(ctx, r.x + 10, r.y + 94, r.w - 20, 18, 8);
+      roundRect(ctx, r.x + 5, r.y + 94, r.w - 10, 18, 8);
       ctx.fill();
       ctx.fillStyle = '#111827';
-      ctx.font = 'bold 10.5px Fredoka, sans-serif';
-      ctx.fillText('TAP TO COOK', r.x + r.w / 2, r.y + 103);
+      ctx.font = `bold ${compact ? 8.5 : 10.5}px Fredoka, sans-serif`;
+      ctx.fillText('COOK', r.x + r.w / 2, r.y + 103);
     }
 
     ctx.restore();

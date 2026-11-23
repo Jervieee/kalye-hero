@@ -32,7 +32,7 @@
     if (!rect.width || !rect.height) return;
     const aspect = rect.width / rect.height;
     // Keep vertical world height fixed at 630px; adapt horizontal viewport width so mobile never squishes!
-    const targetW = Math.max(460, Math.min(1120, Math.round(H * aspect)));
+    const targetW = Math.max(330, Math.min(1120, Math.round(H * aspect)));
     if (canvas.width !== targetW || canvas.height !== H) {
       canvas.width = targetW;
       canvas.height = H;
