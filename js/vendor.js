@@ -899,9 +899,11 @@ const VendorGame = (() => {
       ctx.fillStyle = '#16a34a'; ctx.fillRect(bx - 2, -46, 2.5, 2);
       ctx.fillStyle = '#f59e0b';
     });
-    // Box label ("₱2")
-    ctx.fillStyle = '#fef08a'; ctx.font = 'bold 9px Fredoka, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('PANDESAL ₱2', -42, -25);
+    // Box label ("PANDESAL / ₱2") centered cleanly inside the wooden box
+    ctx.fillStyle = '#fef08a'; ctx.font = 'bold 7.5px Fredoka, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('PANDESAL', -42, -29);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8.5px Fredoka, sans-serif';
+    ctx.fillText('₱2 EACH', -42, -18);
 
     // ---- KUYA TISOY RIDING THE BIKE! ----
     // Pedaling leg

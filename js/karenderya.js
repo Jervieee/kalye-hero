@@ -129,7 +129,7 @@ const Karenderya = (() => {
       stoveSpeed: STOVE_MULT[save.stoveLevel - 1],
       stoveNextCost: save.stoveLevel < stoveMax ? UPGRADE_COSTS.stove[save.stoveLevel] : null,
       staffLevel: save.staffLevel,
-      staffNextCost: save.staffLevel < staffMax ? UPGRADE_COSTS.staff[save.staffLevel] : null
+      staffNextCost: save.staffLevel < staffMax ? UPGRADE_COSTS.staff[save.staffLevel + 1] : null
     };
   }
 
