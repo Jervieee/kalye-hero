@@ -1,9 +1,10 @@
 // KALYE HERO — Mario-Inspired PH Street Action Platformer Engine
 (() => {
   const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { alpha: false });
   let W = canvas.width;
   const H = 630;
+  let hudThrottleTimer = 0;
 
   let manualTouchOverride = null;
   function isMobileViewport() {
@@ -130,6 +131,7 @@
   let selectedGameMode = 'street'; // 'street' | 'jeep' | 'karenderya' | 'vendor'
   let selectedJeepSubMode = 'route'; // 'route' | 'endless'
   let selectedVendorSubMode = 'balot'; // 'balot' | 'pandesal'
+  let selectedBalotCity = 'pasig'; // 'pasig' | 'paranaque' | 'cubao' | 'manila'
   let selectedPandesalLevel = 0;
   let activeGameMode = 'street';
   let playerCustom = {
@@ -217,11 +219,14 @@
   }
 
   function addFloatText(x, y, text, color = '#fde047', size = 18) {
+    if (floatTexts.length >= 12) floatTexts.shift();
     floatTexts.push({ x, y, vy: -75, text, color, size, life: 0.9, maxLife: 0.9 });
   }
 
   function spawnParticles(x, y, color, count = 10, speed = 220) {
-    for (let i = 0; i < count; i++) {
+    const budget = Math.max(0, 48 - particles.length);
+    const n = Math.min(count, budget);
+    for (let i = 0; i < n; i++) {
       const ang = Math.random() * Math.PI * 2;
       const spd = (0.35 + Math.random() * 0.85) * speed;
       particles.push({
@@ -493,9 +498,10 @@
     }
   }
 
-  function startVendor(sub = selectedVendorSubMode, pLvl = selectedPandesalLevel) {
+  function startVendor(sub = selectedVendorSubMode, pLvl = selectedPandesalLevel, cityKey = selectedBalotCity) {
     selectedVendorSubMode = sub;
     selectedPandesalLevel = pLvl;
+    selectedBalotCity = cityKey || 'pasig';
     activeGameMode = 'vendor';
     JeepRide.stop();
     Karenderya.stop();
@@ -516,7 +522,7 @@
       syncTouchControlsVisibility();
       if (result.subMode === 'balot') {
         document.getElementById('gameOverTitle').textContent = '🐕 NAHABOL NG ASO!';
-        document.getElementById('gameOverSub').textContent = 'The Pasig River dog caught the Balot Vendor! Run again & dodge obstacles!';
+        document.getElementById('gameOverSub').textContent = `The ${result.cityName || 'Pasig'} askal caught Manong! Jump over Jeepneys & Tricycles to escape!`;
         document.getElementById('gameOverStats').innerHTML = `
           <div><span>DISTANCE</span><strong>${result.dist}m</strong></div>
           <div><span>BEST RUN</span><strong>${result.bestDist}m</strong></div>
@@ -551,14 +557,14 @@
         `;
         gameOverOverlay.classList.remove('hidden');
       }
-    });
+    }, selectedBalotCity);
 
     syncTouchControlsVisibility();
     requestAnimationFrame(resizeGameCanvas);
     showToast(
       sub === 'balot'
-        ? '🥚 Pasig Balot Run! Slide Joystick/Swipe Left-Right & Jump barriers—outrun the dog!'
-        : '🚲 Malunggay Pandesal (₱2)! Stop & tap 🛑 SELL when a house shouts "PANDESAL!"',
+        ? `🥚 Balot Run (${selectedBalotCity.toUpperCase()})! Jump over Tricycles & Jeepney roofs—outrun the Askal!`
+        : '🚲 Malunggay Pandesal (₱2)! Stop & hold 🛑 SELL at shouting houses across the Barangay!',
       3.4
     );
     SoundFX.startBGM();
@@ -972,7 +978,11 @@
       }
     }
 
-    updateHUD();
+    hudThrottleTimer += dt;
+    if (hudThrottleTimer >= 0.09) {
+      hudThrottleTimer = 0;
+      updateHUD();
+    }
   }
 
   function updatePlayer(dt) {
@@ -2179,6 +2189,7 @@
     });
   });
 
+  const balotCityPicker = document.getElementById('balotCityPicker');
   const pandesalRoutePicker = document.getElementById('pandesalRoutePicker');
   const btnLaunchVendor = document.getElementById('btnLaunchVendor');
   document.querySelectorAll('.vendor-submode-card').forEach((card) => {
@@ -2186,6 +2197,9 @@
       document.querySelectorAll('.vendor-submode-card').forEach((c) => c.classList.remove('active'));
       card.classList.add('active');
       selectedVendorSubMode = card.dataset.vendormode || 'balot';
+      if (balotCityPicker) {
+        balotCityPicker.classList.toggle('hidden', selectedVendorSubMode !== 'balot');
+      }
       if (pandesalRoutePicker) {
         pandesalRoutePicker.classList.toggle('hidden', selectedVendorSubMode !== 'pandesal');
       }
@@ -2194,6 +2208,14 @@
           ? '🥚 START BALOT RUN!'
           : '🚲 SELL PANDESAL NOW!';
       }
+    });
+  });
+
+  document.querySelectorAll('.balot-city-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.balot-city-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedBalotCity = btn.dataset.city || 'pasig';
     });
   });
 
@@ -2220,7 +2242,7 @@
   if (btnLaunchVendor) {
     btnLaunchVendor.addEventListener('click', () => {
       selectedGameMode = 'vendor';
-      startVendor(selectedVendorSubMode, selectedPandesalLevel);
+      startVendor(selectedVendorSubMode, selectedPandesalLevel, selectedBalotCity);
     });
   }
 

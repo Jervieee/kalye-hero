@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=10" />
+  <link rel="stylesheet" href="css/style.css?v=13" />
 </head>
 <body>
   <div class="app-shell">
@@ -443,15 +443,25 @@
               <button class="jeep-submode-card vendor-submode-card active" data-vendormode="balot">
                 <div class="submode-icon">🥚🐕</div>
                 <h3>BALOT VENDOR RUN</h3>
-                <p><strong>Pasig River (Subway Surfers / Temple Run style)!</strong> Sprint across 3 riverside lanes, jump barriers &amp; collect Balot eggs—don't let the chasing dog catch you!</p>
-                <span class="submode-tag">3D RUNNER · SWIPE / JOYSTICK</span>
+                <p><strong>Metro Manila 3D Runner!</strong> Outrun the chasing Askal across <strong>Pasig, Parañaque, Cubao &amp; Manila</strong>—jump over <strong>Jeepneys, Tricycles &amp; Carts</strong> and collect steaming Balot eggs!</p>
+                <span class="submode-tag">4 CITIES · JUMP JEEPS &amp; TRICYCLES</span>
               </button>
               <button class="jeep-submode-card vendor-submode-card" data-vendormode="pandesal">
                 <div class="submode-icon">🚲🥖</div>
                 <h3>MALUNGGAY PANDESAL NI KUYA TISOY</h3>
-                <p>Ride your bike with the wooden bread box! Stop &amp; sell when houses shout <strong>"PANDESAL!"</strong> (₱2 each). Hit the Pandesal sales goal without missing 4 houses!</p>
-                <span class="submode-tag tag-endless">3 ROUTES · ₱2 / PANDESAL</span>
+                <p>Bike through a lively randomized Barangay with <strong>10+ Filipino customers</strong>! Stop &amp; sell when houses shout <strong>"PANDESAL!"</strong> (₱2 each) without missing 4 houses!</p>
+                <span class="submode-tag tag-endless">3 ROUTES · RANDOM BARANGAY</span>
               </button>
+            </div>
+
+            <div class="city-picker-wrap" id="balotCityPicker">
+              <div class="city-picker-label">🏙️ SELECT BALOT RUN CITY SETTING</div>
+              <div class="city-picker-grid">
+                <button class="balot-city-btn active" data-city="pasig"><strong>🌊 PASIG</strong><span>Esplanade &amp; Bridge</span></button>
+                <button class="balot-city-btn" data-city="paranaque"><strong>✈️ PARAÑAQUE</strong><span>NAIA &amp; Baclaran Bay</span></button>
+                <button class="balot-city-btn" data-city="cubao"><strong>🎡 CUBAO</strong><span>Big Dome &amp; LRT-2</span></button>
+                <button class="balot-city-btn" data-city="manila"><strong>🏛️ MANILA</strong><span>Manila Bay &amp; Jones</span></button>
+              </div>
             </div>
 
             <div class="stage-selector hidden" id="pandesalRoutePicker">
@@ -594,7 +604,7 @@
   <script src="js/levels.js?v=10"></script>
   <script src="js/jeep_ride.js?v=10"></script>
   <script src="js/karenderya.js?v=11"></script>
-  <script src="js/vendor.js?v=12"></script>
-  <script src="js/game.js?v=10"></script>
+  <script src="js/vendor.js?v=13"></script>
+  <script src="js/game.js?v=13"></script>
 </body>
 </html>
