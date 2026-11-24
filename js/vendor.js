@@ -503,57 +503,123 @@ const VendorGame = (() => {
 
   // ---------- 3D PERSPECTIVE PASIG RIVER BALOT RUNNER (TEMPLE RUN / SUBWAY SURFERS!) ----------
   function projectLane(laneVal, z, W) {
-    const horizonY = 192;
+    const horizonY = 204;
     const playerY = 515;
     const p = Math.pow(Math.max(0.01, z), 1.65);
     const y = horizonY + p * (playerY - horizonY);
-    const roadHalfW = 24 + p * (Math.min(W * 0.44, 210));
+    const roadHalfW = 28 + p * (Math.min(W * 0.44, 210));
     const laneOffset = (laneVal - 1) * (roadHalfW * 0.66);
     const scale = 0.14 + p * 0.96;
     return { x: W / 2 + laneOffset, y, scale, roadHalfW };
   }
 
   function renderBalotRunner(ctx, W) {
-    const horizonY = 192;
-    // 1. Twilight Manila / Pasig River Sky
-    const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
-    sky.addColorStop(0, '#0f172a');
-    sky.addColorStop(0.55, '#312e81');
-    sky.addColorStop(1, '#ea580c');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, horizonY + 10);
+    const horizonY = 204;
 
-    // Moon & Manila Skyline
-    ctx.fillStyle = '#fef08a';
-    ctx.beginPath(); ctx.arc(W * 0.78, 66, 26, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1e1b4b';
-    for (let i = 0; i < 10; i++) {
-      const bx = i * (W / 9);
-      const bh = 38 + ((i * 29) % 52);
-      ctx.fillRect(bx, horizonY - bh, W / 9 - 4, bh + 6);
+    // 1. Rich Pasig City Dusk-to-Night Twilight Sky
+    const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
+    sky.addColorStop(0, '#070b1e');
+    sky.addColorStop(0.38, '#171c47');
+    sky.addColorStop(0.74, '#432366');
+    sky.addColorStop(0.92, '#c2410c');
+    sky.addColorStop(1, '#fb923c');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, horizonY + 14);
+
+    // Twinkling stars in upper Pasig night sky
+    for (let s = 0; s < 26; s++) {
+      const sx = ((s * 97 + 31) % 997) / 997 * W;
+      const sy = 12 + ((s * 53 + 17) % 100);
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin(time * 2.2 + s * 1.7));
+      ctx.fillStyle = `rgba(254, 249, 195, ${tw.toFixed(2)})`;
+      const sr = s % 4 === 0 ? 2 : 1.2;
+      ctx.fillRect(sx, sy, sr, sr);
     }
 
-    // 2. Left Bank = Shimmering Pasig River Water! Right Bank = Manila Esplanade Trees!
+    // Soft glowing Moon with atmospheric halo
+    const moonX = W * 0.8;
+    const moonY = 58;
+    const moonGlow = ctx.createRadialGradient(moonX, moonY, 8, moonX, moonY, 54);
+    moonGlow.addColorStop(0, 'rgba(254, 240, 138, 0.75)');
+    moonGlow.addColorStop(0.45, 'rgba(253, 224, 71, 0.22)');
+    moonGlow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+    ctx.fillStyle = moonGlow;
+    ctx.beginPath(); ctx.arc(moonX, moonY, 54, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fef9c3';
+    ctx.beginPath(); ctx.arc(moonX, moonY, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(234, 179, 8, 0.25)';
+    ctx.beginPath(); ctx.arc(moonX - 5, moonY - 4, 5, 0, Math.PI * 2); ctx.arc(moonX + 6, moonY + 5, 3.5, 0, Math.PI * 2); ctx.fill();
+
+    // Drifting twilight clouds
+    ctx.fillStyle = 'rgba(129, 140, 248, 0.16)';
+    for (let c = 0; c < 4; c++) {
+      const cx = ((c * 170 + time * 6) % (W + 140)) - 70;
+      const cy = 54 + (c % 2) * 34;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 46, 11, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + 22, cy - 5, 30, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 2. ICONIC CITY OF PASIG SKYLINE (Ortigas CBD Towers + Pasig Cathedral + Illuminated Arch Bridge!)
+    drawPasigCitySkyline(ctx, W, horizonY);
+
+    // 3. Left Side = Shimmering Pasig River + Reflections + Pasig Ferry | Right Side = Pasig Esplanade Park & Night Street
     const water = ctx.createLinearGradient(0, horizonY, 0, H);
-    water.addColorStop(0, '#0369a1');
-    water.addColorStop(1, '#0f766e');
+    water.addColorStop(0, '#0c4a6e');
+    water.addColorStop(0.35, '#075985');
+    water.addColorStop(0.75, '#0f766e');
+    water.addColorStop(1, '#115e59');
     ctx.fillStyle = water;
-    ctx.fillRect(0, horizonY, W / 2, H - horizonY);
-    ctx.fillStyle = '#14532d';
+    ctx.fillRect(0, horizonY, W / 2 + 10, H - horizonY);
+
+    // Warm sunset & Pasig city lights reflecting on the Pasig River!
+    const refGrad = ctx.createLinearGradient(0, horizonY, 0, horizonY + 130);
+    refGrad.addColorStop(0, 'rgba(251, 146, 60, 0.42)');
+    refGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.18)');
+    refGrad.addColorStop(1, 'rgba(15, 118, 110, 0)');
+    ctx.fillStyle = refGrad;
+    ctx.fillRect(0, horizonY, W / 2, 130);
+
+    // Right riverside ground (Pasig Esplanade Lawn & Night Plaza)
+    const bankGrad = ctx.createLinearGradient(0, horizonY, 0, H);
+    bankGrad.addColorStop(0, '#064e3b');
+    bankGrad.addColorStop(0.5, '#14532d');
+    bankGrad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = bankGrad;
     ctx.fillRect(W / 2, horizonY, W / 2, H - horizonY);
 
-    // Water sparkles rushing toward camera
-    ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    for (let i = 0; i < 8; i++) {
-      const z = ((i / 8) + (time * bSpeed * 0.5)) % 1;
-      const pr = projectLane(0, z, W);
-      ctx.fillRect(pr.x - pr.roadHalfW - 45 * pr.scale, pr.y, 40 * pr.scale, 3.5 * pr.scale);
+    // Pasig River Ferry Boat gliding smoothly on the left water!
+    const ferryZ = ((time * 0.08 + 0.35) % 0.72) + 0.08;
+    const fProj = projectLane(0, ferryZ, W);
+    const ferryX = Math.max(26, fProj.x - fProj.roadHalfW - 58 * fProj.scale - 22);
+    const ferryY = fProj.y + 4;
+    if (ferryX > -40) {
+      drawPasigFerry(ctx, ferryX, ferryY, Math.max(0.32, fProj.scale * 0.95));
     }
 
-    // 3. 3-Lane Pasig Riverbank Stone Promenade (Trapezoid Perspective!)
-    const topHalf = 26;
+    // Animated city-light ripples & water sparkles rushing toward camera on Pasig River
+    for (let i = 0; i < 12; i++) {
+      const z = ((i / 12) + (time * bSpeed * 0.52)) % 1;
+      const pr = projectLane(0, z, W);
+      const wx = pr.x - pr.roadHalfW - (24 + (i % 3) * 32) * pr.scale;
+      const ww = (26 + (i % 3) * 18) * pr.scale;
+      ctx.fillStyle = i % 3 === 0
+        ? 'rgba(253, 224, 71, 0.38)'
+        : i % 3 === 1
+        ? 'rgba(56, 189, 248, 0.34)'
+        : 'rgba(255, 255, 255, 0.25)';
+      ctx.fillRect(wx - ww, pr.y, ww, Math.max(1.5, 3.2 * pr.scale));
+    }
+
+    // 4. 3-Lane Pasig River Esplanade Tiled Stone Promenade (3D Perspective!)
+    const topHalf = 28;
     const botHalf = Math.min(W * 0.48, 240);
-    ctx.fillStyle = '#334155';
+    const roadGrad = ctx.createLinearGradient(0, horizonY, 0, H);
+    roadGrad.addColorStop(0, '#475569');
+    roadGrad.addColorStop(0.5, '#334155');
+    roadGrad.addColorStop(1, '#1e293b');
+    ctx.fillStyle = roadGrad;
     ctx.beginPath();
     ctx.moveTo(W / 2 - topHalf, horizonY);
     ctx.lineTo(W / 2 + topHalf, horizonY);
@@ -562,16 +628,34 @@ const VendorGame = (() => {
     ctx.closePath();
     ctx.fill();
 
-    // Glowing yellow-black curb rails
-    ctx.strokeStyle = '#facc15';
-    ctx.lineWidth = 4;
+    // Rushing Esplanade Stone Pavement Cross-Seams (Gives strong 3D speed sensation!)
+    for (let t = 0; t < 10; t++) {
+      const z = ((t / 10) + (time * bSpeed * 0.95)) % 1;
+      const pr = projectLane(1, z, W);
+      ctx.strokeStyle = `rgba(148, 163, 184, ${(0.14 + z * 0.24).toFixed(2)})`;
+      ctx.lineWidth = Math.max(1, 2.2 * pr.scale);
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - pr.roadHalfW, pr.y);
+      ctx.lineTo(W / 2 + pr.roadHalfW, pr.y);
+      ctx.stroke();
+    }
+
+    // Glowing Esplanade Stone Curbs (Left River Wall Curb & Right Street Curb)
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(W / 2 - topHalf, horizonY); ctx.lineTo(W / 2 - botHalf, H);
     ctx.moveTo(W / 2 + topHalf, horizonY); ctx.lineTo(W / 2 + botHalf, H);
     ctx.stroke();
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - topHalf + 3, horizonY); ctx.lineTo(W / 2 - botHalf + 6, H);
+    ctx.moveTo(W / 2 + topHalf - 3, horizonY); ctx.lineTo(W / 2 + botHalf - 6, H);
+    ctx.stroke();
 
     // 3-Lane perspective dashed dividers
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.strokeStyle = 'rgba(254, 240, 138, 0.5)';
     ctx.lineWidth = 2.5;
     [-0.33, 0.33].forEach((f) => {
       ctx.beginPath();
@@ -580,33 +664,224 @@ const VendorGame = (() => {
       ctx.stroke();
     });
 
-    // Rushing streetlamp posts along the right promenade edge!
-    for (let i = 0; i < 6; i++) {
-      const z = ((i / 6) + (time * bSpeed * 0.65)) % 1;
-      const pr = projectLane(2, z, W);
-      const lx = W / 2 + pr.roadHalfW + 18 * pr.scale;
-      const lh = 96 * pr.scale;
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(lx - 2 * pr.scale, pr.y - lh, 4 * pr.scale, lh);
-      ctx.fillStyle = '#fef08a';
-      ctx.beginPath(); ctx.arc(lx, pr.y - lh, 7 * pr.scale, 0, Math.PI * 2); ctx.fill();
+    // 5. 3D Scrolling Esplanade Props (Left Heritage River Railings + Right Pasig Lamp Posts & Trees!)
+    for (let i = 0; i < 7; i++) {
+      const z = ((i / 7) + (time * bSpeed * 0.68)) % 1;
+      const pr = projectLane(1, z, W);
+      const sc = pr.scale;
+
+      // Left Bank: Pasig Esplanade Heritage Stone Balustrade Posts + Cyan Accent Strip
+      const leftPostX = W / 2 - pr.roadHalfW - 6 * sc;
+      const postH = 28 * sc;
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(leftPostX - 4 * sc, pr.y - postH, 8 * sc, postH);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(leftPostX - 5.5 * sc, pr.y - postH - 4 * sc, 11 * sc, 4 * sc);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(leftPostX - 2 * sc, pr.y - postH * 0.55, 4 * sc, 3 * sc);
+
+      // Right Bank: Ornate Pasig Esplanade Heritage Lamp Posts + Tropical Palms/Acacia Trees!
+      const rightX = W / 2 + pr.roadHalfW + 16 * sc;
+      if (i % 2 === 0) {
+        // Double-globe warm heritage lamp post
+        const lh = 108 * sc;
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(rightX - 2.5 * sc, pr.y - lh, 5 * sc, lh);
+        ctx.fillRect(rightX - 11 * sc, pr.y - lh + 4 * sc, 22 * sc, 3 * sc);
+        // Warm lamp light halo
+        const lg = ctx.createRadialGradient(rightX, pr.y - lh, 2 * sc, rightX, pr.y - lh, 34 * sc);
+        lg.addColorStop(0, 'rgba(254, 240, 138, 0.72)');
+        lg.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = lg;
+        ctx.beginPath(); ctx.arc(rightX, pr.y - lh, 34 * sc, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fef9c3';
+        ctx.beginPath();
+        ctx.arc(rightX - 9 * sc, pr.y - lh + 1 * sc, 5 * sc, 0, Math.PI * 2);
+        ctx.arc(rightX + 9 * sc, pr.y - lh + 1 * sc, 5 * sc, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Tropical riverside tree + warm Pasig street stall awning behind it
+        const tx = rightX + 14 * sc;
+        const th = 72 * sc;
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(tx - 4 * sc, pr.y - th * 0.55, 8 * sc, th * 0.55);
+        ctx.fillStyle = '#15803d';
+        ctx.beginPath();
+        ctx.arc(tx, pr.y - th * 0.72, 22 * sc, 0, Math.PI * 2);
+        ctx.arc(tx - 12 * sc, pr.y - th * 0.58, 15 * sc, 0, Math.PI * 2);
+        ctx.arc(tx + 12 * sc, pr.y - th * 0.58, 15 * sc, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.arc(tx - 4 * sc, pr.y - th * 0.8, 12 * sc, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // 4. Depth-Sorted Obstacles & Collectibles (Far z -> Near z)
+    // 6. Depth-Sorted Obstacles & Collectibles (Far z -> Near z)
     const sorted = [...bObjects].filter((o) => !o.hit && o.z > 0.01).sort((a, b) => a.z - b.z);
     for (const obj of sorted) {
       const pr = projectLane(obj.lane, obj.z, W);
       drawBalotWorldObject(ctx, obj, pr.x, pr.y, pr.scale);
     }
 
-    // 5. The Balot Vendor Running Forward (3D Back/Three-Quarter View!)
-    const pProj = projectLane(bLaneX, 0.96, W);
+    // 7. The Balot Vendor Running Forward (3D Back/Three-Quarter View!)
+    const pProj = projectLane(bLaneX, 0.94, W);
     drawBalotVendorSprite(ctx, pProj.x, pProj.y - bJumpY * 0.68, pProj.scale);
 
-    // 6. The Chasing Askal Dog Right Behind!
-    const dogZ = bDogClose >= 1 ? 1.07 : 1.16;
+    // 8. The Improved Chasing Askal Dog Right Behind!
+    const dogZ = bDogClose >= 1 ? 1.04 : 1.11;
     const dProj = projectLane(bLaneX, dogZ, W);
-    drawChasingDog(ctx, dProj.x, Math.min(H - 12, dProj.y + (bDogClose >= 1 ? 0 : 22)), bDogClose >= 1 ? 1.08 : 0.92);
+    const dogY = bDogClose >= 1 ? 556 : 582;
+    drawChasingDog(ctx, dProj.x, dogY, bDogClose >= 1 ? 1.12 : 0.96);
+  }
+
+  function drawPasigCitySkyline(ctx, W, horizonY) {
+    ctx.save();
+
+    // Far background Ortigas / Pasig high-rise silhouettes (subtle atmospheric depth)
+    ctx.fillStyle = '#1e1b4b';
+    const farTowers = [
+      [0.04, 0.07, 46], [0.12, 0.08, 62], [0.22, 0.06, 52],
+      [0.54, 0.08, 86], [0.63, 0.09, 108], [0.73, 0.07, 94],
+      [0.81, 0.09, 118], [0.91, 0.09, 78]
+    ];
+    farTowers.forEach(([fx, fw, fh]) => {
+      ctx.fillRect(W * fx, horizonY - fh, W * fw, fh + 6);
+    });
+
+    // Iconic Pasig River Illuminated Cable-Stayed Arch Bridge (Left-to-Center spanning the river!)
+    const brLeft = -10;
+    const brRight = W * 0.48;
+    const brMid = (brLeft + brRight) * 0.5;
+    const brDeckY = horizonY - 14;
+    // Bridge Arch glowing in Pasig Cyan & Gold!
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(brLeft + 18, brDeckY);
+    ctx.quadraticCurveTo(brMid, horizonY - 82, brRight - 14, brDeckY);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(253, 224, 71, 0.75)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(brLeft + 18, brDeckY + 2);
+    ctx.quadraticCurveTo(brMid, horizonY - 78, brRight - 14, brDeckY + 2);
+    ctx.stroke();
+    // Suspension cables
+    ctx.strokeStyle = 'rgba(186, 230, 253, 0.55)';
+    ctx.lineWidth = 1.2;
+    for (let k = 1; k <= 7; k++) {
+      const t = k / 8;
+      const cx = (brLeft + 18) + t * (brRight - brLeft - 32);
+      const archY = (1 - t) * (1 - t) * brDeckY + 2 * (1 - t) * t * (horizonY - 82) + t * t * brDeckY;
+      ctx.beginPath(); ctx.moveTo(cx, archY); ctx.lineTo(cx, brDeckY); ctx.stroke();
+    }
+    // Bridge Deck + tiny moving vehicle headlights!
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(brLeft, brDeckY, brRight - brLeft, 7);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(brLeft, brDeckY + 6, brRight - brLeft, 2);
+    for (let car = 0; car < 4; car++) {
+      const carX = brLeft + ((car * 64 + time * 26) % (brRight - brLeft));
+      ctx.fillStyle = car % 2 === 0 ? '#fef08a' : '#f87171';
+      ctx.fillRect(carX, brDeckY - 2, 5, 2.5);
+    }
+
+    // Pasig Cathedral (Immaculate Conception) & Heritage Bell Tower Silhouette (Center-Left!)
+    const cathX = W * 0.44;
+    ctx.fillStyle = '#2e1065';
+    ctx.fillRect(cathX - 18, horizonY - 46, 36, 48);
+    // Heritage Bell Tower + Dome + Cross
+    ctx.fillRect(cathX - 8, horizonY - 76, 16, 34);
+    ctx.beginPath(); ctx.arc(cathX, horizonY - 76, 8, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = '#fde047'; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(cathX, horizonY - 94); ctx.lineTo(cathX, horizonY - 82);
+    ctx.moveTo(cathX - 4, horizonY - 90); ctx.lineTo(cathX + 4, horizonY - 90);
+    ctx.stroke();
+    // Glowing Cathedral Clock / Rose Window
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath(); ctx.arc(cathX, horizonY - 62, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.55)';
+    ctx.fillRect(cathX - 13, horizonY - 30, 6, 12);
+    ctx.fillRect(cathX + 7, horizonY - 30, 6, 12);
+
+    // Ortigas Center / Pasig CBD Foreground Illuminated Skyscrapers (Right Half!)
+    const cbdBuildings = [
+      { x: 0.56, w: 0.085, h: 92, color: '#172554', accent: '#38bdf8', spire: false },
+      { x: 0.65, w: 0.095, h: 122, color: '#0f172a', accent: '#facc15', spire: true },
+      { x: 0.75, w: 0.085, h: 98, color: '#1e1b4b', accent: '#22d3ee', spire: false },
+      { x: 0.84, w: 0.095, h: 112, color: '#0f172a', accent: '#fb923c', spire: true },
+      { x: 0.935, w: 0.075, h: 74, color: '#1e293b', accent: '#38bdf8', spire: false }
+    ];
+    cbdBuildings.forEach((b, idx) => {
+      const bx = W * b.x;
+      const bw = Math.max(24, W * b.w);
+      const by = horizonY - b.h;
+      ctx.fillStyle = b.color;
+      ctx.fillRect(bx, by, bw, b.h + 4);
+      // Glowing rooftop LED crown
+      ctx.fillStyle = b.accent;
+      ctx.fillRect(bx, by, bw, 3);
+      if (b.spire) {
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(bx + bw / 2, by); ctx.lineTo(bx + bw / 2, by - 16); ctx.stroke();
+        // Blinking red aviation beacon
+        if (Math.sin(time * 4 + idx) > 0) {
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath(); ctx.arc(bx + bw / 2, by - 17, 2.5, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      // Illuminated office windows grid!
+      const cols = Math.max(3, Math.floor(bw / 8));
+      const rows = Math.floor((b.h - 14) / 10);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if ((r * 7 + c * 3 + idx * 5) % 4 === 0) continue;
+          ctx.fillStyle = (r + c + idx) % 5 === 0
+            ? 'rgba(56, 189, 248, 0.75)'
+            : 'rgba(254, 240, 138, 0.72)';
+          ctx.fillRect(bx + 4 + c * ((bw - 8) / cols), by + 8 + r * 10, 4, 5);
+        }
+      }
+    });
+
+    // Glowing "PASIG CITY" Neon Riverfront Landmark Sign!
+    const signX = W * 0.69;
+    const signY = horizonY - 12;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    roundRect(ctx, signX - 44, signY - 15, 88, 17, 4); ctx.fill();
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 10px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✨ PASIG CITY ✨', signX, signY - 3);
+
+    ctx.restore();
+  }
+
+  function drawPasigFerry(ctx, x, y, sc) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sc, sc);
+    // Water wake ripples
+    ctx.strokeStyle = 'rgba(224, 242, 254, 0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-36, 7); ctx.lineTo(36, 7); ctx.stroke();
+    // Ferry Hull (White + Pasig Blue stripe)
+    ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = INK; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-26, 4); ctx.lineTo(28, 4); ctx.lineTo(34, -4); ctx.lineTo(-22, -4);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(-22, -1, 50, 3);
+    // Glowing Passenger Cabin
+    ctx.fillStyle = '#e2e8f0';
+    roundRect(ctx, -16, -14, 34, 10, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fde047';
+    for (let w = 0; w < 4; w++) ctx.fillRect(-12 + w * 8, -11, 5, 5);
+    ctx.restore();
   }
 
   function drawBalotWorldObject(ctx, obj, x, y, sc) {
@@ -707,26 +982,193 @@ const VendorGame = (() => {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(sc, sc);
-    const gallop = Math.sin(time * 22) * 5;
-    ctx.translate(0, gallop);
-    ctx.strokeStyle = INK; ctx.lineWidth = 2.5;
-    // Playful brown Philippine Askal Dog!
-    ctx.fillStyle = '#b45309';
-    ctx.beginPath(); ctx.ellipse(0, -18, 20, 14, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    // Floppy ears + head
-    ctx.fillStyle = '#d97706';
-    ctx.beginPath(); ctx.arc(0, -32, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#78350f';
-    ctx.beginPath(); ctx.ellipse(-13, -30, 5, 9, 0.3, 0, Math.PI * 2); ctx.ellipse(13, -30, 5, 9, -0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    // Eyes + barking tongue!
-    ctx.fillStyle = '#111827';
-    ctx.beginPath(); ctx.arc(-4.5, -34, 2.2, 0, Math.PI * 2); ctx.arc(4.5, -34, 2.2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f43f5e';
-    ctx.beginPath(); ctx.ellipse(0, -25, 4, 6, 0, 0, Math.PI * 2); ctx.fill();
-    if (bDogClose >= 1) {
-      ctx.fillStyle = '#fef08a'; ctx.font = 'bold 12px Fredoka, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('AW! AW!', 0, -52);
+
+    const stride = time * (bDogClose >= 1 ? 26 : 21);
+    const gallop = Math.sin(stride) * 6;
+    const stretch = Math.cos(stride) * 3.5;
+    const wag = Math.sin(time * 24) * 0.45;
+    const earFlap = Math.sin(stride + 0.6) * 0.22;
+
+    // 1. Ground Shadow + Kicking Dust Puffs behind paws!
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.36)';
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 28 + Math.abs(stretch), 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (let d = 0; d < 2; d++) {
+      const puffPhase = (time * 5 + d * 0.5) % 1;
+      ctx.fillStyle = `rgba(226, 232, 240, ${(0.45 * (1 - puffPhase)).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc((d === 0 ? -18 : 18) + (d === 0 ? -1 : 1) * puffPhase * 12, 2 + puffPhase * 6, 4 + puffPhase * 5, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    ctx.translate(0, -6 + gallop * 0.75);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.6;
+
+    // 2. Curved Animated Tail whipping behind the dog!
+    ctx.save();
+    ctx.translate(0, -14);
+    ctx.rotate(wag);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 9;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(14, -18, 6, -30);
+    ctx.stroke();
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(14, -18, 6, -30);
+    ctx.stroke();
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(9, -23);
+    ctx.lineTo(6, -30);
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Hind Legs (Bounding upward & pushing off!)
+    const hindOff = Math.sin(stride) * 7;
+    [-16, 16].forEach((lx, idx) => {
+      const dy = idx === 0 ? hindOff : -hindOff;
+      ctx.fillStyle = '#9a3412';
+      roundRect(ctx, lx - 6, -18 + dy * 0.6, 12, 20, 5); ctx.fill(); ctx.stroke();
+      // White paw socks!
+      ctx.fillStyle = '#fef3c7';
+      roundRect(ctx, lx - 5.5, -3 + dy * 0.6, 11, 7, 3); ctx.fill(); ctx.stroke();
+    });
+
+    // 4. Muscular Sleek Filipino Askal Torso (Caramel fur + darker saddle back + cream chest!)
+    ctx.fillStyle = '#c2651a';
+    ctx.beginPath();
+    ctx.ellipse(0, -20, 22, 16 + stretch * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Darker brown askal dorsal patch
+    ctx.fillStyle = '#7c2d12';
+    ctx.beginPath();
+    ctx.ellipse(0, -24, 15, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cream chest fluff
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.ellipse(0, -14, 11, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. Front Lunging Forelegs (Reaching forward toward the Balot Vendor!)
+    const frontOff = Math.cos(stride) * 6;
+    [-13, 13].forEach((lx, idx) => {
+      const dy = idx === 0 ? -frontOff : frontOff;
+      ctx.fillStyle = '#d97706';
+      roundRect(ctx, lx - 5, -26 + dy * 0.65, 10, 19, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fef3c7';
+      roundRect(ctx, lx - 4.5, -11 + dy * 0.65, 9, 6, 3); ctx.fill(); ctx.stroke();
+    });
+
+    // 6. Red Collar + Shiny Gold Tag!
+    ctx.fillStyle = '#dc2626';
+    roundRect(ctx, -15, -31, 30, 6.5, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath(); ctx.arc(0, -24.5, 3.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    // 7. Detailed Expressive Askal Head (Perked Floppy Ears + Snout + Fangs + Tongue!)
+    ctx.save();
+    ctx.translate(0, -40 - stretch * 0.3);
+
+    // Flapping Askal Ears (Pointed triangle-base with floppy tips!)
+    [-1, 1].forEach((side) => {
+      ctx.save();
+      ctx.translate(side * 12, -8);
+      ctx.rotate(side * (-0.38 + earFlap));
+      ctx.fillStyle = '#7c2d12';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(side * 11, -11);
+      ctx.quadraticCurveTo(side * 15, 2, side * 5, 9);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+
+    // Head cranium
+    ctx.fillStyle = '#d97706';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 16, 13.5, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Cream facial muzzle & forehead blaze
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 10.5, 8.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, -5, 3, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Intense Cartoon Eyes + Angry Furrowed Brows!
+    [-6, 6].forEach((ex, idx) => {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.ellipse(ex, -3, 4.2, 4.8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#111827';
+      ctx.beginPath(); ctx.arc(ex + (idx === 0 ? 0.6 : -0.6), -3.5, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(ex - 1, -5, 1, 0, Math.PI * 2); ctx.fill();
+    });
+    // Furrowed angry brows
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(-11, -9); ctx.lineTo(-2, -6);
+    ctx.moveTo(11, -9); ctx.lineTo(2, -6);
+    ctx.stroke();
+
+    // Open Barking Mouth + Sharp White Cartoon Teeth + Flopping Pink Tongue!
+    const barkOpen = bDogClose >= 1 ? 7.5 + Math.abs(Math.sin(time * 18)) * 3 : 5 + Math.abs(Math.sin(time * 12)) * 2;
+    ctx.fillStyle = '#7f1d1d';
+    ctx.strokeStyle = INK; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 7.5, barkOpen * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Sharp upper fangs!
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-5.5, 4.5); ctx.lineTo(-3.5, 8.5); ctx.lineTo(-1.8, 4.5);
+    ctx.moveTo(5.5, 4.5); ctx.lineTo(3.5, 8.5); ctx.lineTo(1.8, 4.5);
+    ctx.fill();
+    // Flopping pink tongue
+    ctx.fillStyle = '#fb7185';
+    ctx.beginPath();
+    ctx.ellipse(0, 10 + Math.sin(time * 20) * 1.2, 3.8, 4.8, 0.12, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Shiny Black Wet Nose on top of snout
+    ctx.fillStyle = '#09090b';
+    ctx.beginPath();
+    ctx.ellipse(0, 2.2, 4.6, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.arc(-1.4, 1.3, 1.1, 0, Math.PI * 2); ctx.fill();
+
+    // Comic Bark Speech Bubble when dog is close (or periodic bark while chasing!)
+    const showBark = bDogClose >= 1 || Math.sin(time * 3.5) > 0.72;
+    if (showBark) {
+      const msg = bDogClose >= 1 ? 'GRRR! AW! AW!' : 'AW! AW!';
+      const bw = bDogClose >= 1 ? 86 : 54;
+      const by = -34;
+      ctx.fillStyle = bDogClose >= 1 ? '#fef08a' : '#ffffff';
+      ctx.strokeStyle = bDogClose >= 1 ? '#dc2626' : INK;
+      ctx.lineWidth = 2.2;
+      roundRect(ctx, -bw / 2, by - 13, bw, 19, 9); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = bDogClose >= 1 ? '#b91c1c' : '#111827';
+      ctx.font = 'bold 10.5px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(msg, 0, by);
+    }
+
+    ctx.restore();
     ctx.restore();
   }
 

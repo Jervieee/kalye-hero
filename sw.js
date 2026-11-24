@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kalye-hero-v11';
+const CACHE_NAME = 'kalye-hero-v12';
 const ASSETS = [
   './',
   './index.html',
@@ -9,7 +9,7 @@ const ASSETS = [
   './js/levels.js?v=10',
   './js/jeep_ride.js?v=10',
   './js/karenderya.js?v=11',
-  './js/vendor.js?v=11',
+  './js/vendor.js?v=12',
   './js/game.js?v=10',
   './assets/hero_chibi.jpg',
   './assets/hero_jeep_jersey.jpg',
