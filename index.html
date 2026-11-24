@@ -7,14 +7,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Kalye Hero" />
-  <link rel="manifest" href="manifest.webmanifest?v=9" />
+  <link rel="manifest" href="manifest.webmanifest?v=10" />
   <link rel="icon" type="image/png" href="assets/icon-192.png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
-  <title>KALYE HERO — Street Patrol · EDSA Jeep · Karenderya Mania</title>
+  <title>KALYE HERO — Street Patrol · Jeep · Karenderya · The Vendor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=9" />
+  <link rel="stylesheet" href="css/style.css?v=10" />
 </head>
 <body>
   <div class="app-shell">
@@ -140,6 +140,30 @@
         </div>
       </header>
 
+      <!-- THE VENDOR HUD (Balot Runner & Kuya Tisoy Pandesal Bike!) -->
+      <header class="hud vendor-hud hidden" id="vendorHud">
+        <div class="hud-left">
+          <div class="hero-badge">
+            <img src="assets/hero_vendor.jpg" alt="The Vendor" class="hero-avatar" onerror="this.style.display='none'" />
+            <div class="hero-bars">
+              <div class="stage-pill" id="vendorModeTitle">🥚 BALOT RUN · PASIG RIVER</div>
+              <div class="karen-goals-row">
+                <span class="karen-goal-chip" id="vendorStatA">🏃 0m</span>
+                <span class="karen-goal-chip cash-goal" id="vendorStatB">💵 ₱0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <div class="stat-pill coins-pill" id="vendorAlertPill">
+            <span id="vendorAlertText">🐕 SAFE</span>
+          </div>
+          <button class="icon-btn" id="btnSoundVendor" title="Toggle Sound &amp; Music">🔊</button>
+          <button class="icon-btn" id="btnPauseVendor" title="Pause (P)">⏸</button>
+        </div>
+      </header>
+
       <!-- Boss HP Bar (Boss Arenas) -->
       <div class="boss-bar hidden" id="bossBar">
         <div class="boss-title" id="bossTitle">🦹 BOSS BATTLE</div>
@@ -176,7 +200,7 @@
               <span class="logo-bottom">HERO</span>
             </h1>
             <p class="subtitle">
-              3 Filipino Arcade Games in 1 App: <strong>Street Patrol (8 PH Levels)</strong>, <strong>EDSA Jeep Ride (Route &amp; Endless)</strong>, and <strong>Karenderya Mania</strong>!
+              4 Filipino Arcade Games in 1 App: <strong>Street Patrol (8 PH Levels)</strong>, <strong>EDSA Jeep Ride</strong>, <strong>Karenderya Mania</strong> &amp; <strong>The Vendor</strong>!
             </p>
 
             <div class="landing-cta">
@@ -234,12 +258,24 @@
             <button class="game-select-card card-karen" data-game="karenderya">
               <div class="card-img-wrap">
                 <img src="assets/hero_manong_cook.jpg" alt="Karenderya Mania" />
-                <span class="card-badge badge-orange">3 LEVELS</span>
+                <span class="card-badge badge-orange">5 LEVELS + SHOP</span>
               </div>
               <div class="card-body">
                 <h3>🍲 KARENDERYA MANIA</h3>
-                <p>Cook Adobo, Sinigang, Kanin &amp; Halo-Halo! Serve Aling Tessa, Aling Loring, Madam Baby &amp; Jeo Ong before time runs out!</p>
+                <p>Unlock new Pinoy dishes every level! Upgrade Tray &amp; Cook Speed, hire Empleyados &amp; serve Aling Tessa, Aling Loring, Madam Baby &amp; Jeo Ong!</p>
                 <span class="card-cta">OPEN KARENDERYA ➔</span>
+              </div>
+            </button>
+
+            <button class="game-select-card card-vendor" data-game="vendor">
+              <div class="card-img-wrap">
+                <img src="assets/hero_vendor.jpg" alt="The Vendor" />
+                <span class="card-badge badge-teal">2 MODES</span>
+              </div>
+              <div class="card-body">
+                <h3>🧺 THE VENDOR</h3>
+                <p><strong>Balot Vendor Run</strong> (Temple Run style at Pasig River chased by a dog!) &amp; <strong>Malunggay Pandesal ni Kuya Tisoy</strong> (₱2 bike sales)!</p>
+                <span class="card-cta">PLAY THE VENDOR ➔</span>
               </div>
             </button>
           </div>
@@ -366,16 +402,65 @@
             <button class="btn-primary pulse btn-launch-wide" id="btnLaunchJeep">🚐 DRIVE EDSA NOW!</button>
           </div>
 
-          <!-- KARENDERYA MANIA 3-LEVEL MAP -->
+          <!-- KARENDERYA MANIA 5-LEVEL MAP + UPGRADE SHOP -->
           <div class="map-view hidden" id="karenMapView">
             <div class="adventure-map karen-map" id="karenMapNodes"></div>
+
+            <!-- KARENDERYA UPGRADE SHOP (TRAY · COOK SPEED · HIRE EMPLEYADO!) -->
+            <div class="upgrade-shop-bar">
+              <div class="shop-header-row">
+                <span>🏪 MANONG'S UPGRADE SHOP</span>
+                <span class="shop-bank-pill" id="karenBankText">💰 KITA BANK: ₱0</span>
+              </div>
+              <div class="shop-cards-grid">
+                <button class="shop-btn" id="btnUpgTray">
+                  <strong id="upgTrayLabel">🍽️ TRAY: 2 SLOTS</strong>
+                  <span id="upgTrayCost">UPGRADE · ₱250</span>
+                </button>
+                <button class="shop-btn" id="btnUpgStove">
+                  <strong id="upgStoveLabel">🔥 LUTUAN: 1.0×</strong>
+                  <span id="upgStoveCost">FASTER · ₱220</span>
+                </button>
+                <button class="shop-btn" id="btnUpgStaff">
+                  <strong id="upgStaffLabel">🧑‍🍳 EMPLEYADO: 0/2</strong>
+                  <span id="upgStaffCost">HIRE · ₱300</span>
+                </button>
+              </div>
+            </div>
+
             <div class="map-detail-bar">
               <div class="map-detail-info">
                 <h3 id="mapKarenName">LEVEL 1 · MORNING MERIENDA</h3>
-                <p id="mapKarenDesc">⏱️ 75s · Serve 6 Customers &amp; Earn ₱450! Cook Adobo, Sinigang, Kanin &amp; Halo-Halo for Aling Tessa, Aling Loring, Madam Baby &amp; Jeo Ong!</p>
+                <p id="mapKarenDesc">⏱️ 75s · Serve 6 Customers &amp; Earn ₱420!</p>
               </div>
               <button class="btn-primary pulse" id="btnLaunchKaren">🍲 START COOKING</button>
             </div>
+          </div>
+
+          <!-- THE VENDOR 2-MODE SELECTOR (BALOT RUNNER vs MALUNGGAY PANDESAL BIKE!) -->
+          <div class="map-view hidden" id="vendorMapView">
+            <div class="jeep-mode-cards">
+              <button class="jeep-submode-card vendor-submode-card active" data-vendormode="balot">
+                <div class="submode-icon">🥚🐕</div>
+                <h3>BALOT VENDOR RUN</h3>
+                <p><strong>Pasig River (Subway Surfers / Temple Run style)!</strong> Sprint across 3 riverside lanes, jump barriers &amp; collect Balot eggs—don't let the chasing dog catch you!</p>
+                <span class="submode-tag">3D RUNNER · SWIPE / JOYSTICK</span>
+              </button>
+              <button class="jeep-submode-card vendor-submode-card" data-vendormode="pandesal">
+                <div class="submode-icon">🚲🥖</div>
+                <h3>MALUNGGAY PANDESAL NI KUYA TISOY</h3>
+                <p>Ride your bike with the wooden bread box! Stop &amp; sell when houses shout <strong>"PANDESAL!"</strong> (₱2 each). Hit the Pandesal sales goal without missing 4 houses!</p>
+                <span class="submode-tag tag-endless">3 ROUTES · ₱2 / PANDESAL</span>
+              </button>
+            </div>
+
+            <div class="stage-selector hidden" id="pandesalRoutePicker">
+              <button class="stage-btn pandesal-lvl-btn active" data-plvl="0">1. Barangay (30 pcs · ₱60)</button>
+              <button class="stage-btn pandesal-lvl-btn" data-plvl="1">2. Subdivision (50 pcs · ₱100)</button>
+              <button class="stage-btn pandesal-lvl-btn" data-plvl="2">3. Fiesta Run (75 pcs · ₱150)</button>
+            </div>
+
+            <button class="btn-primary pulse btn-launch-wide" id="btnLaunchVendor">🥚 START BALOT RUN!</button>
           </div>
         </div>
       </section>
@@ -474,6 +559,23 @@
           <button class="touch-btn horn-btn" data-jeep="horn">📯<small>BEEP</small></button>
         </div>
       </div>
+      <!-- THE VENDOR Touch Controls (Forward/Backward Horizontal Joystick + Balot Jump OR Pandesal Sell/Shout!) -->
+      <div class="touch-controls vendor-touch hidden" id="vendorTouchControls">
+        <div class="joystick-zone">
+          <div class="joystick-track-h jeep-joy" id="vendorJoystick" aria-label="Vendor Horizontal Joystick">
+            <span class="joy-h-arrow joy-h-left">◀</span>
+            <span class="joy-h-arrow joy-h-right">▶</span>
+            <div class="joystick-knob" id="vendorJoyKnob"></div>
+          </div>
+        </div>
+        <div class="touch-actions" id="vendorBalotBtns">
+          <button class="touch-btn jump-btn" data-vendor="jump">▲<small>JUMP</small></button>
+        </div>
+        <div class="touch-actions hidden" id="vendorPandesalBtns">
+          <button class="touch-btn stop-btn" data-vendor="sell">🛑<small>SELL</small></button>
+          <button class="touch-btn horn-btn" data-vendor="shout">📣<small>SIGAW</small></button>
+        </div>
+      </div>
     </div>
 
     <!-- Bottom Quick Controls Bar (desktop reference) -->
@@ -487,11 +589,12 @@
     </footer>
   </div>
 
-  <script src="js/audio.js?v=9"></script>
-  <script src="js/sprites.js?v=9"></script>
-  <script src="js/levels.js?v=9"></script>
-  <script src="js/jeep_ride.js?v=9"></script>
-  <script src="js/karenderya.js?v=9"></script>
-  <script src="js/game.js?v=9"></script>
+  <script src="js/audio.js?v=10"></script>
+  <script src="js/sprites.js?v=10"></script>
+  <script src="js/levels.js?v=10"></script>
+  <script src="js/jeep_ride.js?v=10"></script>
+  <script src="js/karenderya.js?v=10"></script>
+  <script src="js/vendor.js?v=10"></script>
+  <script src="js/game.js?v=10"></script>
 </body>
 </html>

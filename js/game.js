@@ -21,9 +21,13 @@
       activeGameMode !== 'karenderya' &&
       (manualTouchOverride !== null ? manualTouchOverride : isMobileViewport());
     const isJeep = activeGameMode === 'jeep';
-    touchControls.classList.toggle('hidden', !showAny || isJeep);
+    const isVendor = activeGameMode === 'vendor';
+    touchControls.classList.toggle('hidden', !showAny || isJeep || isVendor);
     if (jeepTouchControls) {
       jeepTouchControls.classList.toggle('hidden', !showAny || !isJeep);
+    }
+    if (vendorTouchControls) {
+      vendorTouchControls.classList.toggle('hidden', !showAny || !isVendor);
     }
   }
 
@@ -58,6 +62,12 @@
   const karenSalesGoal = document.getElementById('karenSalesGoal');
   const karenTimerPill = document.getElementById('karenTimerPill');
   const karenTimer = document.getElementById('karenTimer');
+  const vendorHud = document.getElementById('vendorHud');
+  const vendorModeTitle = document.getElementById('vendorModeTitle');
+  const vendorStatA = document.getElementById('vendorStatA');
+  const vendorStatB = document.getElementById('vendorStatB');
+  const vendorAlertPill = document.getElementById('vendorAlertPill');
+  const vendorAlertText = document.getElementById('vendorAlertText');
   const hudHearts = document.getElementById('hudHearts');
   const hudEnergyFill = document.getElementById('hudEnergyFill');
   const hudEnergyText = document.getElementById('hudEnergyText');
@@ -88,6 +98,9 @@
   const gameOverOverlay = document.getElementById('gameOverOverlay');
   const touchControls = document.getElementById('touchControls');
   const jeepTouchControls = document.getElementById('jeepTouchControls');
+  const vendorTouchControls = document.getElementById('vendorTouchControls');
+  const vendorBalotBtns = document.getElementById('vendorBalotBtns');
+  const vendorPandesalBtns = document.getElementById('vendorPandesalBtns');
   const titleHighScore = document.getElementById('titleHighScore');
   const titleBestFare = document.getElementById('titleBestFare');
   const previewCanvas = document.getElementById('previewCanvas');
@@ -95,6 +108,7 @@
   const streetMapView = document.getElementById('streetMapView');
   const jeepMapView = document.getElementById('jeepMapView');
   const karenMapView = document.getElementById('karenMapView');
+  const vendorMapView = document.getElementById('vendorMapView');
   const levelMapTitle = document.getElementById('levelMapTitle');
 
   const STORAGE_KEY = 'kalye_hero_high_score_v1';
@@ -113,8 +127,10 @@
 
   // Game State
   let mode = 'title'; // title | playing | paused | clear | gameover
-  let selectedGameMode = 'street'; // 'street' | 'jeep' | 'karenderya'
+  let selectedGameMode = 'street'; // 'street' | 'jeep' | 'karenderya' | 'vendor'
   let selectedJeepSubMode = 'route'; // 'route' | 'endless'
+  let selectedVendorSubMode = 'balot'; // 'balot' | 'pandesal'
+  let selectedPandesalLevel = 0;
   let activeGameMode = 'street';
   let playerCustom = {
     head: 'spiky',
@@ -170,6 +186,11 @@
     brake: false,
     joyX: 0,
     joyY: 0
+  };
+
+  const vendorKeys = {
+    brake: false,
+    joyX: 0
   };
 
   function updateHighScoreUI() {
@@ -362,9 +383,14 @@
       startKarenderya(selectedKarenLevel);
       return;
     }
+    if (selectedGameMode === 'vendor') {
+      startVendor(selectedVendorSubMode, selectedPandesalLevel);
+      return;
+    }
     activeGameMode = 'street';
     JeepRide.stop();
     Karenderya.stop();
+    VendorGame.stop();
     score = 0;
     coins = 0;
     cash = 0;
@@ -381,6 +407,7 @@
     hideAllOverlays();
     jeepHud.classList.add('hidden');
     karenderyaHud.classList.add('hidden');
+    if (vendorHud) vendorHud.classList.add('hidden');
     hud.classList.remove('hidden');
     syncTouchControlsVisibility();
     requestAnimationFrame(resizeGameCanvas);
@@ -401,10 +428,12 @@
     selectedKarenLevel = lvlIndex;
     activeGameMode = 'karenderya';
     JeepRide.stop();
+    VendorGame.stop();
     mode = 'playing';
     hideAllOverlays();
     hud.classList.add('hidden');
     jeepHud.classList.add('hidden');
+    if (vendorHud) vendorHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     karenderyaHud.classList.remove('hidden');
     syncTouchControlsVisibility();
@@ -448,6 +477,93 @@
     SoundFX.startBGM();
   }
 
+  function updateVendorHUD(info) {
+    if (!vendorModeTitle) return;
+    vendorModeTitle.textContent = info.title;
+    if (info.subMode === 'balot') {
+      vendorStatA.textContent = `🏃 ${info.dist}m · 🥚 ${info.eggs}`;
+      vendorStatB.textContent = `💵 ₱${info.pesos}`;
+      vendorAlertText.textContent = info.dogClose >= 1 ? '🐕 DOG CLOSE!!' : '🐕 SAFE';
+      vendorAlertPill.classList.toggle('urgent', info.dogClose >= 1);
+    } else {
+      vendorStatA.textContent = `🥖 ${info.sold}/${info.goalPandesal} pcs`;
+      vendorStatB.textContent = `💵 ₱${info.pesos} / ₱${info.goalPesos}`;
+      vendorAlertText.textContent = `😢 ${info.missed}/${info.maxMissed}`;
+      vendorAlertPill.classList.toggle('urgent', info.missed >= info.maxMissed - 1);
+    }
+  }
+
+  function startVendor(sub = selectedVendorSubMode, pLvl = selectedPandesalLevel) {
+    selectedVendorSubMode = sub;
+    selectedPandesalLevel = pLvl;
+    activeGameMode = 'vendor';
+    JeepRide.stop();
+    Karenderya.stop();
+    mode = 'playing';
+    hideAllOverlays();
+    hud.classList.add('hidden');
+    jeepHud.classList.add('hidden');
+    karenderyaHud.classList.add('hidden');
+    bossBar.classList.add('hidden');
+    if (vendorHud) vendorHud.classList.remove('hidden');
+    if (vendorBalotBtns) vendorBalotBtns.classList.toggle('hidden', sub !== 'balot');
+    if (vendorPandesalBtns) vendorPandesalBtns.classList.toggle('hidden', sub !== 'pandesal');
+    vendorKeys.brake = false;
+    vendorKeys.joyX = 0;
+
+    VendorGame.start(sub, pLvl, playerCustom, updateVendorHUD, (result) => {
+      mode = result.won ? 'clear' : 'gameover';
+      syncTouchControlsVisibility();
+      if (result.subMode === 'balot') {
+        document.getElementById('gameOverTitle').textContent = '🐕 NAHABOL NG ASO!';
+        document.getElementById('gameOverSub').textContent = 'The Pasig River dog caught the Balot Vendor! Run again & dodge obstacles!';
+        document.getElementById('gameOverStats').innerHTML = `
+          <div><span>DISTANCE</span><strong>${result.dist}m</strong></div>
+          <div><span>BEST RUN</span><strong>${result.bestDist}m</strong></div>
+          <div><span>BALOT EGGS</span><strong>🥚 ${result.eggs}</strong></div>
+          <div><span>EARNED</span><strong>₱${result.pesos}</strong></div>
+        `;
+        gameOverOverlay.classList.remove('hidden');
+      } else if (result.won) {
+        document.getElementById('clearBadge').textContent = '🚲';
+        document.getElementById('clearTitle').textContent = result.isLastLevel
+          ? '🏆 GOLDEN PANADERO KUYA TISOY!'
+          : '🥖 PANDESAL QUOTA SOLD OUT!';
+        document.getElementById('clearSubtitle').textContent = 'Hot Malunggay Pandesal (₱2 each) sold out across the barangay!';
+        document.getElementById('clearStats').innerHTML = `
+          <div><span>PANDESAL SOLD</span><strong>${result.sold} pcs 🥖</strong></div>
+          <div><span>TOTAL SALES</span><strong>₱${result.pesos}</strong></div>
+          <div><span>MISSED HOUSES</span><strong>${result.missed}/4</strong></div>
+          <div><span>RATING</span><strong>${'⭐'.repeat(result.stars)}</strong></div>
+        `;
+        const nextBtn = document.getElementById('btnNextStage');
+        nextBtn.textContent = 'NEXT PANDESAL ROUTE ➔';
+        nextBtn.classList.toggle('hidden', result.isLastLevel);
+        stageClearOverlay.classList.remove('hidden');
+      } else {
+        document.getElementById('gameOverTitle').textContent = '😢 SAYANG ANG BENTA!';
+        document.getElementById('gameOverSub').textContent = 'You missed 4 houses shouting "PANDESAL!" Hold 🛑 SELL in front of shouting gates!';
+        document.getElementById('gameOverStats').innerHTML = `
+          <div><span>PANDESAL SOLD</span><strong>${result.sold}/${result.goalPandesal}</strong></div>
+          <div><span>SALES (₱2 ea)</span><strong>₱${result.pesos}</strong></div>
+          <div><span>MISSED HOUSES</span><strong>${result.missed}/4</strong></div>
+          <div><span>TIP</span><strong>Stop at Green Zones!</strong></div>
+        `;
+        gameOverOverlay.classList.remove('hidden');
+      }
+    });
+
+    syncTouchControlsVisibility();
+    requestAnimationFrame(resizeGameCanvas);
+    showToast(
+      sub === 'balot'
+        ? '🥚 Pasig Balot Run! Slide Joystick/Swipe Left-Right & Jump barriers—outrun the dog!'
+        : '🚲 Malunggay Pandesal (₱2)! Stop & tap 🛑 SELL when a house shouts "PANDESAL!"',
+      3.4
+    );
+    SoundFX.startBGM();
+  }
+
   function updateJeepHUD(info) {
     // Angry / Happy strikes display
     let moodIcons = '';
@@ -479,10 +595,12 @@
     selectedJeepSubMode = subMode;
     activeGameMode = 'jeep';
     Karenderya.stop();
+    VendorGame.stop();
     mode = 'playing';
     hideAllOverlays();
     hud.classList.add('hidden');
     karenderyaHud.classList.add('hidden');
+    if (vendorHud) vendorHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     jeepHud.classList.remove('hidden');
     jeepKeys.gas = false;
@@ -813,6 +931,10 @@
     }
     if (activeGameMode === 'karenderya') {
       Karenderya.update(dt, W);
+      return;
+    }
+    if (activeGameMode === 'vendor') {
+      VendorGame.update(dt, W, vendorKeys);
       return;
     }
 
@@ -1587,6 +1709,10 @@
       Karenderya.render(ctx, W);
       return;
     }
+    if (activeGameMode === 'vendor' && VendorGame.isActive()) {
+      VendorGame.render(ctx, W);
+      return;
+    }
     if (!level) {
       Sprites.drawBackground(ctx, W, H, worldTime * 28, 'day', worldTime);
       return;
@@ -1747,14 +1873,28 @@
 
     if (activeGameMode === 'karenderya' && mode === 'playing') {
       if (!e.repeat) {
-        if (code === 'Digit1') Karenderya.interactDish('adobo');
-        if (code === 'Digit2') Karenderya.interactDish('sinigang');
-        if (code === 'Digit3') Karenderya.interactDish('kanin');
-        if (code === 'Digit4') Karenderya.interactDish('halohalo');
+        if (code === 'Digit1') Karenderya.interactDishByIndex(0);
+        if (code === 'Digit2') Karenderya.interactDishByIndex(1);
+        if (code === 'Digit3') Karenderya.interactDishByIndex(2);
+        if (code === 'Digit4') Karenderya.interactDishByIndex(3);
+        if (code === 'Digit5') Karenderya.interactDishByIndex(4);
+        if (code === 'Digit6') Karenderya.interactDishByIndex(5);
+        if (code === 'Digit7') Karenderya.interactDishByIndex(6);
         if (code === 'KeyQ') Karenderya.serveSeat(0);
         if (code === 'KeyW') Karenderya.serveSeat(1);
         if (code === 'KeyE') Karenderya.serveSeat(2);
         if (code === 'KeyC') Karenderya.clearTray();
+      }
+    } else if (activeGameMode === 'vendor' && mode === 'playing') {
+      if (VendorGame.getSubMode() === 'balot') {
+        if ((code === 'KeyA' || code === 'ArrowLeft') && !e.repeat) VendorGame.balotMoveLane(-1);
+        if ((code === 'KeyD' || code === 'ArrowRight') && !e.repeat) VendorGame.balotMoveLane(1);
+        if ((code === 'KeyW' || code === 'ArrowUp' || code === 'Space') && !e.repeat) VendorGame.balotJump();
+      } else {
+        if (code === 'KeyA' || code === 'ArrowLeft') vendorKeys.joyX = -0.8;
+        if (code === 'KeyD' || code === 'ArrowRight') vendorKeys.joyX = 0.8;
+        if (code === 'Space' || code === 'KeyJ') vendorKeys.brake = true;
+        if ((code === 'KeyK' || code === 'KeyH') && !e.repeat) VendorGame.pandesalShout();
       }
     } else if (activeGameMode === 'jeep' && mode === 'playing') {
       if ((code === 'KeyW' || code === 'ArrowUp') && !e.repeat) JeepRide.moveLane(-1);
@@ -1787,12 +1927,14 @@
         mode = 'paused';
         if (activeGameMode === 'jeep') JeepRide.setPaused(true);
         if (activeGameMode === 'karenderya') Karenderya.setPaused(true);
+        if (activeGameMode === 'vendor') VendorGame.setPaused(true);
         pauseOverlay.classList.remove('hidden');
         syncTouchControlsVisibility();
       } else if (mode === 'paused') {
         mode = 'playing';
         if (activeGameMode === 'jeep') JeepRide.setPaused(false);
         if (activeGameMode === 'karenderya') Karenderya.setPaused(false);
+        if (activeGameMode === 'vendor') VendorGame.setPaused(false);
         pauseOverlay.classList.add('hidden');
         syncTouchControlsVisibility();
       }
@@ -1801,9 +1943,10 @@
 
   window.addEventListener('keyup', (e) => {
     const code = e.code;
-    if (code === 'KeyA' || code === 'ArrowLeft') { keys.left = false; jeepKeys.brake = false; }
-    if (code === 'KeyD' || code === 'ArrowRight') { keys.right = false; jeepKeys.gas = false; }
-    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') { keys.jump = false; jeepKeys.brake = false; }
+    if (code === 'KeyA' || code === 'ArrowLeft') { keys.left = false; jeepKeys.brake = false; vendorKeys.joyX = 0; }
+    if (code === 'KeyD' || code === 'ArrowRight') { keys.right = false; jeepKeys.gas = false; vendorKeys.joyX = 0; }
+    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') { keys.jump = false; jeepKeys.brake = false; vendorKeys.brake = false; }
+    if (code === 'KeyJ') vendorKeys.brake = false;
   });
 
   // ==================== 4-STEP UI FLOW (PLAY -> GAME -> PLAYER CUSTOMIZER -> LEVEL MAP) ====================
@@ -1896,19 +2039,58 @@
     document.getElementById('mapStageDesc').textContent = m.desc;
   }
 
+  function syncKarenShopUI() {
+    const st = Karenderya.getUpgradesState();
+    const bankEl = document.getElementById('karenBankText');
+    if (bankEl) bankEl.textContent = `💰 KITA BANK: ₱${st.bank.toLocaleString()}`;
+
+    const btnTray = document.getElementById('btnUpgTray');
+    const btnStove = document.getElementById('btnUpgStove');
+    const btnStaff = document.getElementById('btnUpgStaff');
+    if (btnTray) {
+      document.getElementById('upgTrayLabel').textContent = `🍽️ TRAY: ${st.trayCap} SLOTS`;
+      document.getElementById('upgTrayCost').textContent = st.trayNextCost !== null ? `UPGRADE (+1) · ₱${st.trayNextCost}` : '✓ MAXED';
+      btnTray.classList.toggle('affordable', st.trayNextCost !== null && st.bank >= st.trayNextCost);
+      btnTray.classList.toggle('maxed', st.trayNextCost === null);
+    }
+    if (btnStove) {
+      document.getElementById('upgStoveLabel').textContent = `🔥 LUTUAN: ${st.stoveSpeed}×`;
+      document.getElementById('upgStoveCost').textContent = st.stoveNextCost !== null ? `FASTER COOK · ₱${st.stoveNextCost}` : '✓ MAXED';
+      btnStove.classList.toggle('affordable', st.stoveNextCost !== null && st.bank >= st.stoveNextCost);
+      btnStove.classList.toggle('maxed', st.stoveNextCost === null);
+    }
+    if (btnStaff) {
+      document.getElementById('upgStaffLabel').textContent = `🧑‍🍳 EMPLEYADO: ${st.staffLevel}/2`;
+      document.getElementById('upgStaffCost').textContent = st.staffNextCost !== null ? `HIRE HELPER · ₱${st.staffNextCost}` : '✓ FULL TEAM';
+      btnStaff.classList.toggle('affordable', st.staffNextCost !== null && st.bank >= st.staffNextCost);
+      btnStaff.classList.toggle('maxed', st.staffNextCost === null);
+    }
+  }
+
+  ['Tray', 'Stove', 'Staff'].forEach((name) => {
+    const el = document.getElementById(`btnUpg${name}`);
+    if (el) {
+      el.addEventListener('click', () => {
+        const ok = Karenderya.buyUpgrade(name.toLowerCase());
+        syncKarenShopUI();
+        if (ok) showToast(`✓ ${name} Upgraded!`, 1.8);
+        else showToast('Earn more Kita ₱ by serving customers first!', 1.8);
+      });
+    }
+  });
+
   function buildKarenderyaMap() {
     const container = document.getElementById('karenMapNodes');
     if (!container) return;
-    const icons = ['☀️', '🍽️', '🎉'];
     container.innerHTML = '';
     Karenderya.LEVELS.forEach((lvl, idx) => {
       const btn = document.createElement('button');
       btn.className = `map-node${idx === selectedKarenLevel ? ' selected' : ''}`;
       btn.innerHTML = `
         <span class="map-node-num">${idx + 1}</span>
-        <span class="map-node-icon">${icons[idx] || '🍲'}</span>
-        <span class="map-node-title">${lvl.name.replace(/^LVL \d+ · /, '')}</span>
-        <span class="map-node-sub">⏱️ ${lvl.timeLimit}s · ${lvl.customerGoal} Pax · ₱${lvl.salesGoal}</span>
+        <span class="map-node-icon">${lvl.icon || '🍲'}</span>
+        <span class="map-node-title">${lvl.short}</span>
+        <span class="map-node-sub">⏱️${lvl.timeLimit}s · ${lvl.customerGoal} Pax</span>
       `;
       btn.addEventListener('click', () => {
         selectedKarenLevel = idx;
@@ -1916,6 +2098,7 @@
       });
       container.appendChild(btn);
     });
+    syncKarenShopUI();
     updateKarenderyaMapSelection();
   }
 
@@ -1924,22 +2107,26 @@
     document.querySelectorAll('#karenMapNodes .map-node').forEach((n, idx) => {
       n.classList.toggle('selected', idx === selectedKarenLevel);
     });
-    document.getElementById('mapKarenName').textContent = lvl.name;
+    document.getElementById('mapKarenName').textContent = `${lvl.name} · ${lvl.unlockText}`;
     document.getElementById('mapKarenDesc').textContent =
-      `⏱️ ${lvl.timeLimit}s · Serve ${lvl.customerGoal} Customers & Earn ₱${lvl.salesGoal.toLocaleString()}! Cook Adobo, Sinigang, Kanin & Halo-Halo for Aling Tessa, Aling Loring, Madam Baby & Jeo Ong!`;
+      `⏱️ ${lvl.timeLimit}s · Goal: Serve ${lvl.customerGoal} Customers & Earn ₱${lvl.salesGoal.toLocaleString()}! Dishes: ${lvl.dishes.map((d) => Karenderya.DISHES[d].emoji + ' ' + Karenderya.DISHES[d].name).join(', ')}.`;
   }
 
   function openLevelMapForSelectedGame() {
     streetMapView.classList.toggle('hidden', selectedGameMode !== 'street');
     jeepMapView.classList.toggle('hidden', selectedGameMode !== 'jeep');
     karenMapView.classList.toggle('hidden', selectedGameMode !== 'karenderya');
+    if (vendorMapView) vendorMapView.classList.toggle('hidden', selectedGameMode !== 'vendor');
+
     if (selectedGameMode === 'street') {
       levelMapTitle.textContent = '🗺️ STREET PATROL — 8 PH LEVELS';
       buildStreetAdventureMap();
     } else if (selectedGameMode === 'jeep') {
       levelMapTitle.textContent = '🚐 THE JEEP RIDE — SELECT MODE';
+    } else if (selectedGameMode === 'vendor') {
+      levelMapTitle.textContent = '🧺 THE VENDOR — SELECT MODE';
     } else {
-      levelMapTitle.textContent = '🍲 KARENDERYA MANIA — LEVEL MAP';
+      levelMapTitle.textContent = '🍲 KARENDERYA MANIA — 5 LEVELS & SHOP';
       buildKarenderyaMap();
     }
     showFlowScreen(levelMapOverlay);
@@ -1983,12 +2170,38 @@
   document.getElementById('btnToLevelMap').addEventListener('click', openLevelMapForSelectedGame);
   document.getElementById('btnBackToCustom').addEventListener('click', () => showFlowScreen(customizerOverlay));
 
-  // Step 4: Jeep Sub-Mode (Route vs Endless) + Launch Buttons
-  document.querySelectorAll('.jeep-submode-card').forEach((card) => {
+  // Step 4: Jeep Sub-Mode (Route vs Endless) + Vendor Sub-Mode (Balot vs Pandesal) + Launch Buttons
+  document.querySelectorAll('.jeep-submode-card[data-jeepmode]').forEach((card) => {
     card.addEventListener('click', () => {
-      document.querySelectorAll('.jeep-submode-card').forEach((c) => c.classList.remove('active'));
+      document.querySelectorAll('.jeep-submode-card[data-jeepmode]').forEach((c) => c.classList.remove('active'));
       card.classList.add('active');
       selectedJeepSubMode = card.dataset.jeepmode || 'route';
+    });
+  });
+
+  const pandesalRoutePicker = document.getElementById('pandesalRoutePicker');
+  const btnLaunchVendor = document.getElementById('btnLaunchVendor');
+  document.querySelectorAll('.vendor-submode-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.vendor-submode-card').forEach((c) => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedVendorSubMode = card.dataset.vendormode || 'balot';
+      if (pandesalRoutePicker) {
+        pandesalRoutePicker.classList.toggle('hidden', selectedVendorSubMode !== 'pandesal');
+      }
+      if (btnLaunchVendor) {
+        btnLaunchVendor.textContent = selectedVendorSubMode === 'balot'
+          ? '🥚 START BALOT RUN!'
+          : '🚲 SELL PANDESAL NOW!';
+      }
+    });
+  });
+
+  document.querySelectorAll('.pandesal-lvl-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pandesal-lvl-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPandesalLevel = Number(btn.dataset.plvl || 0);
     });
   });
 
@@ -2004,6 +2217,12 @@
     selectedGameMode = 'karenderya';
     startKarenderya(selectedKarenLevel);
   });
+  if (btnLaunchVendor) {
+    btnLaunchVendor.addEventListener('click', () => {
+      selectedGameMode = 'vendor';
+      startVendor(selectedVendorSubMode, selectedPandesalLevel);
+    });
+  }
 
   document.getElementById('btnHowTo').addEventListener('click', () => howToOverlay.classList.remove('hidden'));
   document.getElementById('btnCloseHowTo').addEventListener('click', () => howToOverlay.classList.add('hidden'));
@@ -2013,6 +2232,7 @@
       mode = 'paused';
       if (activeGameMode === 'jeep') JeepRide.setPaused(true);
       if (activeGameMode === 'karenderya') Karenderya.setPaused(true);
+      if (activeGameMode === 'vendor') VendorGame.setPaused(true);
       pauseOverlay.classList.remove('hidden');
       syncTouchControlsVisibility();
     }
@@ -2021,6 +2241,8 @@
   document.getElementById('btnPauseJeep').addEventListener('click', pauseGame);
   const btnPauseKaren = document.getElementById('btnPauseKaren');
   if (btnPauseKaren) btnPauseKaren.addEventListener('click', pauseGame);
+  const btnPauseVendor = document.getElementById('btnPauseVendor');
+  if (btnPauseVendor) btnPauseVendor.addEventListener('click', pauseGame);
 
   const btnClearTray = document.getElementById('btnClearTray');
   if (btnClearTray) btnClearTray.addEventListener('click', () => Karenderya.clearTray());
@@ -2030,6 +2252,7 @@
       mode = 'playing';
       if (activeGameMode === 'jeep') JeepRide.setPaused(false);
       if (activeGameMode === 'karenderya') Karenderya.setPaused(false);
+      if (activeGameMode === 'vendor') VendorGame.setPaused(false);
       pauseOverlay.classList.add('hidden');
       syncTouchControlsVisibility();
       requestAnimationFrame(resizeGameCanvas);
@@ -2043,6 +2266,10 @@
     }
     if (activeGameMode === 'karenderya') {
       startKarenderya(selectedKarenLevel);
+      return;
+    }
+    if (activeGameMode === 'vendor') {
+      startVendor(selectedVendorSubMode, selectedPandesalLevel);
       return;
     }
     loadStage(currentStageIndex, false);
@@ -2059,11 +2286,13 @@
     SoundFX.stopBGM();
     JeepRide.stop();
     Karenderya.stop();
+    VendorGame.stop();
     mode = 'title';
     hideAllOverlays();
     hud.classList.add('hidden');
     jeepHud.classList.add('hidden');
     karenderyaHud.classList.add('hidden');
+    if (vendorHud) vendorHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     toastBanner.classList.add('hidden');
     titleOverlay.classList.remove('hidden');
@@ -2075,10 +2304,12 @@
     SoundFX.stopBGM();
     JeepRide.stop();
     Karenderya.stop();
+    VendorGame.stop();
     mode = 'title';
     hud.classList.add('hidden');
     jeepHud.classList.add('hidden');
     karenderyaHud.classList.add('hidden');
+    if (vendorHud) vendorHud.classList.add('hidden');
     bossBar.classList.add('hidden');
     toastBanner.classList.add('hidden');
     syncTouchControlsVisibility();
@@ -2095,6 +2326,12 @@
     if (activeGameMode === 'karenderya') {
       if (selectedKarenLevel + 1 < Karenderya.LEVELS.length) {
         startKarenderya(selectedKarenLevel + 1);
+      }
+      return;
+    }
+    if (activeGameMode === 'vendor') {
+      if (selectedVendorSubMode === 'pandesal' && selectedPandesalLevel + 1 < VendorGame.PANDESAL_LEVELS.length) {
+        startVendor('pandesal', selectedPandesalLevel + 1);
       }
       return;
     }
@@ -2116,6 +2353,7 @@
   const btnSound = document.getElementById('btnSound');
   const btnSoundJeep = document.getElementById('btnSoundJeep');
   const btnSoundKaren = document.getElementById('btnSoundKaren');
+  const btnSoundVendor = document.getElementById('btnSoundVendor');
   function toggleGameSound() {
     SoundFX.unlock();
     const muted = SoundFX.toggleMute();
@@ -2123,19 +2361,43 @@
     btnSound.textContent = icon;
     if (btnSoundJeep) btnSoundJeep.textContent = icon;
     if (btnSoundKaren) btnSoundKaren.textContent = icon;
+    if (btnSoundVendor) btnSoundVendor.textContent = icon;
   }
   btnSound.addEventListener('click', toggleGameSound);
   if (btnSoundJeep) btnSoundJeep.addEventListener('click', toggleGameSound);
   if (btnSoundKaren) btnSoundKaren.addEventListener('click', toggleGameSound);
+  if (btnSoundVendor) btnSoundVendor.addEventListener('click', toggleGameSound);
 
-  // Direct Canvas Pointer Handler for Karenderya Mania
+  // Direct Canvas Pointer Handler (Karenderya Tap + Balot Runner Swipe!)
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeActive = false;
   canvas.addEventListener('pointerdown', (ev) => {
-    if (activeGameMode !== 'karenderya' || mode !== 'playing') return;
-    ev.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const cx = ((ev.clientX - rect.left) / rect.width) * W;
-    const cy = ((ev.clientY - rect.top) / rect.height) * H;
-    Karenderya.handleCanvasPointer(cx, cy);
+    if (mode !== 'playing') return;
+    if (activeGameMode === 'karenderya') {
+      ev.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const cx = ((ev.clientX - rect.left) / rect.width) * W;
+      const cy = ((ev.clientY - rect.top) / rect.height) * H;
+      Karenderya.handleCanvasPointer(cx, cy);
+      return;
+    }
+    if (activeGameMode === 'vendor' && VendorGame.getSubMode() === 'balot') {
+      swipeStartX = ev.clientX;
+      swipeStartY = ev.clientY;
+      swipeActive = true;
+    }
+  });
+  canvas.addEventListener('pointerup', (ev) => {
+    if (!swipeActive || activeGameMode !== 'vendor' || mode !== 'playing') return;
+    swipeActive = false;
+    const dx = ev.clientX - swipeStartX;
+    const dy = ev.clientY - swipeStartY;
+    if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy)) {
+      VendorGame.balotMoveLane(dx > 0 ? 1 : -1);
+    } else if (dy < -28) {
+      VendorGame.balotJump();
+    }
   });
 
   // HORIZONTAL FORWARD / BACKWARD-ONLY VIRTUAL JOYSTICK (Same clean 1D slider for BOTH Street Patrol & Jeep Ride!)
@@ -2211,14 +2473,53 @@
     }
   );
 
+  // The Vendor Forward/Backward-Only Horizontal Joystick (Balot Lane Switch / Pandesal Bike Pedal!)
+  bindHorizontalJoystick(
+    document.getElementById('vendorJoystick'),
+    document.getElementById('vendorJoyKnob'),
+    (nx) => {
+      vendorKeys.joyX = nx;
+    },
+    () => {
+      vendorKeys.joyX = 0;
+    }
+  );
+
+  // Vendor Right-Hand Touch Controls (Balot Jump OR Pandesal Sell & Shout!)
+  if (vendorTouchControls) {
+    vendorTouchControls.querySelectorAll('.touch-btn').forEach((btn) => {
+      const action = btn.dataset.vendor;
+      const press = (ev) => {
+        ev.preventDefault();
+        btn.classList.add('pressed');
+        if (action === 'jump') VendorGame.balotJump();
+        if (action === 'sell') vendorKeys.brake = true;
+        if (action === 'shout') VendorGame.pandesalShout();
+      };
+      const release = (ev) => {
+        ev.preventDefault();
+        btn.classList.remove('pressed');
+        if (action === 'sell') vendorKeys.brake = false;
+      };
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('pointerleave', release);
+    });
+  }
+
   // Touch Controls Toggle + Responsive Resize Handlers
   window.addEventListener('resize', resizeGameCanvas);
   window.addEventListener('orientationchange', () => setTimeout(resizeGameCanvas, 120));
   resizeGameCanvas();
 
   document.getElementById('btnToggleTouch').addEventListener('click', () => {
-    const activePad = activeGameMode === 'jeep' ? jeepTouchControls : touchControls;
-    const currentlyHidden = activePad.classList.contains('hidden');
+    const activePad = activeGameMode === 'jeep'
+      ? jeepTouchControls
+      : activeGameMode === 'vendor'
+      ? vendorTouchControls
+      : touchControls;
+    const currentlyHidden = activePad ? activePad.classList.contains('hidden') : true;
     manualTouchOverride = currentlyHidden;
     syncTouchControlsVisibility();
   });
