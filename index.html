@@ -7,14 +7,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Kalye Hero" />
-  <link rel="manifest" href="manifest.webmanifest?v=8" />
+  <link rel="manifest" href="manifest.webmanifest?v=9" />
   <link rel="icon" type="image/png" href="assets/icon-192.png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
-  <title>KALYE HERO — Street Brawl · EDSA Jeep · Karenderya Mania</title>
+  <title>KALYE HERO — Street Patrol · EDSA Jeep · Karenderya Mania</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
 </head>
 <body>
   <div class="app-shell">
@@ -29,7 +29,7 @@
             <img src="assets/hero_chibi.jpg" alt="Kalye Hero" class="hero-avatar" id="hudAvatar" onerror="this.style.display='none'" />
             <div class="hero-bars">
               <div class="hearts-row" id="hudHearts" aria-label="Health"></div>
-              <div class="energy-wrap" title="Punch Energy (Refills over time or grab Energy Drinks!)">
+              <div class="energy-wrap" title="Punch Energy">
                 <span class="energy-icon">⚡</span>
                 <div class="energy-track">
                   <div class="energy-fill" id="hudEnergyFill"></div>
@@ -45,6 +45,11 @@
               <div class="weapon-name" id="weaponName">FISTS ONLY</div>
               <div class="weapon-ammo" id="weaponAmmo">Grab a Baril!</div>
             </div>
+          </div>
+
+          <div class="knife-badge hidden" id="knifeBadge" title="Boost Knife Slashes">
+            <span>🔪</span>
+            <span id="hudKnifeCount">0</span>
           </div>
         </div>
 
@@ -88,10 +93,10 @@
         </div>
 
         <div class="hud-center">
-          <div class="stage-pill" id="jeepNextStation">🚏 NEXT: MONUMENTO (650m)</div>
+          <div class="stage-pill" id="jeepNextStation">🚏 NEXT: MONUMENTO</div>
           <div class="progress-track">
             <div class="progress-fill" id="jeepProgress"></div>
-            <span class="progress-flag">🏁</span>
+            <span class="progress-flag" id="jeepFlagIcon">🏁</span>
           </div>
         </div>
 
@@ -135,9 +140,9 @@
         </div>
       </header>
 
-      <!-- Boss HP Bar (Stage 3 & 4 Boss Arenas) -->
+      <!-- Boss HP Bar (Boss Arenas) -->
       <div class="boss-bar hidden" id="bossBar">
-        <div class="boss-title" id="bossTitle">🦹 BOSS MANDURUKOT — SNATCHER KING</div>
+        <div class="boss-title" id="bossTitle">🦹 BOSS BATTLE</div>
         <div class="boss-track">
           <div class="boss-fill" id="bossFill"></div>
         </div>
@@ -146,100 +151,230 @@
       <!-- Toast / Powerup Banner -->
       <div class="toast-banner hidden" id="toastBanner"></div>
 
-      <!-- TITLE OVERLAY -->
+      <!-- ==================== STEP 1: LANDING / TITLE PAGE ==================== -->
       <section class="overlay title-overlay" id="titleOverlay">
         <div class="title-bg-wrap">
           <img src="assets/ph_street_banner.jpg" alt="Philippine Streets" class="title-bg-img" onerror="this.style.display='none'" />
           <div class="title-bg-scrim"></div>
         </div>
 
-        <div class="title-content">
-          <div class="title-hero-card">
-            <img src="assets/hero_chibi.jpg" alt="Kalye Hero Chibi" class="title-hero-img" id="titleHeroImg" onerror="this.style.display='none'" />
-            <div class="hero-tag" id="titleHeroTag">BLACK SHIRT · MAONG PANTS · STREET JUSTICE</div>
+        <div class="landing-content">
+          <div class="landing-hero-showcase">
+            <div class="title-hero-card">
+              <img src="assets/hero_chibi.jpg" alt="Kalye Hero Chibi" class="title-hero-img" onerror="this.style.display='none'" />
+              <div class="hero-tag">PH STREET ARCADE COLLECTION</div>
+            </div>
           </div>
 
-          <div class="title-main">
+          <div class="landing-main">
             <div class="fiesta-flags" aria-hidden="true">
               <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
             </div>
-            <p class="eyebrow">MARIO-INSPIRED PH STREET &amp; EDSA ARCADE</p>
+            <p class="eyebrow">MARIO-INSPIRED PHILIPPINE ARCADE</p>
             <h1 class="game-logo">
               <span class="logo-top">KALYE</span>
               <span class="logo-bottom">HERO</span>
             </h1>
+            <p class="subtitle">
+              3 Filipino Arcade Games in 1 App: <strong>Street Patrol (8 PH Levels)</strong>, <strong>EDSA Jeep Ride (Route &amp; Endless)</strong>, and <strong>Karenderya Mania</strong>!
+            </p>
 
-            <!-- GAME MODE SWITCHER -->
-            <div class="mode-switcher" id="modeSwitcher">
-              <button class="mode-tab active" data-mode="street">🥊 STREET PATROL</button>
-              <button class="mode-tab jeep-tab" data-mode="jeep">🚐 THE JEEP RIDE</button>
-              <button class="mode-tab karen-tab" data-mode="karenderya">🍲 KARENDERYA MANIA</button>
-            </div>
-
-            <!-- STREET PATROL PANEL -->
-            <div class="mode-panel" id="streetModePanel">
-              <p class="subtitle">
-                Double-jump over jeepneys, grab easy <strong>🔫 Barils</strong>, unleash <strong>⚡ Punch Energy</strong>, and stop thieves from Barangay Kalye to <strong>Malacañang</strong>!
-              </p>
-
-              <div class="outfit-row">
-                <span class="outfit-label">👕 OUTFIT:</span>
-                <button class="outfit-btn active" data-outfit="classic">Black Shirt &amp; Maong</button>
-                <button class="outfit-btn" data-outfit="jersey">🏀 Yellow Jersey + Back Cap</button>
+            <div class="landing-cta">
+              <button class="btn-primary btn-hero-play pulse" id="btnPlayEntry">▶ PLAY</button>
+              <div class="landing-secondary-row">
+                <button class="btn-secondary" id="btnHowTo">🎮 CONTROLS</button>
+                <button class="btn-install hidden" id="btnInstall">📲 INSTALL APP</button>
               </div>
-
-              <div class="stage-selector" id="stageSelector">
-                <button class="stage-btn active" data-stage="0">1. Barangay Kalye</button>
-                <button class="stage-btn" data-stage="1">2. Divisoria Rush</button>
-                <button class="stage-btn" data-stage="2">3. Night Boss</button>
-                <button class="stage-btn malacanang-btn" data-stage="3">🐊 4. Malacañang Manila</button>
-              </div>
-            </div>
-
-            <!-- THE JEEP RIDE (EDSA) PANEL + RULES -->
-            <div class="mode-panel hidden" id="jeepModePanel">
-              <p class="subtitle">
-                Drive your Jeepney through heavy <strong>EDSA Traffic</strong> wearing your <strong>Yellow #8 Jersey, Black Shorts &amp; Backward Cap</strong>!
-              </p>
-              <div class="jeep-rules-card">
-                <div class="rules-heading">📋 THE JEEP RIDE — EDSA RULES:</div>
-                <ul>
-                  <li><strong>Pick Up &amp; Drop Off:</strong> Pull into the bottom curb lane &amp; hold <strong>🛑 STOP</strong> inside glowing EDSA Station Bays to board pasaheros &amp; drop them off at their requested station!</li>
-                  <li><strong>Get Paid (`💵 Bayad`):</strong> Happy pasaheros pay full fare + <strong>SUKI Combo Tips</strong>!</li>
-                  <li><strong>Don't Make Them Angry:</strong> Crashing into EDSA traffic or driving past their station makes them angry (<strong>3 😠 = Game Over</strong>).</li>
-                  <li><strong>Beep Horn (`📯`):</strong> Honk to nudge cars ahead &amp; calm impatient pasaheros!</li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- KARENDERYA MANIA PANEL + LEVEL SELECT -->
-            <div class="mode-panel hidden" id="karenderyaModePanel">
-              <p class="subtitle">
-                Play as <strong>Manong Chef</strong> (white shirt &amp; shoulder towel)! Cook <strong>🍲 Adobo, 🥘 Sinigang, 🍚 Kanin &amp; 🍧 Halo-Halo</strong> and serve <strong>Aling Tessa, Aling Loring, Madam Baby &amp; Jeo Ong</strong>!
-              </p>
-              <div class="stage-selector" id="karenLevelSelector">
-                <button class="stage-btn karen-lvl-btn active" data-klvl="0">1. Merienda (6 Pax · ₱450)</button>
-                <button class="stage-btn karen-lvl-btn" data-klvl="1">2. Lunch Rush (9 Pax · ₱850)</button>
-                <button class="stage-btn karen-lvl-btn" data-klvl="2">3. Fiesta (12 Pax · ₱1,300)</button>
-              </div>
-              <div class="jeep-rules-card karen-rules">
-                <div class="rules-heading">📋 KARENDERYA MANIA RULES:</div>
-                <ul>
-                  <li><strong>Tap Dishes (`1–4`):</strong> Tap any pot/station at the bottom to plate onto Manong's tray (or cook a fresh batch when empty).</li>
-                  <li><strong>Tap Customers (`Q/W/E`):</strong> Serve matching orders before patience runs out to earn <strong>₱ Sales &amp; Speed Tips</strong>!</li>
-                  <li><strong>Beat the Clock:</strong> Hit BOTH the <strong>Customer Goal</strong> &amp; <strong>₱ Sales Goal</strong> before time runs out!</li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="title-actions">
-              <button class="btn-primary pulse" id="btnStart">▶ PLAY NOW</button>
-              <button class="btn-secondary" id="btnHowTo">🎮 CONTROLS</button>
-              <button class="btn-install hidden" id="btnInstall">📲 INSTALL APP</button>
             </div>
 
             <div class="high-score-bar">
-              🏆 HIGH SCORE: <strong id="titleHighScore">00000</strong> &nbsp;|&nbsp; 🚐 EDSA BEST FARE: <strong id="titleBestFare">₱0</strong>
+              🏆 HIGH SCORE: <strong id="titleHighScore">00000</strong> &nbsp;|&nbsp; 🚐 BEST FARE: <strong id="titleBestFare">₱0</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 2: SELECT A GAME TO PLAY ==================== -->
+      <section class="overlay flow-overlay hidden" id="selectGameOverlay">
+        <div class="flow-shell">
+          <div class="flow-header">
+            <button class="btn-back" id="btnBackToTitle">← BACK</button>
+            <div class="flow-title-group">
+              <span class="flow-step-pill">STEP 1 OF 3</span>
+              <h2>SELECT A GAME TO PLAY</h2>
+            </div>
+            <div class="flow-spacer"></div>
+          </div>
+
+          <div class="game-cards-grid">
+            <button class="game-select-card card-street" data-game="street">
+              <div class="card-img-wrap">
+                <img src="assets/hero_chibi.jpg" alt="Street Patrol" />
+                <span class="card-badge">8 PH LEVELS</span>
+              </div>
+              <div class="card-body">
+                <h3>🥊 STREET PATROL</h3>
+                <p>Run, double-jump, punch, knife-slash &amp; shoot thieves from Barangay Kalye &amp; Malacañang to Pasig River, Ilocos, Pangasinan &amp; Kagubatan!</p>
+                <span class="card-cta">PLAY STREET PATROL ➔</span>
+              </div>
+            </button>
+
+            <button class="game-select-card card-jeep" data-game="jeep">
+              <div class="card-img-wrap">
+                <img src="assets/hero_jeep_jersey.jpg" alt="The Jeep Ride" />
+                <span class="card-badge badge-gold">ROUTE + ENDLESS</span>
+              </div>
+              <div class="card-body">
+                <h3>🚐 THE JEEP RIDE</h3>
+                <p>Beat EDSA traffic! Pick up &amp; drop off pasaheros at UP &amp; DOWN bus stops without making them angry—collect bayad &amp; SUKI combos!</p>
+                <span class="card-cta">DRIVE EDSA NOW ➔</span>
+              </div>
+            </button>
+
+            <button class="game-select-card card-karen" data-game="karenderya">
+              <div class="card-img-wrap">
+                <img src="assets/hero_manong_cook.jpg" alt="Karenderya Mania" />
+                <span class="card-badge badge-orange">3 LEVELS</span>
+              </div>
+              <div class="card-body">
+                <h3>🍲 KARENDERYA MANIA</h3>
+                <p>Cook Adobo, Sinigang, Kanin &amp; Halo-Halo! Serve Aling Tessa, Aling Loring, Madam Baby &amp; Jeo Ong before time runs out!</p>
+                <span class="card-cta">OPEN KARENDERYA ➔</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 3: PLAYER VISUAL CUSTOMIZER ==================== -->
+      <section class="overlay flow-overlay hidden" id="customizerOverlay">
+        <div class="flow-shell">
+          <div class="flow-header">
+            <button class="btn-back" id="btnBackToGames">← GAMES</button>
+            <div class="flow-title-group">
+              <span class="flow-step-pill">STEP 2 OF 3</span>
+              <h2>CUSTOMIZE YOUR PLAYER</h2>
+            </div>
+            <div class="flow-spacer"></div>
+          </div>
+
+          <div class="customizer-layout">
+            <div class="preview-stage">
+              <canvas id="previewCanvas" width="220" height="220"></canvas>
+              <div class="preview-presets">
+                <button class="preset-chip" data-preset="classic">Black Shirt</button>
+                <button class="preset-chip" data-preset="jersey">Yellow Jersey</button>
+                <button class="preset-chip" data-preset="manong">Manong Towel</button>
+                <button class="preset-chip" data-preset="jeo">Bandana Long Hair</button>
+              </div>
+            </div>
+
+            <div class="customizer-options">
+              <div class="cust-group">
+                <label>😎 HEAD &amp; FACE</label>
+                <div class="cust-pills" data-part="head">
+                  <button class="cust-pill active" data-val="spiky">Spiky Hair</button>
+                  <button class="cust-pill" data-val="backcap">Backward Cap</button>
+                  <button class="cust-pill" data-val="bandana">Bandana + Long Hair</button>
+                  <button class="cust-pill" data-val="manong">Manong Mustache</button>
+                  <button class="cust-pill" data-val="shades">Cool Shades</button>
+                </div>
+              </div>
+
+              <div class="cust-group">
+                <label>🧑 SKIN TONE</label>
+                <div class="cust-pills" data-part="skin">
+                  <button class="cust-pill active" data-val="tan">Kayumanggi</button>
+                  <button class="cust-pill" data-val="light">Fair Tan</button>
+                  <button class="cust-pill" data-val="deep">Moreno</button>
+                </div>
+              </div>
+
+              <div class="cust-group">
+                <label>👕 BODY / TOP</label>
+                <div class="cust-pills" data-part="top">
+                  <button class="cust-pill active" data-val="black">Black Shirt</button>
+                  <button class="cust-pill" data-val="jersey">Yellow #8 Jersey</button>
+                  <button class="cust-pill" data-val="manong">White + Towel</button>
+                  <button class="cust-pill" data-val="red">Red Street Tee</button>
+                </div>
+              </div>
+
+              <div class="cust-group">
+                <label>👖 LOWER / PANTS</label>
+                <div class="cust-pills" data-part="bottom">
+                  <button class="cust-pill active" data-val="maong">Blue Maong</button>
+                  <button class="cust-pill" data-val="shorts">Black Shorts</button>
+                  <button class="cust-pill" data-val="cargo">Khaki Shorts</button>
+                </div>
+              </div>
+
+              <button class="btn-primary btn-next-flow" id="btnToLevelMap">NEXT: SELECT LEVEL MAP ➔</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 4: INTERACTIVE LEVEL MAP / MODE SELECT ==================== -->
+      <section class="overlay flow-overlay hidden" id="levelMapOverlay">
+        <div class="flow-shell">
+          <div class="flow-header">
+            <button class="btn-back" id="btnBackToCustom">← PLAYER</button>
+            <div class="flow-title-group">
+              <span class="flow-step-pill">STEP 3 OF 3</span>
+              <h2 id="levelMapTitle">PHILIPPINE LEVEL MAP</h2>
+            </div>
+            <div class="flow-spacer"></div>
+          </div>
+
+          <!-- STREET PATROL 8-LEVEL ADVENTURE MAP -->
+          <div class="map-view hidden" id="streetMapView">
+            <div class="adventure-map" id="streetMapNodes"></div>
+            <div class="map-detail-bar">
+              <div class="map-detail-info">
+                <h3 id="mapStageName">LEVEL 1 · BARANGAY KALYE</h3>
+                <p id="mapStageDesc">Sunny Manila neighborhood! Grab an easy Baril, bounce on jeepneys &amp; stop street snatchers.</p>
+              </div>
+              <button class="btn-primary pulse" id="btnLaunchStreet">▶ START LEVEL</button>
+            </div>
+          </div>
+
+          <!-- THE JEEP RIDE MODE MAP (ROUTE vs ENDLESS) -->
+          <div class="map-view hidden" id="jeepMapView">
+            <div class="jeep-mode-cards">
+              <button class="jeep-submode-card active" data-jeepmode="route">
+                <div class="submode-icon">🗺️</div>
+                <h3>EDSA ROUTE MODE</h3>
+                <p>Drive all 7 iconic EDSA Stations (Monumento → Taft Pasay). Stop at UP &amp; DOWN bays to drop off pasaheros &amp; earn 5⭐!</p>
+                <span class="submode-tag">7 STATIONS · WIN AT TAFT</span>
+              </button>
+              <button class="jeep-submode-card" data-jeepmode="endless">
+                <div class="submode-icon">♾️</div>
+                <h3>ENDLESS EDSA MODE</h3>
+                <p>Infinite EDSA highway! Stations keep looping with heavier traffic &amp; higher fare multipliers. How much boundary can you earn?</p>
+                <span class="submode-tag tag-endless">INFINITE · HIGH FARE CHASE</span>
+              </button>
+            </div>
+            <div class="jeep-rules-card">
+              <div class="rules-heading">📋 CONTROLS &amp; RULES:</div>
+              <ul>
+                <li><strong>Forward / Backward Joystick (Left):</strong> Slide Forward for Gas, Backward to Slow/Brake (even inch back slightly!).</li>
+                <li><strong>UP / DOWN Bus Stops:</strong> Use <strong>▲ UP / ▼ DOWN</strong> (or <kbd>W</kbd>/<kbd>S</kbd>) to enter glowing Top or Bottom EDSA Bus Stops and hold <strong>🛑 STOP</strong>!</li>
+                <li><strong>Keep Pasaheros Happy:</strong> Don't crash or miss stops (3 😠 = Game Over). Tap <strong>📯 BEEP</strong> to nudge traffic &amp; calm pasaheros!</li>
+              </ul>
+            </div>
+            <button class="btn-primary pulse btn-launch-wide" id="btnLaunchJeep">🚐 DRIVE EDSA NOW!</button>
+          </div>
+
+          <!-- KARENDERYA MANIA 3-LEVEL MAP -->
+          <div class="map-view hidden" id="karenMapView">
+            <div class="adventure-map karen-map" id="karenMapNodes"></div>
+            <div class="map-detail-bar">
+              <div class="map-detail-info">
+                <h3 id="mapKarenName">LEVEL 1 · MORNING MERIENDA</h3>
+                <p id="mapKarenDesc">⏱️ 75s · Serve 6 Customers &amp; Earn ₱450! Cook Adobo, Sinigang, Kanin &amp; Halo-Halo for Aling Tessa, Aling Loring, Madam Baby &amp; Jeo Ong!</p>
+              </div>
+              <button class="btn-primary pulse" id="btnLaunchKaren">🍲 START COOKING</button>
             </div>
           </div>
         </div>
@@ -248,22 +383,14 @@
       <!-- CONTROLS / HOW TO PLAY MODAL -->
       <section class="overlay modal-overlay hidden" id="howToOverlay">
         <div class="modal-card">
-          <h2>🎮 CONTROLS &amp; RULES</h2>
+          <h2>🎮 CONTROLS &amp; TIPS</h2>
           <div class="controls-grid">
-            <div class="control-item"><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd><span>Street: Run · Jeep: Brake / Gas</span></div>
-            <div class="control-item"><kbd>W</kbd> / <kbd>↑</kbd> / <kbd>Space</kbd><span>Street: Jump &amp; <strong>Double Jump!</strong></span></div>
-            <div class="control-item"><kbd>W</kbd> <kbd>S</kbd> / <kbd>↑</kbd> <kbd>↓</kbd><span>Jeep Ride: Switch EDSA Lanes</span></div>
-            <div class="control-item"><kbd>J</kbd> / <kbd>Z</kbd> / <kbd>F</kbd><span>Street: ⚡ Punch · Jeep: 📯 Beep Horn</span></div>
-            <div class="control-item"><kbd>K</kbd> / <kbd>X</kbd> / <kbd>G</kbd><span>Street: 🔫 Shoot Baril · Jeep: 📯 Horn</span></div>
-            <div class="control-item"><kbd>Space</kbd><span>Jeep Ride: 🛑 Hold Brake / Stop at Station</span></div>
-          </div>
-          <div class="tips-box">
-            <p><strong>💡 PRO TIPS:</strong></p>
-            <ul>
-              <li><strong>Double Jump:</strong> Tap Jump twice in mid-air to reach high balconies &amp; clear wide gaps!</li>
-              <li><strong>Easy Barils:</strong> Pick up glowing guns right on the street, from `[?]` boxes, or from defeated thieves!</li>
-              <li><strong>EDSA Jeep Ride:</strong> Watch the green <strong>PARA PO!</strong> alert, move to the bottom curb lane, and hold <strong>🛑 STOP</strong> to collect fare!</li>
-            </ul>
+            <div class="control-item"><kbd>A</kbd> <kbd>D</kbd> / Joystick ◀ ▶<span>Forward / Backward Move (Street &amp; Jeep)</span></div>
+            <div class="control-item"><kbd>W</kbd> / <kbd>Space</kbd> / ▲<span>Street: Jump &amp; <strong>Double Jump!</strong></span></div>
+            <div class="control-item"><kbd>J</kbd> / ✊<span>Street: ⚡ Punch / 🔪 Boost Knife Slash</span></div>
+            <div class="control-item"><kbd>K</kbd> / 🔫<span>Street: 🔫 Shoot Baril</span></div>
+            <div class="control-item"><kbd>W</kbd> <kbd>S</kbd> / ▲ ▼<span>Jeep Ride: Switch Lanes to UP / DOWN Stops</span></div>
+            <div class="control-item"><kbd>1–4</kbd> &amp; <kbd>Q/W/E</kbd><span>Karenderya: Tap/Cook Dishes &amp; Serve Seats</span></div>
           </div>
           <button class="btn-primary" id="btnCloseHowTo">GOT IT!</button>
         </div>
@@ -277,12 +404,13 @@
           <div class="modal-actions">
             <button class="btn-primary" id="btnResume">▶ RESUME</button>
             <button class="btn-secondary" id="btnRestartPause">↻ RESTART</button>
+            <button class="btn-ghost" id="btnMapFromPause">🗺️ LEVEL MAP</button>
             <button class="btn-ghost" id="btnQuitTitle">🏠 MAIN MENU</button>
           </div>
         </div>
       </section>
 
-      <!-- STAGE CLEAR / JEEP ROUTE COMPLETE OVERLAY -->
+      <!-- STAGE CLEAR OVERLAY -->
       <section class="overlay modal-overlay hidden" id="stageClearOverlay">
         <div class="modal-card small-modal">
           <div class="victory-badge" id="clearBadge">🏁</div>
@@ -290,9 +418,9 @@
           <p class="modal-sub" id="clearSubtitle">The Barangay is safe!</p>
           <div class="score-summary" id="clearStats"></div>
           <div class="modal-actions">
-            <button class="btn-primary" id="btnNextStage">NEXT STREET ➔</button>
+            <button class="btn-primary" id="btnNextStage">NEXT LEVEL ➔</button>
             <button class="btn-secondary" id="btnReplayClear">↻ REPLAY</button>
-            <button class="btn-ghost" id="btnMenuClear">🏠 MAIN MENU</button>
+            <button class="btn-ghost" id="btnMapFromClear">🗺️ LEVEL MAP</button>
           </div>
         </div>
       </section>
@@ -302,23 +430,22 @@
         <div class="modal-card small-modal">
           <div class="victory-badge">💥</div>
           <h2 id="gameOverTitle">NAKO! KNOCKED OUT!</h2>
-          <p class="modal-sub" id="gameOverSub">Those street thieves got away—get back up and stop them!</p>
+          <p class="modal-sub" id="gameOverSub">Get back up and try again!</p>
           <div class="score-summary" id="gameOverStats"></div>
           <div class="modal-actions">
             <button class="btn-primary" id="btnRetry">↻ TRY AGAIN</button>
+            <button class="btn-ghost" id="btnMapFromOver">🗺️ LEVEL MAP</button>
             <button class="btn-ghost" id="btnMenuOver">🏠 MAIN MENU</button>
           </div>
         </div>
       </section>
 
-      <!-- STREET PATROL Touch Controls (Virtual Joystick + Arcade Buttons) -->
+      <!-- STREET PATROL Touch Controls (Forward/Backward-ONLY Horizontal Joystick!) -->
       <div class="touch-controls hidden" id="touchControls">
         <div class="joystick-zone">
-          <div class="joystick-base" id="streetJoystick" aria-label="Move Joystick">
-            <span class="joy-arrow joy-up">▲</span>
-            <span class="joy-arrow joy-down">▼</span>
-            <span class="joy-arrow joy-left">◀</span>
-            <span class="joy-arrow joy-right">▶</span>
+          <div class="joystick-track-h" id="streetJoystick" aria-label="Forward and Backward Joystick">
+            <span class="joy-h-arrow joy-h-left">◀</span>
+            <span class="joy-h-arrow joy-h-right">▶</span>
             <div class="joystick-knob" id="streetJoyKnob"></div>
           </div>
         </div>
@@ -329,41 +456,42 @@
         </div>
       </div>
 
-      <!-- THE JEEP RIDE (EDSA) Touch Controls (Virtual Joystick + Pedal/Horn Buttons) -->
+      <!-- THE JEEP RIDE (EDSA) Touch Controls (Forward/Backward-ONLY Horizontal Joystick + UP/DOWN Lane + STOP/BEEP!) -->
       <div class="touch-controls jeep-touch hidden" id="jeepTouchControls">
         <div class="joystick-zone">
-          <div class="joystick-base jeep-joy" id="jeepJoystick" aria-label="Steer Joystick">
-            <span class="joy-arrow joy-up">▲</span>
-            <span class="joy-arrow joy-down">▼</span>
-            <span class="joy-arrow joy-left">◀</span>
-            <span class="joy-arrow joy-right">▶</span>
+          <div class="joystick-track-h jeep-joy" id="jeepJoystick" aria-label="Forward and Backward Joystick">
+            <span class="joy-h-arrow joy-h-left">◀</span>
+            <span class="joy-h-arrow joy-h-right">▶</span>
             <div class="joystick-knob" id="jeepJoyKnob"></div>
           </div>
         </div>
-        <div class="touch-actions">
+        <div class="touch-actions jeep-right-pad">
+          <div class="jeep-ud-stack">
+            <button class="touch-btn mini-lane-btn" data-jeep="up">▲<small>UP</small></button>
+            <button class="touch-btn mini-lane-btn" data-jeep="down">▼<small>DOWN</small></button>
+          </div>
           <button class="touch-btn stop-btn" data-jeep="brake">🛑<small>STOP</small></button>
           <button class="touch-btn horn-btn" data-jeep="horn">📯<small>BEEP</small></button>
-          <button class="touch-btn gas-btn" data-jeep="gas">⚡<small>GAS</small></button>
         </div>
       </div>
     </div>
 
     <!-- Bottom Quick Controls Bar (desktop reference) -->
     <footer class="controls-bar" id="controlsBar">
-      <span><kbd>A</kbd><kbd>D</kbd> Move / Brake-Gas</span>
+      <span><kbd>A</kbd><kbd>D</kbd> Forward / Backward</span>
       <span><kbd>W</kbd> / <kbd>Space</kbd> Double Jump / Stop</span>
-      <span><kbd>J</kbd> ⚡ Punch / 📯 Horn</span>
-      <span><kbd>K</kbd> 🔫 Shoot Baril</span>
+      <span><kbd>J</kbd> ⚡ Punch / 🔪 Knife</span>
+      <span><kbd>K</kbd> 🔫 Shoot / 📯 Horn</span>
       <span><kbd>P</kbd> Pause</span>
       <button class="touch-toggle" id="btnToggleTouch">📱 Touch Pad</button>
     </footer>
   </div>
 
-  <script src="js/audio.js?v=8"></script>
-  <script src="js/sprites.js?v=8"></script>
-  <script src="js/levels.js?v=8"></script>
-  <script src="js/jeep_ride.js?v=8"></script>
-  <script src="js/karenderya.js?v=8"></script>
-  <script src="js/game.js?v=8"></script>
+  <script src="js/audio.js?v=9"></script>
+  <script src="js/sprites.js?v=9"></script>
+  <script src="js/levels.js?v=9"></script>
+  <script src="js/jeep_ride.js?v=9"></script>
+  <script src="js/karenderya.js?v=9"></script>
+  <script src="js/game.js?v=9"></script>
 </body>
 </html>

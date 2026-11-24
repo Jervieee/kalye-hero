@@ -65,6 +65,9 @@
   const weaponIcon = document.getElementById('weaponIcon');
   const weaponName = document.getElementById('weaponName');
   const weaponAmmo = document.getElementById('weaponAmmo');
+  const knifeBadge = document.getElementById('knifeBadge');
+  const hudKnifeCount = document.getElementById('hudKnifeCount');
+  const jeepFlagIcon = document.getElementById('jeepFlagIcon');
   const hudStage = document.getElementById('hudStage');
   const hudProgress = document.getElementById('hudProgress');
   const hudCoins = document.getElementById('hudCoins');
@@ -76,6 +79,9 @@
   const toastBanner = document.getElementById('toastBanner');
 
   const titleOverlay = document.getElementById('titleOverlay');
+  const selectGameOverlay = document.getElementById('selectGameOverlay');
+  const customizerOverlay = document.getElementById('customizerOverlay');
+  const levelMapOverlay = document.getElementById('levelMapOverlay');
   const howToOverlay = document.getElementById('howToOverlay');
   const pauseOverlay = document.getElementById('pauseOverlay');
   const stageClearOverlay = document.getElementById('stageClearOverlay');
@@ -84,12 +90,12 @@
   const jeepTouchControls = document.getElementById('jeepTouchControls');
   const titleHighScore = document.getElementById('titleHighScore');
   const titleBestFare = document.getElementById('titleBestFare');
-  const titleHeroImg = document.getElementById('titleHeroImg');
-  const titleHeroTag = document.getElementById('titleHeroTag');
-  const streetModePanel = document.getElementById('streetModePanel');
-  const jeepModePanel = document.getElementById('jeepModePanel');
-  const karenderyaModePanel = document.getElementById('karenderyaModePanel');
-  const btnStart = document.getElementById('btnStart');
+  const previewCanvas = document.getElementById('previewCanvas');
+  const previewCtx = previewCanvas ? previewCanvas.getContext('2d') : null;
+  const streetMapView = document.getElementById('streetMapView');
+  const jeepMapView = document.getElementById('jeepMapView');
+  const karenMapView = document.getElementById('karenMapView');
+  const levelMapTitle = document.getElementById('levelMapTitle');
 
   const STORAGE_KEY = 'kalye_hero_high_score_v1';
   const FARE_STORAGE_KEY = 'kalye_hero_best_fare_v1';
@@ -108,8 +114,14 @@
   // Game State
   let mode = 'title'; // title | playing | paused | clear | gameover
   let selectedGameMode = 'street'; // 'street' | 'jeep' | 'karenderya'
+  let selectedJeepSubMode = 'route'; // 'route' | 'endless'
   let activeGameMode = 'street';
-  let selectedOutfit = 'classic'; // 'classic' | 'jersey'
+  let playerCustom = {
+    head: 'spiky',
+    skin: 'tan',
+    top: 'black',
+    bottom: 'maong'
+  };
   let selectedStage = 0;
   let selectedKarenLevel = 0;
   let currentStageIndex = 0;
@@ -207,6 +219,7 @@
   function createPlayer(keepGear = false) {
     const prevWeapon = keepGear && player ? player.weapon : null;
     const prevAmmo = keepGear && player ? player.ammo : 0;
+    const prevKnife = keepGear && player ? player.knifeAmmo : 0;
     const prevHp = keepGear && player ? Math.max(3, player.hp) : 5;
     return {
       x: 80,
@@ -221,13 +234,14 @@
       jumpBuffer: 0,
       jumpsRemaining: 2,
       doubleJumpTimer: 0,
-      outfit: selectedOutfit,
+      custom: { ...playerCustom },
       hp: prevHp,
       maxHp: 5,
       energy: 100,
       maxEnergy: 100,
       weapon: prevWeapon, // null | 'pistol' | 'blaster'
       ammo: prevAmmo,
+      knifeAmmo: prevKnife,
       punchTimer: 0,
       punchDuration: 0.22,
       punchCooldown: 0,
@@ -240,23 +254,45 @@
   }
 
   function isBossEnemy(e) {
-    return e.type === 'boss' || e.type === 'croc_boss';
+    return (
+      e.type === 'boss' ||
+      e.type === 'croc_boss' ||
+      e.type === 'boss_magnanakaw' ||
+      e.type === 'tikbalang_boss'
+    );
   }
 
   function spawnEnemyInstance(def) {
-    const isBoss = def.type === 'boss' || def.type === 'croc_boss';
-    const isCrocBoss = def.type === 'croc_boss';
-    const isCrocVip = def.type === 'croc_vip';
-    const isCroc = def.type === 'croc_thief';
-    const isThug = def.type === 'thug';
-    const isRunner = def.type === 'runner';
-    const maxHp = isCrocBoss ? 20 : isBoss ? 16 : isCrocVip ? 3 : isThug || isCroc ? 2 : 1;
+    const isBoss =
+      def.type === 'boss' ||
+      def.type === 'croc_boss' ||
+      def.type === 'boss_magnanakaw' ||
+      def.type === 'tikbalang_boss';
+    const hpMap = {
+      snatcher: 1,
+      runner: 1,
+      thug: 2,
+      croc_thief: 2,
+      croc_vip: 3,
+      big_knife_thief: 4,
+      armed_gang: 3,
+      tikbalang: 3,
+      manananggal: 2,
+      kapre: 4,
+      boss: 16,
+      croc_boss: 20,
+      boss_magnanakaw: 18,
+      tikbalang_boss: 22
+    };
+    const maxHp = hpMap[def.type] || 2;
+    const isBig = def.type === 'big_knife_thief' || def.type === 'kapre' || def.type === 'tikbalang';
     return {
       x: def.x,
       y: def.y,
-      w: isBoss ? 60 : isThug || isCrocVip ? 42 : isCroc ? 38 : 34,
-      h: isBoss ? 88 : isThug || isCrocVip ? 60 : isCroc ? 56 : 52,
-      vx: isRunner ? -155 : isBoss ? -125 : isCroc ? -105 : -85,
+      baseY: def.y,
+      w: isBoss ? 60 : isBig ? 46 : def.type === 'armed_gang' || def.type === 'thug' || def.type === 'croc_vip' ? 40 : 36,
+      h: isBoss ? 88 : isBig ? 66 : def.type === 'manananggal' ? 46 : 56,
+      vx: def.type === 'runner' || def.type === 'tikbalang' ? -150 : isBoss ? -125 : -95,
       vy: 0,
       facing: -1,
       type: def.type,
@@ -267,7 +303,7 @@
       deathTimer: 0,
       deathSpin: 0,
       hurtFlash: 0,
-      aiTimer: 1 + Math.random() * 1.4,
+      aiTimer: 1 + Math.random() * 1.3,
       bossJumpTimer: 2.2,
       arenaMinX: def.arenaMinX || 0,
       arenaMaxX: def.arenaMaxX || 99999,
@@ -303,21 +339,23 @@
     hudStage.textContent = level.name;
     updateHUD();
 
-    if (index === 0) {
-      showToast('⚡ Punch Thieves [J] · Crack [?] Boxes for Guns!', 3.0);
-    } else if (index === 1) {
-      showToast('🌇 Divisoria Rush! Watch out for Bottle-Throwing Thugs!', 2.8);
-    } else if (index === 2) {
-      showToast('🌙 Midnight Showdown! Defeat Boss Mandurukot!', 2.8);
-    } else {
-      showToast('🏛️ Malacañang, Manila! Stop the Crocodile Barong Thieves & Grab the Cash!', 3.4);
-    }
+    const stageToasts = [
+      '⚡ Punch Thieves [J] · Grab Barils & Double-Jump!',
+      '🌇 Divisoria Rush! Watch out for Bottle-Throwing Thugs!',
+      '🌙 Midnight Showdown! Defeat Boss Mandurukot!',
+      '🏛️ Malacañang, Manila! Stop the Crocodile Barong Thieves & Grab Cash!',
+      '🌊 The Pasig River! Claim Boost Knife, Baril & 3 Hearts vs Big Magnanakaw!',
+      '🌬️ Ilocos Norte! Armed Drug Addict thugs carry Guns & Knives—stay sharp!',
+      '🏖️ Pangasinan Beach! Double Boss Ahead: BOSS Magnanakaw & BOSS Mandurukot!',
+      '🌲 Kagubatan Finale! Battle the Tikbalang, Manananggal & Kapre!'
+    ];
+    showToast(stageToasts[index] || stageToasts[0], 3.3);
   }
 
   function startGame(stageIdx = selectedStage) {
     SoundFX.unlock();
     if (selectedGameMode === 'jeep') {
-      startJeepRide();
+      startJeepRide(selectedJeepSubMode);
       return;
     }
     if (selectedGameMode === 'karenderya') {
@@ -332,7 +370,11 @@
     cash = 0;
     thievesDefeated = 0;
     if (hudAvatar) {
-      hudAvatar.src = selectedOutfit === 'jersey' ? 'assets/hero_jeep_jersey.jpg' : 'assets/hero_chibi.jpg';
+      hudAvatar.src = playerCustom.top === 'jersey'
+        ? 'assets/hero_jeep_jersey.jpg'
+        : playerCustom.top === 'manong'
+        ? 'assets/hero_manong_cook.jpg'
+        : 'assets/hero_chibi.jpg';
     }
     loadStage(stageIdx, false);
     mode = 'playing';
@@ -415,8 +457,9 @@
     jeepMoodRow.textContent = moodIcons;
     jeepSeatsText.textContent = `👥 ${info.passengers.length}/${info.maxSeats} PASAHERO${info.combo >= 2 ? ` · x${info.combo} SUKI!` : ''}`;
     jeepNextStation.textContent = info.dropHere > 0
-      ? `🛑 STOP: ${info.nextStation} (${info.dropHere} PAX · ${info.nextStationDist}m)`
-      : `🚏 NEXT: ${info.nextStation} (${info.nextStationDist}m)`;
+      ? `🛑 ${info.nextStationSide}: ${info.nextStation} (${info.dropHere} PAX)`
+      : `🚏 ${info.nextStationSide}: ${info.nextStation} (${info.nextStationDist}m)`;
+    if (jeepFlagIcon) jeepFlagIcon.textContent = info.endlessMode ? '♾️' : '🏁';
     jeepProgress.style.width = `${info.progress}%`;
     jeepFare.textContent = `₱${info.fareEarned.toLocaleString()}`;
     jeepServed.textContent = String(info.happyServed);
@@ -432,7 +475,8 @@
       .join('');
   }
 
-  function startJeepRide() {
+  function startJeepRide(subMode = selectedJeepSubMode) {
+    selectedJeepSubMode = subMode;
     activeGameMode = 'jeep';
     Karenderya.stop();
     mode = 'playing';
@@ -470,26 +514,38 @@
         document.getElementById('btnNextStage').classList.add('hidden');
         stageClearOverlay.classList.remove('hidden');
       } else {
-        document.getElementById('gameOverTitle').textContent = '😠 NAWALAN NG PASAHERO!';
-        document.getElementById('gameOverSub').textContent = '3 pasaheros got angry! Slow down at stations & dodge EDSA traffic!';
+        document.getElementById('gameOverTitle').textContent = result.endlessMode
+          ? '♾️ ENDLESS RUN COMPLETE!'
+          : '😠 NAWALAN NG PASAHERO!';
+        document.getElementById('gameOverSub').textContent = result.endlessMode
+          ? `You drove ${result.distance}m across EDSA and served ${result.happyServed} happy pasaheros!`
+          : '3 pasaheros got angry! Watch UP & DOWN bus stops and dodge traffic!';
         document.getElementById('gameOverStats').innerHTML = `
           <div><span>FARE EARNED</span><strong>₱${result.fareEarned.toLocaleString()}</strong></div>
           <div><span>HAPPY PASAHEROS</span><strong>${result.happyServed} 😊</strong></div>
-          <div><span>ANGRY STRIKES</span><strong>${result.angryCount}/3 😠</strong></div>
+          <div><span>DISTANCE</span><strong>${result.distance}m</strong></div>
           <div><span>BEST EDSA FARE</span><strong>₱${bestFare.toLocaleString()}</strong></div>
         `;
         gameOverOverlay.classList.remove('hidden');
       }
-    });
+    }, subMode);
 
     syncTouchControlsVisibility();
     requestAnimationFrame(resizeGameCanvas);
-    showToast('🚐 EDSA Jeep Ride! Pull into bottom lane & hold 🛑 STOP at stations!', 3.2);
+    showToast(
+      subMode === 'endless'
+        ? '♾️ Endless EDSA! Stop at ⬆️ UP & ⬇️ DOWN Bus Stops to earn infinite Bayad!'
+        : '🚐 EDSA Route! Watch for ⬆️ UP & ⬇️ DOWN Bus Stops and hold 🛑 STOP!',
+      3.3
+    );
     SoundFX.startBGM();
   }
 
   function hideAllOverlays() {
     titleOverlay.classList.add('hidden');
+    if (selectGameOverlay) selectGameOverlay.classList.add('hidden');
+    if (customizerOverlay) customizerOverlay.classList.add('hidden');
+    if (levelMapOverlay) levelMapOverlay.classList.add('hidden');
     howToOverlay.classList.add('hidden');
     pauseOverlay.classList.add('hidden');
     stageClearOverlay.classList.add('hidden');
@@ -527,6 +583,12 @@
       weaponIcon.textContent = '✊';
       weaponName.textContent = 'FISTS ONLY';
       weaponAmmo.textContent = 'Find a [?] Gun Box!';
+    }
+
+    // Boost Knife badge
+    if (knifeBadge && hudKnifeCount) {
+      knifeBadge.classList.toggle('hidden', !player.knifeAmmo || player.knifeAmmo <= 0);
+      hudKnifeCount.textContent = String(player.knifeAmmo || 0);
     }
 
     // Coins, Cash & Score
@@ -860,23 +922,26 @@
       p.vy *= 0.88;
     }
 
-    // PUNCH ACTION (Uses Energy!)
+    // PUNCH / BOOST KNIFE SLASH ACTION (Uses Energy!)
     if (keys.punchPressed) {
       keys.punchPressed = false;
       if (p.punchCooldown <= 0) {
-        if (p.energy >= PUNCH_COST) {
-          p.energy -= PUNCH_COST;
+        const usingKnife = p.knifeAmmo > 0;
+        const cost = usingKnife ? 10 : PUNCH_COST;
+        if (p.energy >= cost) {
+          p.energy -= cost;
+          if (usingKnife) p.knifeAmmo--;
           p.punchTimer = p.punchDuration;
-          p.punchCooldown = 0.27;
+          p.punchCooldown = usingKnife ? 0.2 : 0.27;
           p.punchHitSet.clear();
-          p.vx += p.facing * 120;
+          p.vx += p.facing * (usingKnife ? 160 : 120);
           SoundFX.punchSwing();
           spawnParticles(
             p.facing > 0 ? p.x + p.w + 8 : p.x - 8,
             p.y + 28,
-            '#fde047',
-            7,
-            150
+            usingKnife ? '#38bdf8' : '#fde047',
+            usingKnife ? 11 : 7,
+            170
           );
         } else if (p.noEnergyHintCooldown <= 0) {
           SoundFX.noEnergy();
@@ -940,20 +1005,22 @@
       }
     }
 
-    // Active Punch Hitbox Check (hits enemies & smashes crates!)
+    // Active Punch / Boost Knife Hitbox Check
     if (p.punchTimer > 0) {
       p.punchTimer -= dt;
+      const hasKnifeReach = p.knifeAmmo > 0;
+      const reach = hasKnifeReach ? 62 : 46;
       const punchBox = {
-        x: p.facing > 0 ? p.x + p.w - 4 : p.x - 42,
-        y: p.y + 8,
-        w: 46,
-        h: 40
+        x: p.facing > 0 ? p.x + p.w - 4 : p.x - reach + 4,
+        y: p.y + 4,
+        w: reach,
+        h: 44
       };
 
       for (const e of enemies) {
         if (!e.dead && !p.punchHitSet.has(e) && rectOverlap(punchBox, e)) {
           p.punchHitSet.add(e);
-          defeatOrDamageEnemy(e, 2, p.facing, 'punch');
+          defeatOrDamageEnemy(e, hasKnifeReach ? 3 : 2, p.facing, 'punch');
         }
       }
 
@@ -992,9 +1059,11 @@
       }
     }
 
-    // Street / Palace ground solid walls horizontal collision
+    const GROUND_STYLES = ['street', 'palace', 'boardwalk', 'sandroad', 'beach', 'forest'];
+
+    // Solid ground horizontal collision
     for (const plat of platforms) {
-      if (plat.style !== 'street' && plat.style !== 'palace') continue;
+      if (!GROUND_STYLES.includes(plat.style)) continue;
       if (rectOverlap(p, plat)) {
         if (p.vx > 0) p.x = plat.x - p.w;
         else if (p.vx < 0) p.x = plat.x + plat.w;
@@ -1062,10 +1131,10 @@
       if (player.hp <= 0) {
         triggerGameOver();
       } else {
-        // Respawn safely on nearest street/palace segment to the left
+        // Respawn safely on nearest ground segment to the left
         let safeX = Math.max(60, p.x - 190);
         for (const plat of platforms) {
-          const isGround = plat.style === 'street' || plat.style === 'palace';
+          const isGround = GROUND_STYLES.includes(plat.style);
           if (isGround && safeX >= plat.x && safeX <= plat.x + plat.w - 40) {
             break;
           }
@@ -1167,6 +1236,13 @@
           showToast('💥 3-WAY SPREAD BARIL (+16 Ammo)! Press [K] to Blast!', 2.4);
           addFloatText(player.x + 17, player.y - 12, '💥 SPREAD BARIL!', '#f87171', 18);
           spawnParticles(item.x + 14, item.y + 14, '#ef4444', 18, 220);
+        } else if (item.type === 'knife') {
+          player.knifeAmmo = (player.knifeAmmo || 0) + 15;
+          score += 250;
+          SoundFX.powerup();
+          showToast('🔪 BOOST KNIFE (+15 Slashes · 3× Damage & Half Energy)!', 2.6);
+          addFloatText(player.x + 17, player.y - 12, '🔪 BOOST KNIFE!', '#38bdf8', 18);
+          spawnParticles(item.x + 14, item.y + 14, '#38bdf8', 18, 220);
         } else if (item.type === 'heart') {
           player.hp = Math.min(player.maxHp, player.hp + 1);
           score += 150;
@@ -1233,45 +1309,118 @@
       const dist = Math.abs(dx);
 
       if (isBossEnemy(e)) {
-        const triggerX = e.type === 'croc_boss' ? 2420 : 2240;
+        const triggerX = e.type === 'croc_boss' || e.type === 'boss_magnanakaw' || e.type === 'tikbalang_boss' ? 2360 : 2240;
         if (player.x > triggerX) {
+          const liveBosses = enemies.filter((b) => isBossEnemy(b) && !b.dead);
+          const totalHp = liveBosses.reduce((s, b) => s + b.hp, 0);
+          const totalMax = liveBosses.reduce((s, b) => s + b.maxHp, 0) || 1;
           bossBar.classList.remove('hidden');
           if (bossTitle) {
-            bossTitle.textContent = e.type === 'croc_boss'
-              ? '🐊 DON BUWAYA — MALACAÑANG CROC IN BARONG'
-              : '🦹 BOSS MANDURUKOT — SNATCHER KING';
+            if (liveBosses.length > 1) {
+              bossTitle.textContent = '⚔️ DOUBLE BOSS: MAGNANAKAW & MANDURUKOT!';
+            } else if (e.type === 'croc_boss') {
+              bossTitle.textContent = '🐊 DON BUWAYA — MALACAÑANG CROC IN BARONG';
+            } else if (e.type === 'boss_magnanakaw') {
+              bossTitle.textContent = '🔪 BOSS MAGNANAKAW — BEACH BANDIT KING';
+            } else if (e.type === 'tikbalang_boss') {
+              bossTitle.textContent = '🐴 HARI NG KAGUBATAN — ALPHA TIKBALANG';
+            } else {
+              bossTitle.textContent = '🦹 BOSS MANDURUKOT — SNATCHER KING';
+            }
           }
-          bossFill.style.width = `${Math.max(0, (e.hp / e.maxHp) * 100)}%`;
+          bossFill.style.width = `${Math.max(0, (totalHp / totalMax) * 100)}%`;
 
-          // Boss AI: chase, leap-slam, and toss loot-bombs / cash briefcases!
           e.facing = dx >= 0 ? 1 : -1;
           const enraged = e.hp <= e.maxHp * 0.45;
-          const speed = enraged ? 185 : 135;
+          const speed = enraged ? 190 : 140;
           e.vx += (e.facing * speed - e.vx) * Math.min(1, dt * 4);
 
           e.bossJumpTimer -= dt;
           if (e.bossJumpTimer <= 0 && e.onGround) {
-            e.vy = -620;
+            e.vy = e.type === 'tikbalang_boss' ? -680 : -620;
             e.onGround = false;
-            e.bossJumpTimer = enraged ? 1.7 : 2.5;
+            e.bossJumpTimer = enraged ? 1.6 : 2.4;
           }
 
           e.aiTimer -= dt;
           if (e.aiTimer <= 0 && dist < 580) {
-            e.aiTimer = enraged ? 1.55 : 2.2;
+            e.aiTimer = enraged ? 1.5 : 2.15;
+            const kind = e.type === 'croc_boss'
+              ? 'briefcase'
+              : e.type === 'boss_magnanakaw'
+              ? 'enemy_bullet'
+              : e.type === 'tikbalang_boss'
+              ? 'ember'
+              : 'sack';
             enemyProjectiles.push({
               x: e.x + e.w / 2,
               y: e.y + 24,
-              w: 20,
-              h: 16,
-              vx: e.facing * 320,
-              vy: -250,
-              kind: e.type === 'croc_boss' ? 'briefcase' : 'sack',
-              life: 2.6
+              w: kind === 'enemy_bullet' ? 14 : 20,
+              h: kind === 'enemy_bullet' ? 10 : 16,
+              vx: e.facing * (kind === 'enemy_bullet' ? 420 : 320),
+              vy: kind === 'enemy_bullet' ? 0 : -250,
+              noGravity: kind === 'enemy_bullet',
+              kind,
+              life: 2.4
             });
           }
         } else {
           e.vx = 0;
+        }
+      } else if (e.type === 'manananggal') {
+        // Flying Winged Manananggal — hovers & swoops without gravity!
+        e.facing = dx >= 0 ? 1 : -1;
+        if (dist < 520) {
+          e.vx = e.facing * 125;
+          const targetY = (e.baseY || 240) + Math.sin(worldTime * 3.4 + e.seed) * 70;
+          e.y += (targetY - e.y) * Math.min(1, dt * 3.5);
+          e.x += e.vx * dt;
+        }
+        if (rectOverlap(player, e)) {
+          const playerFalling = player.vy > 40;
+          const playerAbove = player.y + player.h - player.vy * dt <= e.y + 22;
+          if (playerFalling && playerAbove) {
+            player.vy = -510;
+            player.jumpsRemaining = 1;
+            SoundFX.stomp();
+            defeatOrDamageEnemy(e, 2, player.facing, 'stomp');
+          } else {
+            damagePlayer(1, player.x < e.x ? -1 : 1);
+          }
+        }
+        continue;
+      } else if (e.type === 'armed_gang' || e.type === 'kapre') {
+        // Armed Gang (Gun & Knife!) or Kapre (Throws Glowing Fire Embers!)
+        if (dist < 470) {
+          e.facing = dx >= 0 ? 1 : -1;
+          e.vx = dist > 160 ? e.facing * (e.type === 'armed_gang' ? 105 : 65) : e.type === 'armed_gang' ? e.facing * 145 : 0;
+          e.aiTimer -= dt;
+          if (e.aiTimer <= 0 && dist < 440 && dist > 120) {
+            e.aiTimer = e.type === 'armed_gang' ? 1.95 : 2.3;
+            const isGun = e.type === 'armed_gang';
+            enemyProjectiles.push({
+              x: e.x + e.w / 2,
+              y: e.y + 20,
+              w: isGun ? 13 : 16,
+              h: isGun ? 8 : 16,
+              vx: e.facing * (isGun ? 390 : 285),
+              vy: isGun ? 0 : -230,
+              noGravity: isGun,
+              kind: isGun ? 'enemy_bullet' : 'ember',
+              life: 2.3
+            });
+          }
+        }
+      } else if (e.type === 'tikbalang' || e.type === 'big_knife_thief') {
+        // Aggressive lunging & leaping melee beasts / Big Magnanakaw with Knife!
+        if (dist < 420) {
+          e.facing = dx >= 0 ? 1 : -1;
+          e.vx = e.facing * (e.type === 'tikbalang' ? 165 : 135);
+          e.aiTimer -= dt;
+          if (e.aiTimer <= 0 && e.onGround && dist < 290) {
+            e.vy = e.type === 'tikbalang' ? -540 : -390;
+            e.aiTimer = e.type === 'tikbalang' ? 1.7 : 2.1;
+          }
         }
       } else if (e.type === 'runner') {
         if (dist < 420) {
@@ -1388,7 +1537,7 @@
   function updateEnemyProjectiles(dt) {
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
       const pr = enemyProjectiles[i];
-      pr.vy += GRAVITY * 0.55 * dt;
+      if (!pr.noGravity) pr.vy += GRAVITY * 0.55 * dt;
       pr.x += pr.vx * dt;
       pr.y += pr.vy * dt;
       pr.life -= dt;
@@ -1518,6 +1667,22 @@
         ctx.fillStyle = '#22c55e';
         ctx.fillRect(-4, -9, 8, 18);
         ctx.strokeRect(-4, -9, 8, 18);
+      } else if (pr.kind === 'enemy_bullet') {
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (pr.kind === 'ember') {
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+        ctx.fill();
       } else if (pr.kind === 'briefcase') {
         // Spinning Cash-Stuffed Executive Briefcase!
         ctx.fillStyle = '#1e293b';
@@ -1641,71 +1806,205 @@
     if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') { keys.jump = false; jeepKeys.brake = false; }
   });
 
-  function syncTitleShowcase() {
-    if (selectedGameMode === 'karenderya') {
-      if (titleHeroImg) titleHeroImg.src = 'assets/hero_manong_cook.jpg';
-      if (titleHeroTag) titleHeroTag.textContent = 'MANONG CHEF · WHITE SHIRT & SHOULDER TOWEL';
-      if (btnStart) btnStart.textContent = '🍲 COOK & SERVE NOW!';
-      return;
-    }
-    const showJersey = selectedGameMode === 'jeep' || selectedOutfit === 'jersey';
-    if (titleHeroImg) {
-      titleHeroImg.src = showJersey ? 'assets/hero_jeep_jersey.jpg' : 'assets/hero_chibi.jpg';
-    }
-    if (titleHeroTag) {
-      titleHeroTag.textContent = showJersey
-        ? 'YELLOW #8 JERSEY · BLACK SHORTS · BACKWARD CAP'
-        : 'BLACK SHIRT · MAONG PANTS · STREET JUSTICE';
-    }
-    if (btnStart) {
-      btnStart.textContent = selectedGameMode === 'jeep' ? '🚐 DRIVE EDSA NOW!' : '▶ PLAY NOW';
+  // ==================== 4-STEP UI FLOW (PLAY -> GAME -> PLAYER CUSTOMIZER -> LEVEL MAP) ====================
+  function showFlowScreen(screenEl) {
+    hideAllOverlays();
+    if (screenEl) screenEl.classList.remove('hidden');
+  }
+
+  function applyCustomPreset(presetKey) {
+    const presets = {
+      classic: { head: 'spiky', skin: 'tan', top: 'black', bottom: 'maong' },
+      jersey: { head: 'backcap', skin: 'tan', top: 'jersey', bottom: 'shorts' },
+      manong: { head: 'manong', skin: 'tan', top: 'manong', bottom: 'shorts' },
+      jeo: { head: 'bandana', skin: 'tan', top: 'black', bottom: 'maong' }
+    };
+    if (presets[presetKey]) {
+      playerCustom = { ...presets[presetKey] };
+      syncCustomizerPills();
     }
   }
 
-  // Mode Switcher (Street Patrol vs The Jeep Ride EDSA vs Karenderya Mania)
-  document.querySelectorAll('.mode-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.mode-tab').forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      selectedGameMode = tab.dataset.mode || 'street';
-      streetModePanel.classList.toggle('hidden', selectedGameMode !== 'street');
-      jeepModePanel.classList.toggle('hidden', selectedGameMode !== 'jeep');
-      if (karenderyaModePanel) {
-        karenderyaModePanel.classList.toggle('hidden', selectedGameMode !== 'karenderya');
-      }
-      syncTitleShowcase();
+  function syncCustomizerPills() {
+    document.querySelectorAll('.cust-pills').forEach((group) => {
+      const part = group.dataset.part;
+      group.querySelectorAll('.cust-pill').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.val === playerCustom[part]);
+      });
+    });
+  }
+
+  function renderPreviewHero() {
+    if (!previewCtx || !customizerOverlay || customizerOverlay.classList.contains('hidden')) return;
+    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    previewCtx.save();
+    previewCtx.translate(110, 192);
+    previewCtx.scale(2.15, 2.15);
+    const dummy = {
+      x: -17,
+      y: -56,
+      w: 34,
+      h: 56,
+      vx: 0,
+      vy: 0,
+      facing: 1,
+      onGround: true,
+      energy: 60,
+      maxEnergy: 100,
+      weapon: null,
+      ammo: 0,
+      knifeAmmo: 0,
+      punchTimer: 0,
+      punchDuration: 0.22,
+      shootFlashTimer: 0,
+      invulnTimer: 0,
+      doubleJumpTimer: 0,
+      custom: { ...playerCustom }
+    };
+    Sprites.drawHero(previewCtx, dummy, worldTime);
+    previewCtx.restore();
+  }
+
+  function buildStreetAdventureMap() {
+    const container = document.getElementById('streetMapNodes');
+    if (!container) return;
+    container.innerHTML = '';
+    Levels.META.forEach((m) => {
+      const btn = document.createElement('button');
+      btn.className = `map-node${m.index === selectedStage ? ' selected' : ''}`;
+      btn.innerHTML = `
+        <span class="map-node-num">${m.index + 1}</span>
+        <span class="map-node-icon">${m.icon}</span>
+        <span class="map-node-title">${m.short}</span>
+        <span class="map-node-sub">${m.sub}</span>
+      `;
+      btn.addEventListener('click', () => {
+        selectedStage = m.index;
+        updateStreetMapSelection();
+      });
+      container.appendChild(btn);
+    });
+    updateStreetMapSelection();
+  }
+
+  function updateStreetMapSelection() {
+    const m = Levels.META[selectedStage] || Levels.META[0];
+    document.querySelectorAll('#streetMapNodes .map-node').forEach((n, idx) => {
+      n.classList.toggle('selected', idx === selectedStage);
+    });
+    document.getElementById('mapStageName').textContent = `LEVEL ${m.index + 1} · ${m.short.toUpperCase()}`;
+    document.getElementById('mapStageDesc').textContent = m.desc;
+  }
+
+  function buildKarenderyaMap() {
+    const container = document.getElementById('karenMapNodes');
+    if (!container) return;
+    const icons = ['☀️', '🍽️', '🎉'];
+    container.innerHTML = '';
+    Karenderya.LEVELS.forEach((lvl, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `map-node${idx === selectedKarenLevel ? ' selected' : ''}`;
+      btn.innerHTML = `
+        <span class="map-node-num">${idx + 1}</span>
+        <span class="map-node-icon">${icons[idx] || '🍲'}</span>
+        <span class="map-node-title">${lvl.name.replace(/^LVL \d+ · /, '')}</span>
+        <span class="map-node-sub">⏱️ ${lvl.timeLimit}s · ${lvl.customerGoal} Pax · ₱${lvl.salesGoal}</span>
+      `;
+      btn.addEventListener('click', () => {
+        selectedKarenLevel = idx;
+        updateKarenderyaMapSelection();
+      });
+      container.appendChild(btn);
+    });
+    updateKarenderyaMapSelection();
+  }
+
+  function updateKarenderyaMapSelection() {
+    const lvl = Karenderya.LEVELS[selectedKarenLevel] || Karenderya.LEVELS[0];
+    document.querySelectorAll('#karenMapNodes .map-node').forEach((n, idx) => {
+      n.classList.toggle('selected', idx === selectedKarenLevel);
+    });
+    document.getElementById('mapKarenName').textContent = lvl.name;
+    document.getElementById('mapKarenDesc').textContent =
+      `⏱️ ${lvl.timeLimit}s · Serve ${lvl.customerGoal} Customers & Earn ₱${lvl.salesGoal.toLocaleString()}! Cook Adobo, Sinigang, Kanin & Halo-Halo for Aling Tessa, Aling Loring, Madam Baby & Jeo Ong!`;
+  }
+
+  function openLevelMapForSelectedGame() {
+    streetMapView.classList.toggle('hidden', selectedGameMode !== 'street');
+    jeepMapView.classList.toggle('hidden', selectedGameMode !== 'jeep');
+    karenMapView.classList.toggle('hidden', selectedGameMode !== 'karenderya');
+    if (selectedGameMode === 'street') {
+      levelMapTitle.textContent = '🗺️ STREET PATROL — 8 PH LEVELS';
+      buildStreetAdventureMap();
+    } else if (selectedGameMode === 'jeep') {
+      levelMapTitle.textContent = '🚐 THE JEEP RIDE — SELECT MODE';
+    } else {
+      levelMapTitle.textContent = '🍲 KARENDERYA MANIA — LEVEL MAP';
+      buildKarenderyaMap();
+    }
+    showFlowScreen(levelMapOverlay);
+  }
+
+  // Step 1 -> Step 2 (PLAY -> Select a Game)
+  document.getElementById('btnPlayEntry').addEventListener('click', () => {
+    SoundFX.unlock();
+    showFlowScreen(selectGameOverlay);
+  });
+  document.getElementById('btnBackToTitle').addEventListener('click', () => showFlowScreen(titleOverlay));
+
+  // Step 2 -> Step 3 (Select Game -> Player Visual Customizer)
+  document.querySelectorAll('.game-select-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      selectedGameMode = card.dataset.game || 'street';
+      // Smart default visual suggestion per game (player can still customize every part!)
+      if (selectedGameMode === 'jeep') applyCustomPreset('jersey');
+      else if (selectedGameMode === 'karenderya') applyCustomPreset('manong');
+      else applyCustomPreset('classic');
+      showFlowScreen(customizerOverlay);
+    });
+  });
+  document.getElementById('btnBackToGames').addEventListener('click', () => showFlowScreen(selectGameOverlay));
+
+  // Step 3: Visual Customizer Pills & Presets
+  document.querySelectorAll('.cust-pills').forEach((group) => {
+    const part = group.dataset.part;
+    group.querySelectorAll('.cust-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playerCustom[part] = btn.dataset.val;
+        syncCustomizerPills();
+      });
+    });
+  });
+  document.querySelectorAll('.preset-chip').forEach((chip) => {
+    chip.addEventListener('click', () => applyCustomPreset(chip.dataset.preset));
+  });
+
+  // Step 3 -> Step 4 (Player Customizer -> Level Map / Mode Select)
+  document.getElementById('btnToLevelMap').addEventListener('click', openLevelMapForSelectedGame);
+  document.getElementById('btnBackToCustom').addEventListener('click', () => showFlowScreen(customizerOverlay));
+
+  // Step 4: Jeep Sub-Mode (Route vs Endless) + Launch Buttons
+  document.querySelectorAll('.jeep-submode-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.jeep-submode-card').forEach((c) => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedJeepSubMode = card.dataset.jeepmode || 'route';
     });
   });
 
-  // Outfit Toggle (Classic Black Shirt vs Yellow Jersey + Backward Cap)
-  document.querySelectorAll('.outfit-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.outfit-btn').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedOutfit = btn.dataset.outfit || 'classic';
-      syncTitleShowcase();
-    });
+  document.getElementById('btnLaunchStreet').addEventListener('click', () => {
+    selectedGameMode = 'street';
+    startGame(selectedStage);
+  });
+  document.getElementById('btnLaunchJeep').addEventListener('click', () => {
+    selectedGameMode = 'jeep';
+    startJeepRide(selectedJeepSubMode);
+  });
+  document.getElementById('btnLaunchKaren').addEventListener('click', () => {
+    selectedGameMode = 'karenderya';
+    startKarenderya(selectedKarenLevel);
   });
 
-  // Street Patrol Stage selection pills
-  document.querySelectorAll('#stageSelector .stage-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#stageSelector .stage-btn').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedStage = Number(btn.dataset.stage || 0);
-    });
-  });
-
-  // Karenderya Level selection pills
-  document.querySelectorAll('#karenLevelSelector .karen-lvl-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#karenLevelSelector .karen-lvl-btn').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedKarenLevel = Number(btn.dataset.klvl || 0);
-    });
-  });
-
-  btnStart.addEventListener('click', () => startGame(selectedStage));
   document.getElementById('btnHowTo').addEventListener('click', () => howToOverlay.classList.remove('hidden'));
   document.getElementById('btnCloseHowTo').addEventListener('click', () => howToOverlay.classList.add('hidden'));
 
@@ -1739,7 +2038,7 @@
 
   function restartCurrentMode() {
     if (activeGameMode === 'jeep') {
-      startJeepRide();
+      startJeepRide(selectedJeepSubMode);
       return;
     }
     if (activeGameMode === 'karenderya') {
@@ -1772,9 +2071,25 @@
     updateHighScoreUI();
   }
 
+  function returnToLevelMap() {
+    SoundFX.stopBGM();
+    JeepRide.stop();
+    Karenderya.stop();
+    mode = 'title';
+    hud.classList.add('hidden');
+    jeepHud.classList.add('hidden');
+    karenderyaHud.classList.add('hidden');
+    bossBar.classList.add('hidden');
+    toastBanner.classList.add('hidden');
+    syncTouchControlsVisibility();
+    openLevelMapForSelectedGame();
+  }
+
   document.getElementById('btnQuitTitle').addEventListener('click', returnToTitle);
-  document.getElementById('btnMenuClear').addEventListener('click', returnToTitle);
   document.getElementById('btnMenuOver').addEventListener('click', returnToTitle);
+  document.getElementById('btnMapFromPause').addEventListener('click', returnToLevelMap);
+  document.getElementById('btnMapFromClear').addEventListener('click', returnToLevelMap);
+  document.getElementById('btnMapFromOver').addEventListener('click', returnToLevelMap);
 
   document.getElementById('btnNextStage').addEventListener('click', () => {
     if (activeGameMode === 'karenderya') {
@@ -1784,7 +2099,8 @@
       return;
     }
     if (currentStageIndex + 1 < Levels.count) {
-      document.getElementById('btnNextStage').textContent = 'NEXT STREET ➔';
+      document.getElementById('btnNextStage').textContent = 'NEXT LEVEL ➔';
+      selectedStage = currentStageIndex + 1;
       loadStage(currentStageIndex + 1, true);
       mode = 'playing';
       hideAllOverlays();
@@ -1812,7 +2128,7 @@
   if (btnSoundJeep) btnSoundJeep.addEventListener('click', toggleGameSound);
   if (btnSoundKaren) btnSoundKaren.addEventListener('click', toggleGameSound);
 
-  // Direct Canvas Pointer Handler for Karenderya Mania (Tap Pots & Customers!)
+  // Direct Canvas Pointer Handler for Karenderya Mania
   canvas.addEventListener('pointerdown', (ev) => {
     if (activeGameMode !== 'karenderya' || mode !== 'playing') return;
     ev.preventDefault();
@@ -1822,48 +2138,42 @@
     Karenderya.handleCanvasPointer(cx, cy);
   });
 
-  // Reusable Virtual Thumb Joystick Helper (Pointer-captured, smooth on mobile & desktop!)
-  function bindVirtualJoystick(baseEl, knobEl, onMove, onRelease) {
-    if (!baseEl || !knobEl) return;
+  // HORIZONTAL FORWARD / BACKWARD-ONLY VIRTUAL JOYSTICK (Same clean 1D slider for BOTH Street Patrol & Jeep Ride!)
+  function bindHorizontalJoystick(trackEl, knobEl, onMoveX, onRelease) {
+    if (!trackEl || !knobEl) return;
     let pointerId = null;
 
-    function updateStick(clientX, clientY) {
-      const rect = baseEl.getBoundingClientRect();
+    function updateStick(clientX) {
+      const rect = trackEl.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const maxR = rect.width * 0.34;
+      const maxX = Math.max(24, rect.width / 2 - 28);
       let dx = clientX - cx;
-      let dy = clientY - cy;
-      const dist = Math.hypot(dx, dy);
-      if (dist > maxR) {
-        dx = (dx / dist) * maxR;
-        dy = (dy / dist) * maxR;
-      }
-      knobEl.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
-      onMove(dx / maxR, dy / maxR);
+      dx = Math.max(-maxX, Math.min(maxX, dx));
+      knobEl.style.transform = `translate(${dx.toFixed(1)}px, 0px)`;
+      onMoveX(dx / maxX);
     }
 
     function resetStick() {
       pointerId = null;
-      baseEl.classList.remove('active');
+      trackEl.classList.remove('active');
       knobEl.style.transform = 'translate(0px, 0px)';
       onRelease();
     }
 
-    baseEl.addEventListener('pointerdown', (ev) => {
+    trackEl.addEventListener('pointerdown', (ev) => {
       ev.preventDefault();
       pointerId = ev.pointerId;
-      baseEl.classList.add('active');
-      if (baseEl.setPointerCapture) {
-        try { baseEl.setPointerCapture(pointerId); } catch (_) {}
+      trackEl.classList.add('active');
+      if (trackEl.setPointerCapture) {
+        try { trackEl.setPointerCapture(pointerId); } catch (_) {}
       }
-      updateStick(ev.clientX, ev.clientY);
+      updateStick(ev.clientX);
     });
 
-    baseEl.addEventListener('pointermove', (ev) => {
+    trackEl.addEventListener('pointermove', (ev) => {
       if (ev.pointerId !== pointerId) return;
       ev.preventDefault();
-      updateStick(ev.clientX, ev.clientY);
+      updateStick(ev.clientX);
     });
 
     const end = (ev) => {
@@ -1871,48 +2181,33 @@
       ev.preventDefault();
       resetStick();
     };
-    baseEl.addEventListener('pointerup', end);
-    baseEl.addEventListener('pointercancel', end);
+    trackEl.addEventListener('pointerup', end);
+    trackEl.addEventListener('pointercancel', end);
   }
 
-  // Bind Street Patrol Virtual Joystick (Left/Right run + Up-flick Jump!)
-  let streetJoyJumpLatched = false;
-  bindVirtualJoystick(
+  // Street Patrol Forward/Backward-Only Joystick
+  bindHorizontalJoystick(
     document.getElementById('streetJoystick'),
     document.getElementById('streetJoyKnob'),
-    (nx, ny) => {
-      keys.left = nx < -0.24;
-      keys.right = nx > 0.24;
-      if (ny < -0.62) {
-        if (!streetJoyJumpLatched) {
-          keys.jumpPressed = true;
-          streetJoyJumpLatched = true;
-        }
-        keys.jump = true;
-      } else {
-        streetJoyJumpLatched = false;
-        keys.jump = false;
-      }
+    (nx) => {
+      keys.left = nx < -0.2;
+      keys.right = nx > 0.2;
     },
     () => {
       keys.left = false;
       keys.right = false;
-      keys.jump = false;
-      streetJoyJumpLatched = false;
     }
   );
 
-  // Bind The Jeep Ride (EDSA) Virtual Joystick (Smooth Up/Down EDSA Steering + Left Brake / Right Gas!)
-  bindVirtualJoystick(
+  // The Jeep Ride Forward/Backward-Only Joystick (same horizontal feel as Street Patrol!)
+  bindHorizontalJoystick(
     document.getElementById('jeepJoystick'),
     document.getElementById('jeepJoyKnob'),
-    (nx, ny) => {
+    (nx) => {
       jeepKeys.joyX = nx;
-      jeepKeys.joyY = ny;
     },
     () => {
       jeepKeys.joyX = 0;
-      jeepKeys.joyY = 0;
     }
   );
 
@@ -1928,22 +2223,22 @@
     syncTouchControlsVisibility();
   });
 
-  // Jeep Ride Pedal & Horn Touch Buttons!
+  // Jeep Ride Right-Hand Touch Controls (UP / DOWN lane switches + STOP + BEEP!)
   if (jeepTouchControls) {
     jeepTouchControls.querySelectorAll('.touch-btn').forEach((btn) => {
       const action = btn.dataset.jeep;
       const press = (ev) => {
         ev.preventDefault();
         btn.classList.add('pressed');
+        if (action === 'up') JeepRide.moveLane(-1);
+        if (action === 'down') JeepRide.moveLane(1);
         if (action === 'brake') jeepKeys.brake = true;
-        if (action === 'gas') jeepKeys.gas = true;
         if (action === 'horn') JeepRide.honkHorn();
       };
       const release = (ev) => {
         ev.preventDefault();
         btn.classList.remove('pressed');
         if (action === 'brake') jeepKeys.brake = false;
-        if (action === 'gas') jeepKeys.gas = false;
       };
       btn.addEventListener('pointerdown', press);
       btn.addEventListener('pointerup', release);
@@ -2017,6 +2312,7 @@
     lastTime = now;
     update(dt);
     render();
+    renderPreviewHero();
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);

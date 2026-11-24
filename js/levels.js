@@ -387,10 +387,313 @@ const Levels = (() => {
     };
   }
 
-  const builders = [buildStage1, buildStage2, buildStage3, buildStage4];
+  function buildStage5() {
+    // STAGE 5: THE PASIG RIVER — Big Magnanakaw with Knife, Boost Knife, Baril & 3 Hearts!
+    const platforms = [
+      { x: 0, y: GROUND_Y, w: 1120, h: 90, style: 'boardwalk' },
+      { x: 1270, y: GROUND_Y, w: 1080, h: 90, style: 'boardwalk' },
+      { x: 2500, y: GROUND_Y, w: 1380, h: 90, style: 'boardwalk' },
+
+      // Bouncy Pasig River Ferry Boats!
+      { x: 650, y: GROUND_Y - 72, w: 195, h: 72, style: 'ferry', bouncy: true },
+      { x: 1740, y: GROUND_Y - 72, w: 195, h: 72, style: 'ferry', bouncy: true },
+      { x: 2880, y: GROUND_Y - 72, w: 195, h: 72, style: 'ferry', bouncy: true },
+
+      // Elevated River Bridges
+      { x: 960, y: 375, w: 190, h: 24, style: 'bridge' },
+      { x: 1460, y: 360, w: 195, h: 24, style: 'bridge' },
+      { x: 2050, y: 350, w: 205, h: 24, style: 'bridge' },
+      { x: 2370, y: 420, w: 135, h: 24, style: 'bridge' },
+      { x: 3180, y: 360, w: 190, h: 24, style: 'bridge' }
+    ];
+
+    const blocks = [
+      { x: 250, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 294, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'gun' },
+      { x: 338, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 1030, y: 250, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 1525, y: 235, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 2120, y: 225, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 2710, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 3250, y: 235, size: BLOCK_SIZE, type: 'question', reward: 'blaster' }
+    ];
+
+    const pickups = [
+      // Immediate Boost Knife + Baril + 3 Claimable Hearts across Pasig River!
+      { x: 150, y: 488, type: 'knife' },
+      { x: 205, y: 488, type: 'gun' },
+      { x: 430, y: 488, type: 'heart' },
+      ...coinArc(745, 345, 5, 38),
+      { x: 1010, y: 330, type: 'cash' },
+      { x: 1340, y: 488, type: 'blaster' },
+      { x: 1510, y: 315, type: 'heart' },
+      ...coinArc(1835, 345, 5, 38),
+      { x: 2095, y: 305, type: 'knife' },
+      { x: 2610, y: 488, type: 'heart' },
+      { x: 2665, y: 488, type: 'energy' },
+      ...coinArc(2975, 345, 5, 38),
+      { x: 3225, y: 315, type: 'cash' }
+    ];
+
+    const enemies = [
+      { x: 540, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 1020, y: 375 - 64, type: 'big_knife_thief' },
+      { x: 1410, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 1620, y: GROUND_Y - 52, type: 'runner' },
+      { x: 2090, y: 350 - 64, type: 'big_knife_thief' },
+      { x: 2210, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 2740, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 3180, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 3390, y: GROUND_Y - 64, type: 'big_knife_thief' }
+    ];
+
+    return {
+      index: 4,
+      name: 'STAGE 5 · THE PASIG RIVER',
+      theme: 'pasig',
+      width: 3880,
+      goalX: 3640,
+      platforms,
+      blocks,
+      pickups,
+      enemies
+    };
+  }
+
+  function buildStage6() {
+    // STAGE 6: ILOCOS NORTE — Armed Drug Addict Enemies with Gun & Knife!
+    const platforms = [
+      { x: 0, y: GROUND_Y, w: 1060, h: 90, style: 'sandroad' },
+      { x: 1210, y: GROUND_Y, w: 1080, h: 90, style: 'sandroad' },
+      { x: 2440, y: GROUND_Y, w: 1480, h: 90, style: 'sandroad' },
+
+      { x: 610, y: GROUND_Y - 82, w: 195, h: 82, style: 'jeepney', bouncy: true, route: 'LAOAG · BANGUI', color: '#f97316' },
+      { x: 1680, y: GROUND_Y - 82, w: 195, h: 82, style: 'jeepney', bouncy: true, route: 'PAOAY · VIGAN', color: '#0284c7' },
+      { x: 2860, y: GROUND_Y - 82, w: 195, h: 82, style: 'jeepney', bouncy: true, route: 'ILOCOS EXPRESS', color: '#ef4444' },
+
+      { x: 890, y: 375, w: 185, h: 24, style: 'awning' },
+      { x: 1380, y: 360, w: 205, h: 24, style: 'bridge' },
+      { x: 1980, y: 350, w: 210, h: 24, style: 'bridge' },
+      { x: 2300, y: 420, w: 140, h: 24, style: 'awning' },
+      { x: 3170, y: 355, w: 200, h: 24, style: 'bridge' }
+    ];
+
+    const blocks = [
+      { x: 240, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 284, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 328, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 1445, y: 235, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 2045, y: 225, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 2680, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 3235, y: 230, size: BLOCK_SIZE, type: 'question', reward: 'heart' }
+    ];
+
+    const pickups = [
+      { x: 155, y: 488, type: 'blaster' },
+      { x: 205, y: 488, type: 'knife' },
+      ...coinArc(705, 345, 5, 38),
+      { x: 940, y: 330, type: 'heart' },
+      { x: 1300, y: 488, type: 'energy' },
+      { x: 1435, y: 315, type: 'cash' },
+      ...coinArc(1775, 345, 5, 38),
+      { x: 2020, y: 305, type: 'heart' },
+      { x: 2560, y: 488, type: 'blaster' },
+      { x: 2615, y: 488, type: 'knife' },
+      ...coinArc(2955, 345, 5, 38),
+      { x: 3220, y: 310, type: 'cash' }
+    ];
+
+    const enemies = [
+      { x: 500, y: GROUND_Y - 58, type: 'armed_gang' },
+      { x: 940, y: 375 - 58, type: 'armed_gang' },
+      { x: 1340, y: GROUND_Y - 58, type: 'armed_gang' },
+      { x: 1510, y: 360 - 58, type: 'armed_gang' },
+      { x: 1940, y: GROUND_Y - 58, type: 'armed_gang' },
+      { x: 2110, y: 350 - 58, type: 'armed_gang' },
+      { x: 2660, y: GROUND_Y - 58, type: 'armed_gang' },
+      { x: 2790, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 3260, y: GROUND_Y - 58, type: 'armed_gang' },
+      { x: 3440, y: GROUND_Y - 58, type: 'armed_gang' }
+    ];
+
+    return {
+      index: 5,
+      name: 'STAGE 6 · ILOCOS NORTE',
+      theme: 'ilocos',
+      width: 3920,
+      goalX: 3680,
+      platforms,
+      blocks,
+      pickups,
+      enemies
+    };
+  }
+
+  function buildStage7() {
+    // STAGE 7: PANGASINAN BEACH — DOUBLE BOSS: BOSS MAGNANAKAW & BOSS MANDURUKOT!
+    const platforms = [
+      { x: 0, y: GROUND_Y, w: 1080, h: 90, style: 'beach' },
+      { x: 1220, y: GROUND_Y, w: 980, h: 90, style: 'beach' },
+      // Wide Pangasinan Beach Dual-Boss Arena!
+      { x: 2340, y: GROUND_Y, w: 1720, h: 90, style: 'beach' },
+
+      // Bouncy Pangasinan Bangka Outrigger Boats!
+      { x: 600, y: GROUND_Y - 68, w: 190, h: 68, style: 'bangka', bouncy: true },
+      { x: 1580, y: GROUND_Y - 68, w: 190, h: 68, style: 'bangka', bouncy: true },
+      { x: 2550, y: GROUND_Y - 68, w: 185, h: 68, style: 'bangka', bouncy: true },
+
+      { x: 880, y: 375, w: 180, h: 24, style: 'awning' },
+      { x: 1850, y: 360, w: 195, h: 24, style: 'awning' },
+      // Boss Arena Tactical Bamboo Platforms
+      { x: 2880, y: 385, w: 175, h: 24, style: 'awning' },
+      { x: 3290, y: 385, w: 175, h: 24, style: 'awning' }
+    ];
+
+    const blocks = [
+      { x: 240, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 284, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 328, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 1915, y: 235, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      // Boss arena resupply!
+      { x: 2945, y: 260, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 3130, y: 325, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 3355, y: 260, size: BLOCK_SIZE, type: 'question', reward: 'heart' }
+    ];
+
+    const pickups = [
+      { x: 155, y: 488, type: 'blaster' },
+      { x: 205, y: 488, type: 'knife' },
+      ...coinArc(695, 345, 5, 38),
+      { x: 925, y: 330, type: 'cash' },
+      { x: 1320, y: 488, type: 'heart' },
+      ...coinArc(1675, 345, 5, 38),
+      { x: 1900, y: 315, type: 'cash' },
+      { x: 2460, y: 488, type: 'energy' },
+      { x: 2505, y: 488, type: 'heart' },
+      { x: 3500, y: 488, type: 'energy' }
+    ];
+
+    const enemies = [
+      { x: 480, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      { x: 930, y: 375 - 58, type: 'armed_gang' },
+      { x: 1380, y: GROUND_Y - 52, type: 'runner' },
+      { x: 1890, y: 360 - 58, type: 'armed_gang' },
+      { x: 2010, y: GROUND_Y - 64, type: 'big_knife_thief' },
+      // DOUBLE BOSS SHOWDOWN ON PANGASINAN BEACH!
+      { x: 3060, y: GROUND_Y - 88, type: 'boss_magnanakaw', arenaMinX: 2460, arenaMaxX: 3560 },
+      { x: 3340, y: GROUND_Y - 86, type: 'boss', arenaMinX: 2460, arenaMaxX: 3560 }
+    ];
+
+    return {
+      index: 6,
+      name: 'STAGE 7 · PANGASINAN BEACH',
+      theme: 'pangasinan',
+      width: 4060,
+      goalX: 3820,
+      bossStage: true,
+      platforms,
+      blocks,
+      pickups,
+      enemies
+    };
+  }
+
+  function buildStage8() {
+    // STAGE 8: KAGUBATAN — Philippine Mythical Creatures: Tikbalang, Manananggal, Kapre & Alpha Tikbalang Boss!
+    const platforms = [
+      { x: 0, y: GROUND_Y, w: 1080, h: 90, style: 'forest' },
+      { x: 1230, y: GROUND_Y, w: 1020, h: 90, style: 'forest' },
+      // Mystical Forest Final Boss Clearing!
+      { x: 2400, y: GROUND_Y, w: 1760, h: 90, style: 'forest' },
+
+      // Bouncy Giant Forest Mushrooms!
+      { x: 610, y: GROUND_Y - 66, w: 130, h: 66, style: 'mushroom', bouncy: true },
+      { x: 1620, y: GROUND_Y - 66, w: 130, h: 66, style: 'mushroom', bouncy: true },
+      { x: 2600, y: GROUND_Y - 66, w: 130, h: 66, style: 'mushroom', bouncy: true },
+
+      { x: 860, y: 375, w: 195, h: 24, style: 'awning' },
+      { x: 1340, y: 355, w: 195, h: 24, style: 'awning' },
+      { x: 1880, y: 345, w: 215, h: 24, style: 'awning' },
+      { x: 2920, y: 380, w: 185, h: 24, style: 'awning' },
+      { x: 3340, y: 380, w: 185, h: 24, style: 'awning' }
+    ];
+
+    const blocks = [
+      { x: 240, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 284, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 328, y: 410, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 1410, y: 230, size: BLOCK_SIZE, type: 'question', reward: 'heart' },
+      { x: 1950, y: 220, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 2990, y: 255, size: BLOCK_SIZE, type: 'question', reward: 'blaster' },
+      { x: 3180, y: 320, size: BLOCK_SIZE, type: 'question', reward: 'knife' },
+      { x: 3405, y: 255, size: BLOCK_SIZE, type: 'question', reward: 'heart' }
+    ];
+
+    const pickups = [
+      { x: 155, y: 488, type: 'blaster' },
+      { x: 205, y: 488, type: 'knife' },
+      ...coinArc(675, 345, 5, 38),
+      { x: 910, y: 330, type: 'heart' },
+      { x: 1385, y: 310, type: 'cash' },
+      ...coinArc(1685, 345, 5, 38),
+      { x: 1935, y: 300, type: 'knife' },
+      { x: 2490, y: 488, type: 'heart' },
+      { x: 2545, y: 488, type: 'energy' },
+      { x: 3580, y: 488, type: 'energy' }
+    ];
+
+    const enemies = [
+      { x: 490, y: GROUND_Y - 68, type: 'tikbalang' },
+      { x: 840, y: 255, type: 'manananggal' },
+      { x: 1000, y: GROUND_Y - 72, type: 'kapre' },
+      { x: 1380, y: GROUND_Y - 68, type: 'tikbalang' },
+      { x: 1540, y: 235, type: 'manananggal' },
+      { x: 1940, y: 345 - 72, type: 'kapre' },
+      { x: 2120, y: GROUND_Y - 68, type: 'tikbalang' },
+      // FINAL MYTHIC BOSS: HARI NG KAGUBATAN (ALPHA TIKBALANG) + FLYING MANANANGGAL!
+      { x: 3080, y: 240, type: 'manananggal' },
+      { x: 3320, y: GROUND_Y - 94, type: 'tikbalang_boss', arenaMinX: 2520, arenaMaxX: 3660 }
+    ];
+
+    return {
+      index: 7,
+      name: 'STAGE 8 · KAGUBATAN (MYTHIC FINALE)',
+      theme: 'kagubatan',
+      width: 4160,
+      goalX: 3920,
+      bossStage: true,
+      platforms,
+      blocks,
+      pickups,
+      enemies
+    };
+  }
+
+  const META = [
+    { index: 0, icon: '🏘️', short: 'Barangay Kalye', sub: 'Manila', desc: 'Sunny Manila street! Grab your first Baril, double-jump over jeepneys & stop street snatchers.' },
+    { index: 1, icon: '🌇', short: 'Divisoria Rush', sub: 'Market', desc: 'Golden-hour market rush! Dodge flying bottles and battle pickpocket runners across awnings.' },
+    { index: 2, icon: '🌙', short: 'Midnight Boss', sub: 'EDSA Night', desc: 'Neon Manila night! Defeat Boss Mandurukot on the rooftops to save the barangay.' },
+    { index: 3, icon: '🏛️', short: 'Malacañang', sub: 'Manila', desc: 'Crocodile-headed thieves in Barong Tagalog! Recover Coins & Cash from Don Buwaya!' },
+    { index: 4, icon: '🌊', short: 'Pasig River', sub: 'Knife & Hearts', desc: 'Pasig River boardwalk & ferries! Battle Big Magnanakaw with Knife—claim Boost Knife, Baril & 3 Hearts!' },
+    { index: 5, icon: '🌬️', short: 'Ilocos Norte', sub: 'Windmills', desc: 'Spinning Bangui Windmills & sand dunes! Watch out for armed Drug Addict thugs wielding Guns & Knives!' },
+    { index: 6, icon: '🏖️', short: 'Pangasinan Beach', sub: 'Double Boss', desc: 'Hundred Islands shore & bangka boats! Survive the Double Boss battle: BOSS Magnanakaw & BOSS Mandurukot!' },
+    { index: 7, icon: '🌲', short: 'Kagubatan', sub: 'Mythic Finale', desc: 'Enchanted Philippine jungle! Face the Tikbalang, flying Manananggal, Kapre & Alpha Tikbalang Boss!' }
+  ];
+
+  const builders = [
+    buildStage1,
+    buildStage2,
+    buildStage3,
+    buildStage4,
+    buildStage5,
+    buildStage6,
+    buildStage7,
+    buildStage8
+  ];
 
   return {
     GROUND_Y,
+    META,
     count: builders.length,
     load(index) {
       const safe = Math.max(0, Math.min(builders.length - 1, index));

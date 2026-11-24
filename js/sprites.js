@@ -33,7 +33,16 @@ const Sprites = (() => {
     const punchProgress = p.punchTimer > 0 ? p.punchTimer / p.punchDuration : 0;
     const isPunching = punchProgress > 0;
     const isShooting = p.shootFlashTimer > 0;
-    const isJersey = p.outfit === 'jersey';
+    const custom = p.custom || {
+      head: p.outfit === 'jersey' ? 'backcap' : 'spiky',
+      skin: 'tan',
+      top: p.outfit === 'jersey' ? 'jersey' : 'black',
+      bottom: p.outfit === 'jersey' ? 'shorts' : 'maong'
+    };
+    const skinTone = custom.skin === 'light' ? '#fbd3b4' : custom.skin === 'deep' ? '#c98856' : '#f5be93';
+    const skinShadow = custom.skin === 'light' ? '#ebb690' : custom.skin === 'deep' ? '#a86b3e' : '#e5a373';
+    const sleeveColor = custom.top === 'jersey' ? skinTone : custom.top === 'manong' ? '#ffffff' : custom.top === 'red' ? '#dc2626' : '#18181b';
+    const hasKnife = (p.knifeAmmo || 0) > 0;
 
     // Ground shadow
     if (p.onGround) {
@@ -65,24 +74,24 @@ const Sprites = (() => {
     const lean = isPunching ? 0.16 : moving ? 0.08 : 0;
     ctx.rotate(lean);
 
-    // ---- BACK ARM (black t-shirt sleeve OR sleeveless jersey shoulder + tan forearm) ----
+    // ---- BACK ARM ----
     ctx.save();
     const backArmSwing = p.onGround ? -walkPhase * 0.6 : -0.5;
     ctx.translate(-7, -26 + bob);
     ctx.rotate(backArmSwing);
-    ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
+    ctx.fillStyle = sleeveColor;
     ctx.strokeStyle = INK;
     ctx.lineWidth = 2.4;
     roundRect(ctx, -5, -2, 9, 10, 4);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#f2b88a';
+    ctx.fillStyle = skinTone;
     roundRect(ctx, -4, 6, 7, 8, 3.5);
     ctx.fill();
     ctx.stroke();
     ctx.restore();
 
-    // ---- LEGS: MAONG PANTS OR BLACK SHORTS + SNEAKERS ----
+    // ---- LEGS: MAONG PANTS / BLACK SHORTS / KHAKI CARGO SHORTS + SNEAKERS ----
     const leftLegAngle = p.onGround ? walkPhase * 0.55 : -0.35;
     const rightLegAngle = p.onGround ? -walkPhase * 0.55 : 0.45;
 
@@ -91,38 +100,38 @@ const Sprites = (() => {
       ctx.translate(offsetX, -19 + bob);
       ctx.rotate(angle);
 
-      if (isJersey) {
-        // Black basketball shorts leg
-        ctx.fillStyle = isFront ? '#18181b' : '#09090b';
+      if (custom.bottom === 'shorts' || custom.bottom === 'cargo') {
+        const isCargo = custom.bottom === 'cargo';
+        ctx.fillStyle = isCargo
+          ? (isFront ? '#ca8a04' : '#a16207')
+          : (isFront ? '#18181b' : '#09090b');
         ctx.strokeStyle = INK;
         ctx.lineWidth = 2.4;
         roundRect(ctx, -6.5, 0, 13, 8.5, 3);
         ctx.fill();
         ctx.stroke();
-        // White side stripe on black shorts
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(2, 1.5, 2.2, 6);
-        // Tan lower calf
-        ctx.fillStyle = '#f2b88a';
+        if (!isCargo) {
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(2, 1.5, 2.2, 6);
+        }
+        ctx.fillStyle = skinTone;
         roundRect(ctx, -4.5, 7.5, 9, 6.5, 3);
         ctx.fill();
         ctx.stroke();
       } else {
-        // Denim pants leg
+        // Denim maong pants leg
         ctx.fillStyle = isFront ? '#2563eb' : '#1d4ed8';
         ctx.strokeStyle = INK;
         ctx.lineWidth = 2.5;
         roundRect(ctx, -6, 0, 12, 13, 4);
         ctx.fill();
         ctx.stroke();
-        // Denim gold side stitching
         ctx.strokeStyle = '#fbbf24';
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(2, 2);
         ctx.lineTo(2, 9);
         ctx.stroke();
-        // Cuffed maong hem
         ctx.fillStyle = '#93c5fd';
         ctx.strokeStyle = INK;
         ctx.lineWidth = 2;
@@ -138,8 +147,6 @@ const Sprites = (() => {
       roundRect(ctx, -5, 12.5, 15, 7, 3.5);
       ctx.fill();
       ctx.stroke();
-
-      // Red sneaker stripe
       ctx.fillStyle = '#ef4444';
       ctx.fillRect(0, 14.5, 6, 2.5);
       ctx.restore();
@@ -148,28 +155,25 @@ const Sprites = (() => {
     drawHeroLeg(-5, leftLegAngle, false);
     drawHeroLeg(5, rightLegAngle, true);
 
-    // ---- TORSO: BLACK SHIRT OR YELLOW #8 JERSEY ----
+    // ---- TORSO: BLACK SHIRT / YELLOW #8 JERSEY / WHITE MANONG + TOWEL / RED STREET TEE ----
     ctx.save();
     ctx.translate(0, -29 + bob);
 
-    if (isJersey) {
-      // Black shorts waistband
-      ctx.fillStyle = '#111827';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 2.3;
-      roundRect(ctx, -11.5, 9, 23, 6, 3);
-      ctx.fill();
-      ctx.stroke();
+    // Waistband peek
+    ctx.fillStyle = custom.bottom === 'maong' ? '#1e40af' : custom.bottom === 'cargo' ? '#a16207' : '#111827';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.3;
+    roundRect(ctx, -11.5, 9, 23, 6, 3);
+    ctx.fill();
+    ctx.stroke();
 
-      // Bright Yellow Basketball Jersey!
+    if (custom.top === 'jersey') {
       ctx.fillStyle = '#facc15';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.8;
       roundRect(ctx, -12.5, -5, 25, 17, 6);
       ctx.fill();
       ctx.stroke();
-
-      // Red jersey V-neck & armhole trim
       ctx.strokeStyle = '#dc2626';
       ctx.lineWidth = 2.4;
       ctx.beginPath();
@@ -177,8 +181,6 @@ const Sprites = (() => {
       ctx.lineTo(0, 0.5);
       ctx.lineTo(5.5, -4.5);
       ctx.stroke();
-
-      // Jersey number "8"
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.2;
@@ -186,31 +188,35 @@ const Sprites = (() => {
       ctx.textAlign = 'center';
       ctx.strokeText('8', 1, 9.5);
       ctx.fillText('8', 1, 9.5);
-    } else {
-      // Maong denim belt/waistband peek
-      ctx.fillStyle = '#1e40af';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 2.4;
-      roundRect(ctx, -11.5, 9, 23, 6, 3);
-      ctx.fill();
-      ctx.stroke();
-
-      // Black crew-neck t-shirt body
-      ctx.fillStyle = '#18181b';
+    } else if (custom.top === 'manong') {
+      // Crisp White Shirt + Red-Striped Kitchen Towel draped over shoulder!
+      ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.8;
       roundRect(ctx, -12.5, -5, 25, 17, 6);
       ctx.fill();
       ctx.stroke();
-
-      // Subtle fabric highlight on black shirt
-      ctx.fillStyle = '#334155';
+      // Shoulder towel (bimpo)
+      ctx.fillStyle = '#f8fafc';
+      ctx.lineWidth = 2;
+      roundRect(ctx, -11, -6, 9, 17, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-10, 4, 7, 2.2);
+      ctx.fillRect(-10, 7.5, 7, 2.2);
+    } else {
+      ctx.fillStyle = custom.top === 'red' ? '#dc2626' : '#18181b';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.8;
+      roundRect(ctx, -12.5, -5, 25, 17, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = custom.top === 'red' ? '#f87171' : '#334155';
       ctx.beginPath();
       ctx.ellipse(-4, 1, 5, 2.2, -0.3, 0, Math.PI * 2);
       ctx.fill();
-
-      // Crew-neck collar
-      ctx.strokeStyle = '#3f3f46';
+      ctx.strokeStyle = custom.top === 'red' ? '#991b1b' : '#3f3f46';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(0, -4, 5.5, 0.15, Math.PI - 0.15);
@@ -222,8 +228,18 @@ const Sprites = (() => {
     ctx.save();
     ctx.translate(1, -46 + bob);
 
+    // Long flowing back hair for Bandana (Jeo Ong style!)
+    if (custom.head === 'bandana') {
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.5;
+      roundRect(ctx, -20, -6, 14, 28, 6);
+      ctx.fill();
+      ctx.stroke();
+    }
+
     // Ear
-    ctx.fillStyle = '#e5a373';
+    ctx.fillStyle = skinShadow;
     ctx.strokeStyle = INK;
     ctx.lineWidth = 2.4;
     ctx.beginPath();
@@ -232,7 +248,7 @@ const Sprites = (() => {
     ctx.stroke();
 
     // Round chibi face
-    ctx.fillStyle = '#f5be93';
+    ctx.fillStyle = skinTone;
     ctx.strokeStyle = INK;
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -303,7 +319,23 @@ const Sprites = (() => {
       ctx.stroke();
     }
 
-    if (isJersey) {
+    // Optional Mustache for Manong face OR Cool Shades!
+    if (custom.head === 'manong') {
+      ctx.fillStyle = '#1f2937';
+      ctx.beginPath();
+      ctx.ellipse(1, 5.2, 4, 1.8, -0.1, 0, Math.PI * 2);
+      ctx.ellipse(7, 5.2, 4, 1.8, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (custom.head === 'shades') {
+      ctx.fillStyle = '#111827';
+      roundRect(ctx, -6, -3.5, 20, 7.5, 2.5);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(-3.5, -2, 5, 2);
+      ctx.fillRect(5.5, -2, 5, 2);
+    }
+
+    if (custom.head === 'backcap') {
       // Hair tufts peeking out from under the BACKWARD CAP!
       ctx.fillStyle = '#18181b';
       ctx.strokeStyle = INK;
@@ -336,8 +368,6 @@ const Sprites = (() => {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      // Back panel darker accent
       ctx.fillStyle = '#1f2937';
       ctx.beginPath();
       ctx.arc(0, -5, 16.2, Math.PI + 0.1, Math.PI * 1.42);
@@ -345,22 +375,17 @@ const Sprites = (() => {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      // Cap top button
       ctx.fillStyle = '#1f2937';
       ctx.beginPath();
       ctx.arc(0, -22, 2.8, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-
-      // Signature FRONT snapback cutout & strap (the back of the cap worn in FRONT!)
       ctx.fillStyle = '#18181b';
       ctx.beginPath();
       ctx.arc(7, -8, 5.2, Math.PI, 0);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-      // Little spiky hair tuft poking through front snapback hole
       ctx.fillStyle = '#27272a';
       ctx.beginPath();
       ctx.moveTo(4, -9);
@@ -368,13 +393,52 @@ const Sprites = (() => {
       ctx.lineTo(10, -9);
       ctx.closePath();
       ctx.fill();
-      // Snapback strap bar across the forehead
       ctx.fillStyle = '#475569';
       roundRect(ctx, 1, -9.5, 12, 3.8, 1.5);
       ctx.fill();
       ctx.stroke();
+    } else if (custom.head === 'bandana') {
+      // Long hair + Red Bandana wrapped across forehead!
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.arc(0, -5, 16.5, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#dc2626';
+      roundRect(ctx, -17, -12, 34, 8, 3.5);
+      ctx.fill();
+      ctx.stroke();
+      // Bandana tail fluttering behind
+      ctx.beginPath();
+      ctx.moveTo(-16, -9);
+      ctx.lineTo(-26, -5);
+      ctx.lineTo(-23, 0);
+      ctx.lineTo(-15, -5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      [-8, 0, 8].forEach((bx) => {
+        ctx.beginPath();
+        ctx.arc(bx, -8, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    } else if (custom.head === 'manong') {
+      // Neat classic Manong short dark hair
+      ctx.fillStyle = '#18181b';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.arc(0, -5, 16.5, Math.PI + 0.1, -0.08);
+      ctx.quadraticCurveTo(5, -10, -15, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     } else {
-      // Spiky cartoon dark hair
+      // Spiky cartoon dark hair (default & shades)
       ctx.fillStyle = '#18181b';
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.8;
@@ -394,8 +458,6 @@ const Sprites = (() => {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      // Hair highlight shine
       ctx.fillStyle = 'rgba(255,255,255,0.22)';
       ctx.beginPath();
       ctx.ellipse(-2, -13, 6, 2.2, -0.2, 0, Math.PI * 2);
@@ -403,65 +465,79 @@ const Sprites = (() => {
     }
     ctx.restore();
 
-    // ---- FRONT ARM: PUNCHING OR HOLDING OBTAINED GUN OR RUNNING ----
+    // ---- FRONT ARM: PUNCH / BOOST KNIFE SLASH / HOLDING GUN / RUNNING ----
     ctx.save();
     ctx.translate(6, -26 + bob);
 
     if (isPunching) {
-      // Extended energy-charged cartoon punch!
-      const thrust = Math.sin(punchProgress * Math.PI) * 24;
-      // Sleeve or bare arm
-      ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
+      const thrust = Math.sin(punchProgress * Math.PI) * (hasKnife ? 32 : 24);
+      ctx.fillStyle = sleeveColor;
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.4;
       roundRect(ctx, -3, -4, 11, 9, 4);
       ctx.fill();
       ctx.stroke();
 
-      // Extended forearm
-      ctx.fillStyle = '#f2b88a';
+      ctx.fillStyle = skinTone;
       roundRect(ctx, 5, -3.5, 8 + thrust * 0.65, 7, 3);
       ctx.fill();
       ctx.stroke();
 
-      // Glowing yellow energy fist!
       const fistX = 14 + thrust;
       ctx.save();
-      ctx.fillStyle = 'rgba(253, 224, 71, 0.55)';
-      ctx.beginPath();
-      ctx.arc(fistX, 0, 15, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Fist body
-      ctx.fillStyle = '#f5be93';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 2.6;
-      ctx.beginPath();
-      ctx.arc(fistX, 0, 8.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Energy crescent shockwave
-      ctx.strokeStyle = '#fde047';
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.arc(fistX + 4, 0, 15, -Math.PI * 0.42, Math.PI * 0.42);
-      ctx.stroke();
+      if (hasKnife) {
+        // BLAZING BOOST KNIFE SLASH!
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.2;
+        roundRect(ctx, fistX - 4, -4, 9, 8, 2);
+        ctx.fill();
+        ctx.stroke();
+        // Gleaming cyan-gold blade
+        ctx.fillStyle = '#e0f2fe';
+        ctx.beginPath();
+        ctx.moveTo(fistX + 5, -5);
+        ctx.lineTo(fistX + 28, -1);
+        ctx.lineTo(fistX + 18, 6);
+        ctx.lineTo(fistX + 5, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Huge glowing slash arc!
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 4.5;
+        ctx.beginPath();
+        ctx.arc(fistX + 8, 0, 24, -Math.PI * 0.55, Math.PI * 0.55);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.55)';
+        ctx.beginPath();
+        ctx.arc(fistX, 0, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = skinTone;
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.arc(fistX, 0, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(fistX + 4, 0, 15, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.stroke();
+      }
       ctx.restore();
     } else if (p.weapon && p.ammo > 0) {
-      // Holding obtained gun!
       const recoil = isShooting ? -4 : 0;
       ctx.translate(recoil, 0);
-
-      // Sleeve + arm holding gun
-      ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
+      ctx.fillStyle = sleeveColor;
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.4;
       roundRect(ctx, -3, -3, 10, 8, 4);
       ctx.fill();
       ctx.stroke();
-
-      ctx.fillStyle = '#f2b88a';
+      ctx.fillStyle = skinTone;
       roundRect(ctx, 5, -2.5, 9, 6.5, 3);
       ctx.fill();
       ctx.stroke();
@@ -523,13 +599,13 @@ const Sprites = (() => {
       // Normal arm swing
       const armSwing = p.onGround ? walkPhase * 0.65 : -0.6;
       ctx.rotate(armSwing);
-      ctx.fillStyle = isJersey ? '#f2b88a' : '#18181b';
+      ctx.fillStyle = sleeveColor;
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.4;
       roundRect(ctx, -4, -2, 9, 10, 4);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = '#f2b88a';
+      ctx.fillStyle = skinTone;
       roundRect(ctx, -3, 6, 7, 8, 3.5);
       ctx.fill();
       ctx.stroke();
@@ -856,9 +932,356 @@ const Sprites = (() => {
     ctx.restore();
   }
 
+  // ==================== SPECIAL ENEMIES (LEVELS 5–8: KNIFE THIEF, ARMED GANG, MYTHICAL CREATURES) ====================
+  function drawSpecialEnemy(ctx, e, time) {
+    ctx.save();
+    const cx = e.x + e.w / 2;
+    const bottom = e.y + e.h;
+    ctx.translate(cx, bottom);
+
+    if (e.dead) {
+      ctx.rotate(e.deathSpin || 0);
+      ctx.globalAlpha = Math.max(0, e.deathTimer / 0.55);
+    }
+
+    const isBoss = e.type === 'boss_magnanakaw' || e.type === 'tikbalang_boss';
+    const scale = isBoss ? 1.55 : e.type === 'big_knife_thief' || e.type === 'kapre' ? 1.28 : e.type === 'tikbalang' ? 1.2 : 1.05;
+    ctx.scale(e.facing * scale, scale);
+    if (e.hurtFlash > 0) ctx.filter = 'brightness(1.85)';
+
+    const step = Math.sin(time * 12 + e.seed);
+    const bob = e.onGround ? Math.abs(step) * -3 : Math.sin(time * 8 + e.seed) * 5;
+
+    if (e.onGround && !e.dead && e.type !== 'manananggal') {
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, -1, 17, 4.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (e.type === 'manananggal') {
+      // Flying Winged Philippine Manananggal!
+      const flap = Math.sin(time * 14 + e.seed) * 0.45;
+      ctx.translate(0, -28 + bob);
+      // Giant Bat Wings!
+      ctx.save();
+      ctx.rotate(-0.3 + flap);
+      ctx.fillStyle = '#3b0764';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-6, -12);
+      ctx.quadraticCurveTo(-34, -36, -38, -8);
+      ctx.quadraticCurveTo(-24, -10, -20, 2);
+      ctx.quadraticCurveTo(-12, -6, -6, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.rotate(0.3 - flap);
+      ctx.fillStyle = '#4c1d95';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(6, -12);
+      ctx.quadraticCurveTo(32, -34, 36, -6);
+      ctx.quadraticCurveTo(22, -8, 18, 2);
+      ctx.quadraticCurveTo(12, -6, 6, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Long Flowing Dark Hair + Upper Torso Dress
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      roundRect(ctx, -14, -22, 28, 28, 8);
+      ctx.fill();
+      ctx.stroke();
+      // Tattered white-violet blouse
+      ctx.fillStyle = '#e9d5ff';
+      ctx.beginPath();
+      ctx.moveTo(-10, -12);
+      ctx.lineTo(10, -12);
+      ctx.lineTo(13, 8);
+      ctx.lineTo(6, 3);
+      ctx.lineTo(0, 10);
+      ctx.lineTo(-6, 3);
+      ctx.lineTo(-13, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Eerie Pale Head with Glowing Red Eyes & Fangs
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.ellipse(1, -22, 13, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(-2, -23, 2.4, 0, Math.PI * 2);
+      ctx.arc(6, -23, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+      // Little cartoon fangs
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(-1, -16); ctx.lineTo(1, -12); ctx.lineTo(3, -16);
+      ctx.moveTo(4, -16); ctx.lineTo(6, -12); ctx.lineTo(8, -16);
+      ctx.fill();
+    } else if (e.type === 'tikbalang' || e.type === 'tikbalang_boss') {
+      // Mythological Horse-Headed Tikbalang!
+      // Muscular dark hooves & legs
+      ctx.fillStyle = '#3f2e21';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      [-5, 5].forEach((ox, idx) => {
+        ctx.save();
+        ctx.translate(ox, -19 + bob);
+        ctx.rotate((idx === 0 ? step : -step) * 0.55);
+        roundRect(ctx, -4.5, 0, 9, 15, 3);
+        ctx.fill();
+        ctx.stroke();
+        // Hoof
+        ctx.fillStyle = '#111827';
+        roundRect(ctx, -4.5, 13, 10, 5, 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Muscular brown-fur torso + glowing forest markings
+      ctx.fillStyle = e.type === 'tikbalang_boss' ? '#291d14' : '#5c3a21';
+      roundRect(ctx, -12, -37 + bob, 24, 21, 6);
+      ctx.fill();
+      ctx.stroke();
+      // Golden tribal chest mark
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-6, -30 + bob); ctx.lineTo(0, -24 + bob); ctx.lineTo(6, -30 + bob);
+      ctx.stroke();
+
+      // Horse Head + Spiky Dark Mane!
+      ctx.save();
+      ctx.translate(2, -49 + bob);
+      // Mane spikes
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-14, 4); ctx.lineTo(-20, -4); ctx.lineTo(-14, -8);
+      ctx.lineTo(-17, -16); ctx.lineTo(-6, -14); ctx.lineTo(-2, -22);
+      ctx.lineTo(4, -14); ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Horse snout & skull
+      ctx.fillStyle = e.type === 'tikbalang_boss' ? '#451a03' : '#78350f';
+      ctx.beginPath();
+      ctx.ellipse(-2, -2, 12, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      roundRect(ctx, 2, -5, 18, 11, 5);
+      ctx.fill();
+      ctx.stroke();
+      // Pointed horse ears
+      ctx.beginPath();
+      ctx.moveTo(-7, -10); ctx.lineTo(-4, -22); ctx.lineTo(1, -11);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Glowing golden/red eyes!
+      ctx.fillStyle = e.type === 'tikbalang_boss' ? '#ef4444' : '#fde047';
+      ctx.beginPath();
+      ctx.arc(3, -5, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Boss antlers/crown aura
+      if (e.type === 'tikbalang_boss') {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-4, -16); ctx.lineTo(-10, -27);
+        ctx.moveTo(2, -16); ctx.lineTo(8, -27);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else if (e.type === 'kapre') {
+      // Hulking Forest Giant Kapre with Glowing Cigar (Tabako)!
+      ctx.fillStyle = '#292524';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.6;
+      // Legs
+      roundRect(ctx, -11, -17 + bob, 9, 17, 3); ctx.fill(); ctx.stroke();
+      roundRect(ctx, 2, -17 + bob, 9, 17, 3); ctx.fill(); ctx.stroke();
+      // Huge furry body
+      roundRect(ctx, -16, -40 + bob, 32, 26, 9); ctx.fill(); ctx.stroke();
+      // Mossy vine sash
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(-13, -36 + bob); ctx.lineTo(13, -18 + bob);
+      ctx.stroke();
+      // Head + bushy beard
+      ctx.fillStyle = '#1c1917';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.arc(0, -49 + bob, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Glowing red eyes
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(-2, -51 + bob, 2.8, 0, Math.PI * 2);
+      ctx.arc(7, -51 + bob, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+      // Glowing Cigar (Tabako) in mouth!
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(6, -45 + bob, 14, 4.5);
+      ctx.strokeRect(6, -45 + bob, 14, 4.5);
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(21, -43 + bob, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // BIG MAGNANAKAW WITH KNIFE / ARMED GANG (GUN & KNIFE) / BOSS MAGNANAKAW!
+      const isArmedGang = e.type === 'armed_gang';
+      const isBossMag = e.type === 'boss_magnanakaw';
+
+      // Legs
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      [-5, 5].forEach((ox, idx) => {
+        ctx.save();
+        ctx.translate(ox, -16 + bob);
+        ctx.rotate((idx === 0 ? step : -step) * 0.5);
+        roundRect(ctx, -4.5, 0, 9, 15, 3.5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Torso
+      ctx.fillStyle = isArmedGang ? '#581c87' : isBossMag ? '#7f1d1d' : '#1f2937';
+      roundRect(ctx, -13, -32 + bob, 26, 19, 5);
+      ctx.fill();
+      ctx.stroke();
+      if (!isArmedGang) {
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(-12, -24 + bob, 24, 4);
+      }
+
+      // Head
+      ctx.save();
+      ctx.translate(1, -45 + bob);
+      ctx.fillStyle = isArmedGang ? '#d6a582' : '#e5a373';
+      ctx.beginPath();
+      ctx.ellipse(0, 1, 15, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      if (isArmedGang) {
+        // Wild red-eyed street hood!
+        ctx.fillStyle = '#3b0764';
+        ctx.beginPath();
+        ctx.arc(0, -4, 16, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(-1, 0, 3.4, 0, Math.PI * 2);
+        ctx.arc(8, 0, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(-0.5, 0, 1.7, 0, Math.PI * 2);
+        ctx.arc(8.5, 0, 1.7, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Burglar mask + red skull bandana!
+        ctx.fillStyle = '#111827';
+        roundRect(ctx, -11, -5, 25, 8.5, 4);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(-1, -0.5, 2.6, 0, Math.PI * 2);
+        ctx.arc(8.5, -0.5, 2.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(0, -6, 15.5, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        if (isBossMag) {
+          ctx.fillStyle = '#facc15';
+          ctx.beginPath();
+          ctx.arc(3, -13, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+
+      // Weapons in Hands! (Big Gleaming Knife/Bolo + Pistol for Armed Gang!)
+      ctx.save();
+      ctx.translate(10, -24 + bob);
+      ctx.rotate(Math.sin(time * 8 + e.seed) * 0.25 - 0.3);
+      // Handle
+      ctx.fillStyle = '#78350f';
+      roundRect(ctx, -2, -3, 8, 6, 2);
+      ctx.fill();
+      ctx.stroke();
+      // Curved Silver Knife / Bolo Blade!
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(6, -4);
+      ctx.lineTo(24, -1);
+      ctx.lineTo(17, 5);
+      ctx.lineTo(6, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      if (isArmedGang || isBossMag) {
+        // Back hand holding a Gun!
+        ctx.save();
+        ctx.translate(-12, -23 + bob);
+        ctx.fillStyle = '#334155';
+        roundRect(ctx, -12, -4, 15, 7, 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Mini HP bar for tough non-boss enemies
+    if (!e.dead && !isBoss && e.maxHp > 1 && e.hp < e.maxHp) {
+      ctx.scale(e.facing, 1);
+      const bw = 34;
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(-bw / 2, -70, bw, 6);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-bw / 2 + 1, -69, (bw - 2) * (e.hp / e.maxHp), 4);
+    }
+
+    ctx.restore();
+  }
+
   function drawEnemy(ctx, e, time) {
     if (e.type === 'croc_thief' || e.type === 'croc_vip' || e.type === 'croc_boss') {
       drawCrocEnemy(ctx, e, time);
+      return;
+    }
+    if (['big_knife_thief', 'armed_gang', 'boss_magnanakaw', 'tikbalang', 'tikbalang_boss', 'manananggal', 'kapre'].includes(e.type)) {
+      drawSpecialEnemy(ctx, e, time);
       return;
     }
     ctx.save();
@@ -1109,6 +1532,30 @@ const Sprites = (() => {
       sky.addColorStop(0.42, '#38bdf8');
       sky.addColorStop(0.82, '#fde68a');
       sky.addColorStop(1, '#fef3c7');
+    } else if (theme === 'pasig') {
+      // Pasig River Golden Afternoon Sky!
+      sky.addColorStop(0, '#0369a1');
+      sky.addColorStop(0.48, '#38bdf8');
+      sky.addColorStop(0.85, '#fed7aa');
+      sky.addColorStop(1, '#fef08a');
+    } else if (theme === 'ilocos') {
+      // Ilocos Norte Bright Coastal Windmill Sky!
+      sky.addColorStop(0, '#1e40af');
+      sky.addColorStop(0.45, '#60a5fa');
+      sky.addColorStop(0.82, '#fde68a');
+      sky.addColorStop(1, '#fef3c7');
+    } else if (theme === 'pangasinan') {
+      // Pangasinan Tropical Beach Sky!
+      sky.addColorStop(0, '#0284c7');
+      sky.addColorStop(0.5, '#38bdf8');
+      sky.addColorStop(0.88, '#a5f3fc');
+      sky.addColorStop(1, '#fef9c3');
+    } else if (theme === 'kagubatan') {
+      // Mystical Philippine Jungle Twilight!
+      sky.addColorStop(0, '#052e16');
+      sky.addColorStop(0.45, '#064e3b');
+      sky.addColorStop(0.82, '#115e59');
+      sky.addColorStop(1, '#1e293b');
     } else {
       // Sunny Manila Kalye
       sky.addColorStop(0, '#2563eb');
@@ -1175,9 +1622,25 @@ const Sprites = (() => {
       }
     }
 
-    // 3. Midground Philippine Neighborhood Houses OR Iconic Malacañang Palace (0.38x parallax)
+    // 3. Regional Midground Parallax Backgrounds
     if (theme === 'malacanang') {
       drawMalacanangBackground(ctx, width, height, camX, time);
+      return;
+    }
+    if (theme === 'pasig') {
+      drawPasigRiverBackground(ctx, width, height, camX, time);
+      return;
+    }
+    if (theme === 'ilocos') {
+      drawIlocosNorteBackground(ctx, width, height, camX, time);
+      return;
+    }
+    if (theme === 'pangasinan') {
+      drawPangasinanBeachBackground(ctx, width, height, camX, time);
+      return;
+    }
+    if (theme === 'kagubatan') {
+      drawKagubatanBackground(ctx, width, height, camX, time);
       return;
     }
 
@@ -1419,6 +1882,257 @@ const Sprites = (() => {
     }
   }
 
+  function drawPasigRiverBackground(ctx, width, height, camX, time) {
+    const groundY = height - 92;
+    // Shimmering Pasig River expanse!
+    const riverGrad = ctx.createLinearGradient(0, groundY - 120, 0, groundY + 10);
+    riverGrad.addColorStop(0, '#0284c7');
+    riverGrad.addColorStop(1, '#0f766e');
+    ctx.fillStyle = riverGrad;
+    ctx.fillRect(0, groundY - 120, width, 128);
+    // Animated water glints
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    for (let rx = -((camX * 0.35 + time * 26) % 95); rx < width + 95; rx += 95) {
+      ctx.fillRect(rx, groundY - 96, 44, 4);
+      ctx.fillRect(rx + 28, groundY - 62, 36, 4);
+      ctx.fillRect(rx + 10, groundY - 32, 48, 3);
+    }
+    // Iconic Manila Pasig River Arch Bridges (Jones / Ayala Bridge style!)
+    const brScroll = camX * 0.42;
+    const brSpacing = 440;
+    const start = Math.floor(brScroll / brSpacing) - 1;
+    for (let i = start; i < start + 5; i++) {
+      const bx = i * brSpacing - brScroll;
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.arc(bx + 180, groundY - 82, 135, Math.PI, 0);
+      ctx.stroke();
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(bx + 36, groundY - 115, 24, 115);
+      ctx.fillRect(bx + 300, groundY - 115, 24, 115);
+      // Heritage lamp atop bridge pier
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(bx + 48, groundY - 124, 9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Riverbank Railing + Sign ("PASIG RIVER · MANILA")
+    const railScroll = camX * 0.65;
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, groundY - 40, width, 6);
+    for (let px = -(railScroll % 42); px < width + 42; px += 42) {
+      ctx.fillRect(px, groundY - 40, 5, 42);
+    }
+    const signX = 240 - ((camX * 0.55) % 520);
+    ctx.fillStyle = '#0369a1';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.5;
+    roundRect(ctx, signX, groundY - 165, 165, 28, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 11.5px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌊 PASIG RIVER · MANILA', signX + 82, groundY - 147);
+  }
+
+  function drawIlocosNorteBackground(ctx, width, height, camX, time) {
+    const groundY = height - 92;
+    // Coastal sea horizon
+    ctx.fillStyle = '#0ea5e9';
+    ctx.fillRect(0, groundY - 88, width, 92);
+    // Golden Paoay Sand Dunes rolling hills!
+    const duneScroll = camX * 0.28;
+    ctx.fillStyle = '#eab308';
+    ctx.beginPath();
+    ctx.moveTo(0, groundY + 10);
+    for (let x = 0; x <= width + 60; x += 60) {
+      const y = groundY - 52 - Math.sin((x + duneScroll) * 0.009) * 28;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(width, groundY + 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Iconic SPINNING BANGUI WINDMILLS! (0.45x parallax)
+    const wmScroll = camX * 0.45;
+    const wmSpacing = 260;
+    const start = Math.floor(wmScroll / wmSpacing) - 1;
+    for (let i = start; i < start + 7; i++) {
+      const wx = i * wmSpacing - wmScroll;
+      const hubY = groundY - 220 + (Math.abs(i) % 2) * 18;
+      // Tall white windmill tower
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(wx - 8, groundY - 30);
+      ctx.lineTo(wx - 4, hubY);
+      ctx.lineTo(wx + 4, hubY);
+      ctx.lineTo(wx + 8, groundY - 30);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 3 Rotating Windmill Blades!
+      ctx.save();
+      ctx.translate(wx, hubY);
+      ctx.rotate(time * 1.9 + i * 1.1);
+      for (let b = 0; b < 3; b++) {
+        ctx.rotate((Math.PI * 2) / 3);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-4, 0);
+        ctx.lineTo(0, -68);
+        ctx.lineTo(4, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Ilocos Norte Heritage Brick Signpost
+    const sx = 280 - ((camX * 0.52) % 560);
+    ctx.fillStyle = '#9a3412';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.5;
+    roundRect(ctx, sx, groundY - 125, 175, 28, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 11.5px Fredoka, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌬️ ILOCOS NORTE · BANGUI', sx + 87, groundY - 107);
+  }
+
+  function drawPangasinanBeachBackground(ctx, width, height, camX, time) {
+    const groundY = height - 92;
+    // Sparkling Turquoise Hundred Islands / Lingayen Sea!
+    const sea = ctx.createLinearGradient(0, groundY - 130, 0, groundY);
+    sea.addColorStop(0, '#0284c7');
+    sea.addColorStop(0.55, '#06b6d4');
+    sea.addColorStop(1, '#67e8f9');
+    ctx.fillStyle = sea;
+    ctx.fillRect(0, groundY - 130, width, 138);
+
+    // Emerald Hundred Islands Dome Islets on Horizon!
+    const islScroll = camX * 0.22;
+    for (let i = -1; i < 8; i++) {
+      const ix = i * 240 - (islScroll % 240);
+      const ir = 42 + (Math.abs(i * 19) % 28);
+      ctx.fillStyle = '#15803d';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(ix, groundY - 110, ir, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Animated White Beach Waves!
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    for (let wx = -((camX * 0.4 + time * 35) % 120); wx < width + 120; wx += 120) {
+      ctx.beginPath();
+      ctx.ellipse(wx, groundY - 14 + Math.sin(time * 4 + wx) * 3, 46, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Coconut Palms & Nipa Beach Huts (Bahay Kubo Cottages!)
+    const hutScroll = camX * 0.48;
+    const hSpacing = 380;
+    const start = Math.floor(hutScroll / hSpacing) - 1;
+    for (let i = start; i < start + 6; i++) {
+      const hx = i * hSpacing - hutScroll;
+      drawPalmTree(ctx, hx - 40, groundY - 8, time + i);
+      // Thatched Nipa Beach Cottage
+      ctx.fillStyle = '#92400e';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(hx + 16, groundY - 84, 96, 76);
+      ctx.strokeRect(hx + 16, groundY - 84, 96, 76);
+      // Steep Nipa Roof
+      ctx.fillStyle = '#ca8a04';
+      ctx.beginPath();
+      ctx.moveTo(hx - 4, groundY - 80);
+      ctx.lineTo(hx + 64, groundY - 134);
+      ctx.lineTo(hx + 132, groundY - 80);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fef9c3';
+      ctx.font = 'bold 10px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏖️ PANGASINAN', hx + 64, groundY - 56);
+    }
+  }
+
+  function drawKagubatanBackground(ctx, width, height, camX, time) {
+    const groundY = height - 92;
+    // Glowing Full Moon through Mystical Forest!
+    ctx.fillStyle = '#fef9c3';
+    ctx.beginPath();
+    ctx.arc(width - 130, 88, 38, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Distant Dark Jungle Canopy Silhouettes
+    const farScroll = camX * 0.25;
+    ctx.fillStyle = '#064e3b';
+    for (let i = -1; i < 12; i++) {
+      const tx = i * 150 - (farScroll % 150);
+      ctx.beginPath();
+      ctx.arc(tx + 75, groundY - 170, 95, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(tx + 55, groundY - 170, 40, 175);
+    }
+
+    // Ancient Gnarled Balete Trees + Hanging Vines (0.5x parallax)
+    const treeScroll = camX * 0.5;
+    const tSpacing = 290;
+    const start = Math.floor(treeScroll / tSpacing) - 1;
+    for (let i = start; i < start + 6; i++) {
+      const tx = i * tSpacing - treeScroll;
+      ctx.fillStyle = '#3f2e21';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.6;
+      ctx.fillRect(tx, groundY - 260, 46, 265);
+      ctx.strokeRect(tx, groundY - 260, 46, 265);
+      // Canopy & Vines
+      ctx.fillStyle = '#14532d';
+      ctx.beginPath();
+      ctx.arc(tx + 23, groundY - 265, 76, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      for (let v = 0; v < 3; v++) {
+        const vx = tx - 26 + v * 46;
+        ctx.beginPath();
+        ctx.moveTo(vx, groundY - 210);
+        ctx.quadraticCurveTo(vx + Math.sin(time * 2 + v) * 10, groundY - 140, vx - 4, groundY - 80);
+        ctx.stroke();
+      }
+    }
+
+    // Floating Golden Fireflies (Alitaptap)!
+    for (let f = 0; f < 24; f++) {
+      const fx = ((f * 97 + time * 18) % (width + 40)) - 20;
+      const fy = 110 + ((f * 53) % (groundY - 140)) + Math.sin(time * 3 + f) * 12;
+      const alpha = 0.4 + Math.sin(time * 5 + f * 1.7) * 0.45;
+      ctx.fillStyle = `rgba(253, 224, 71, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   function drawPalmTree(ctx, x, groundY, phase) {
     ctx.save();
     // Trunk
@@ -1642,6 +2356,63 @@ const Sprites = (() => {
       ctx.fillRect(x + 4, y + 3, w - 8, 6);
       ctx.fillStyle = '#dc2626';
       ctx.fillRect(x + 6, y + h - 7, w - 12, 4);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'boardwalk' || style === 'sandroad' || style === 'beach' || style === 'forest') {
+      const topColors = { boardwalk: '#94a3b8', sandroad: '#f59e0b', beach: '#fde047', forest: '#15803d' };
+      const bodyColors = { boardwalk: '#475569', sandroad: '#b45309', beach: '#eab308', forest: '#422006' };
+      ctx.fillStyle = topColors[style];
+      ctx.fillRect(x, y, w, 18);
+      ctx.fillStyle = bodyColors[style];
+      ctx.fillRect(x, y + 18, w, h - 18);
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, w, h);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'ferry' || style === 'bangka') {
+      // Bouncy Pasig River Ferry OR Pangasinan Bangka Boat!
+      ctx.fillStyle = style === 'ferry' ? '#0284c7' : '#ef4444';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3;
+      roundRect(ctx, x + 6, y + 12, w - 12, h - 14, 14);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      roundRect(ctx, x + 16, y - 2, w - 32, 16, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(style === 'ferry' ? '⛴️ PASIG FERRY' : '⛵ BANGKA BOAT', x + w / 2, y + 38);
+      ctx.restore();
+      return;
+    }
+
+    if (style === 'mushroom') {
+      // Bouncy Glowing Kagubatan Giant Mushroom!
+      ctx.fillStyle = '#fef3c7';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 3;
+      roundRect(ctx, x + w * 0.34, y + 18, w * 0.32, h - 18, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#a855f7';
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + 18, w * 0.5, 22, 0, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(x + w * 0.35, y + 8, 5, 0, Math.PI * 2);
+      ctx.arc(x + w * 0.62, y + 6, 6, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
       return;
     }
@@ -2044,6 +2815,30 @@ const Sprites = (() => {
       ctx.fillRect(-6, -5, 10, 4);
       ctx.fillStyle = '#f97316';
       ctx.fillRect(isBlaster ? 11 : 7, -6.5, 4.5, 8);
+    } else if (item.type === 'knife') {
+      // Glowing Boost Knife Pickup!
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.36)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 21, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.rotate(-0.45 + Math.sin(time * 6) * 0.12);
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 2.4;
+      // Handle
+      ctx.fillStyle = '#f59e0b';
+      roundRect(ctx, -14, -4, 11, 8, 2);
+      ctx.fill();
+      ctx.stroke();
+      // Gleaming cyan-silver blade
+      ctx.fillStyle = '#e0f2fe';
+      ctx.beginPath();
+      ctx.moveTo(-3, -6);
+      ctx.lineTo(17, -1);
+      ctx.lineTo(9, 6);
+      ctx.lineTo(-3, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     } else if (item.type === 'heart') {
       // Halo-Halo / Health Heart
       ctx.fillStyle = 'rgba(244, 63, 94, 0.28)';
@@ -2129,9 +2924,16 @@ const Sprites = (() => {
     ctx.arc(goalX + 16, flagY + 24, 6, 0, Math.PI * 2);
     ctx.fill();
 
-    // Little Barangay Outpost or Malacañang Gate Arch behind flag
+    // Little Goal Outpost Arch behind flag
+    const goalLabels = {
+      malacanang: 'MALACAÑANG',
+      pasig: 'PASIG PORT',
+      ilocos: 'ILOCOS GATE',
+      pangasinan: 'BEACH CAMP',
+      kagubatan: 'FOREST SHRINE'
+    };
     const isPalace = theme === 'malacanang';
-    ctx.fillStyle = isPalace ? '#fffbeb' : '#1e3a8a';
+    ctx.fillStyle = isPalace ? '#fffbeb' : theme === 'kagubatan' ? '#14532d' : '#1e3a8a';
     roundRect(ctx, goalX + 66, groundY - 125, 118, 125, 10);
     ctx.fill();
     ctx.stroke();
@@ -2139,9 +2941,9 @@ const Sprites = (() => {
     ctx.fillRect(goalX + 74, groundY - 114, 102, 24);
     ctx.strokeRect(goalX + 74, groundY - 114, 102, 24);
     ctx.fillStyle = isPalace ? '#fde047' : '#111827';
-    ctx.font = 'bold 11px Fredoka, sans-serif';
+    ctx.font = 'bold 10.5px Fredoka, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(isPalace ? 'MALACAÑANG' : 'BARANGAY HQ', goalX + 125, groundY - 98);
+    ctx.fillText(goalLabels[theme] || 'BARANGAY HQ', goalX + 125, groundY - 98);
 
     // Door
     ctx.fillStyle = '#0f172a';

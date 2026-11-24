@@ -1588,3 +1588,620 @@ kbd {
     padding: 3px 9px;
   }
 }
+
+
+/* ==================== KNIFE BOOST BADGE ==================== */
+.knife-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(180, 83, 9, 0.92);
+  border: 3px solid #fde047;
+  border-radius: 12px;
+  padding: 4px 9px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fef08a;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* ==================== HORIZONTAL FORWARD/BACKWARD-ONLY JOYSTICK ==================== */
+.joystick-track-h {
+  position: relative;
+  width: 146px;
+  height: 62px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+  border: 3.5px solid #475569;
+  box-shadow:
+    inset 0 4px 12px rgba(0, 0, 0, 0.65),
+    0 5px 0 rgba(0, 0, 0, 0.65);
+  touch-action: none;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.joystick-track-h.active {
+  border-color: var(--sun-gold);
+  cursor: grabbing;
+}
+
+.joystick-track-h.jeep-joy {
+  border-color: #facc15;
+}
+
+.joy-h-arrow {
+  position: absolute;
+  font-size: 14px;
+  color: rgba(203, 213, 225, 0.6);
+  pointer-events: none;
+}
+
+.joy-h-left { left: 12px; }
+.joy-h-right { right: 12px; }
+
+.joystick-track-h .joystick-knob {
+  width: 50px;
+  height: 50px;
+}
+
+.joystick-track-h.active .joystick-knob {
+  transition: none;
+  filter: brightness(1.08);
+}
+
+.jeep-right-pad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jeep-ud-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.touch-btn.mini-lane-btn {
+  width: 56px;
+  height: 44px;
+  border-radius: 14px;
+  font-size: 13px;
+  background: rgba(37, 99, 235, 0.92);
+  color: #fff;
+}
+
+/* ==================== STEP 1: CLEAN LANDING PAGE ==================== */
+.landing-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 880px;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  align-items: center;
+  gap: 28px;
+  margin: auto;
+}
+
+.landing-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.landing-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.btn-hero-play {
+  font-size: 24px;
+  padding: 15px 32px;
+  letter-spacing: 1px;
+  border-radius: 18px;
+  width: 100%;
+}
+
+.landing-secondary-row {
+  display: flex;
+  gap: 10px;
+}
+
+.landing-secondary-row button {
+  flex: 1;
+}
+
+/* ==================== STEPS 2–4: FLOW SCREENS ==================== */
+.flow-overlay {
+  background: linear-gradient(160deg, #0f172a 0%, #172554 52%, #0f172a 100%);
+  align-items: flex-start;
+}
+
+.flow-shell {
+  width: 100%;
+  max-width: 980px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 6px 4px 16px;
+}
+
+.flow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-back {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 3px solid #111827;
+  background: #334155;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #111827;
+  flex-shrink: 0;
+}
+
+.btn-back:hover {
+  background: #475569;
+}
+
+.flow-title-group {
+  text-align: center;
+  flex: 1;
+}
+
+.flow-step-pill {
+  display: inline-block;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: rgba(250, 204, 21, 0.2);
+  color: #fde047;
+  border: 1.5px solid rgba(250, 204, 21, 0.55);
+  border-radius: 99px;
+  padding: 2px 10px;
+  margin-bottom: 3px;
+}
+
+.flow-title-group h2 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: clamp(20px, 4vw, 30px);
+  color: #fff;
+  text-shadow: 0 3px 0 #111827;
+}
+
+.flow-spacer {
+  width: 78px;
+  flex-shrink: 0;
+}
+
+/* ==================== STEP 2: SELECT GAME CARDS ==================== */
+.game-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.game-select-card {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  background: #1e293b;
+  border: 4px solid #111827;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: 0 7px 0 #111827;
+  transition: transform 0.14s, border-color 0.14s;
+}
+
+.game-select-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--sun-gold);
+}
+
+.game-select-card:active {
+  transform: translateY(2px);
+}
+
+.card-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: #fff;
+  border: 2px solid #111827;
+  border-radius: 99px;
+  padding: 2px 9px;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.card-badge.badge-gold { background: #facc15; color: #111827; }
+.card-badge.badge-orange { background: #f97316; color: #fff; }
+
+.card-body {
+  padding: 13px 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+}
+
+.card-body h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  color: #fde047;
+}
+
+.card-body p {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #cbd5e1;
+  flex: 1;
+}
+
+.card-cta {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-top: 4px;
+}
+
+/* ==================== STEP 3: PLAYER VISUAL CUSTOMIZER ==================== */
+.customizer-layout {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.preview-stage {
+  background: radial-gradient(circle at center, #38bdf8 0%, #1d4ed8 100%);
+  border: 4px solid #111827;
+  border-radius: 22px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 7px 0 #111827;
+}
+
+#previewCanvas {
+  width: 210px;
+  height: 210px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.25);
+}
+
+.preview-presets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.preset-chip {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 99px;
+  border: 2px solid #111827;
+  background: #fffdf5;
+  color: #111827;
+  cursor: pointer;
+}
+
+.preset-chip:hover {
+  background: #fde047;
+}
+
+.customizer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 3px solid #111827;
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.cust-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cust-group label {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12.5px;
+  color: #fde047;
+  letter-spacing: 0.5px;
+}
+
+.cust-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.cust-pill {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 11px;
+  border: 2.5px solid #111827;
+  background: #1e293b;
+  color: #e2e8f0;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #111827;
+}
+
+.cust-pill.active {
+  background: #facc15;
+  color: #111827;
+  border-color: #fff;
+}
+
+.btn-next-flow {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 17px;
+}
+
+/* ==================== STEP 4: WINDING PHILIPPINE LEVEL MAP ==================== */
+.map-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.adventure-map {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 12px;
+  padding: 18px 16px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.25), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.28), transparent 45%),
+    linear-gradient(135deg, #065f46 0%, #0f766e 48%, #1e3a8a 100%);
+  border: 4px solid #111827;
+  border-radius: 22px;
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.4), 0 7px 0 #111827;
+}
+
+.adventure-map.karen-map {
+  grid-template-columns: repeat(3, 1fr);
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 55%, #991b1b 100%);
+}
+
+.map-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 3px solid #475569;
+  border-radius: 16px;
+  color: #f8fafc;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #111827;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s;
+  text-align: center;
+}
+
+.map-node:hover {
+  transform: translateY(-3px);
+  border-color: #fde047;
+}
+
+.map-node.selected {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #fde047;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.45), 0 5px 0 #111827;
+  transform: translateY(-2px);
+}
+
+.map-node-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #facc15;
+  color: #111827;
+  border: 2.5px solid #111827;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-node-icon {
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.map-node-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.map-node-sub {
+  font-size: 10px;
+  color: #93c5fd;
+  font-weight: 800;
+}
+
+.map-detail-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 3px solid #facc15;
+  border-radius: 18px;
+  padding: 13px 16px;
+}
+
+.map-detail-info h3 {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 18px;
+  color: #fde047;
+  margin-bottom: 3px;
+}
+
+.map-detail-info p {
+  font-size: 13px;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+/* Jeep Sub-Modes (Route vs Endless) */
+.jeep-mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.jeep-submode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 16px;
+  background: #1e293b;
+  border: 4px solid #111827;
+  border-radius: 18px;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #111827;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.jeep-submode-card.active {
+  background: linear-gradient(160deg, #1e3a8a 0%, #1e293b 100%);
+  border-color: #facc15;
+  transform: translateY(-2px);
+}
+
+.submode-icon { font-size: 32px; }
+.jeep-submode-card h3 { font-family: 'Fredoka', sans-serif; font-size: 18px; color: #fde047; }
+.jeep-submode-card p { font-size: 12.5px; color: #cbd5e1; line-height: 1.4; }
+.submode-tag {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: #10b981;
+  color: #052e16;
+  font-weight: 700;
+}
+.submode-tag.tag-endless { background: #f97316; color: #fff; }
+.btn-launch-wide { width: 100%; font-size: 18px; }
+
+/* ==================== MOBILE PORTRAIT RESPONSIVE FOR NEW 4-STEP FLOW ==================== */
+@media (max-width: 768px) {
+  .landing-content {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 14px;
+  }
+  .landing-main {
+    align-items: center;
+  }
+  .game-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .card-img-wrap {
+    aspect-ratio: 21 / 9;
+  }
+  .customizer-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  #previewCanvas {
+    width: 150px;
+    height: 150px;
+  }
+  .adventure-map {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+  .adventure-map.karen-map {
+    grid-template-columns: 1fr;
+  }
+  .map-detail-bar {
+    flex-direction: column;
+    text-align: center;
+  }
+  .map-detail-bar button {
+    width: 100%;
+  }
+  .jeep-mode-cards {
+    grid-template-columns: 1fr;
+  }
+  .flow-spacer {
+    display: none;
+  }
+  .joystick-track-h {
+    width: 126px;
+    height: 54px;
+  }
+  .joystick-track-h .joystick-knob {
+    width: 44px;
+    height: 44px;
+  }
+  .touch-btn.mini-lane-btn {
+    width: 50px;
+    height: 38px;
+    font-size: 11px;
+  }
+}
