@@ -37,8 +37,8 @@
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const aspect = rect.width / rect.height;
-    // Keep vertical world height fixed at 630px; adapt horizontal viewport width so mobile never squishes!
-    const targetW = Math.max(330, Math.min(1120, Math.round(H * aspect)));
+    // Keep vertical world height fixed at 630px; adapt horizontal viewport width cleanly from narrow portrait to 21:9 phone landscape!
+    const targetW = Math.max(330, Math.min(1420, Math.round(H * aspect)));
     if (canvas.width !== targetW || canvas.height !== H) {
       canvas.width = targetW;
       canvas.height = H;
@@ -2755,10 +2755,20 @@
     if (btnL) btnL.classList.toggle('active', !isPortrait);
   }
 
-  function applyOrientationMode(targetMode, tryNativeLock = false) {
+  function isPhysicalPortrait() {
+    if (window.matchMedia) {
+      return window.matchMedia('(orientation: portrait)').matches;
+    }
+    const vw = (window.visualViewport && window.visualViewport.width) || window.innerWidth;
+    const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    return vh > vw;
+  }
+
+  function applyOrientationMode(targetMode, tryNativeLock = false, manualLock = false) {
     const isPortrait = targetMode === 'portrait';
     document.body.classList.toggle('view-portrait', isPortrait);
     document.body.classList.toggle('view-landscape', !isPortrait);
+    document.body.classList.toggle('view-portrait-locked', isPortrait && manualLock);
     syncOrientButtons(isPortrait);
 
     if (tryNativeLock) {
@@ -2776,17 +2786,17 @@
 
     requestAnimationFrame(() => {
       resizeGameCanvas();
-      setTimeout(resizeGameCanvas, 150);
+      setTimeout(resizeGameCanvas, 120);
     });
   }
 
   function setPreferredOrientation(targetMode, notify = true) {
     userChosenOrient = targetMode;
     try { localStorage.setItem(ORIENT_STORAGE_KEY, targetMode); } catch (_) {}
-    applyOrientationMode(targetMode, true);
+    applyOrientationMode(targetMode, true, true);
     if (notify) {
-      const isPhonePortrait = window.innerHeight > window.innerWidth && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-      if (targetMode === 'landscape' && isPhonePortrait) {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      if (targetMode === 'landscape' && isPhysicalPortrait() && isTouch) {
         showToast('🖥️ Landscape selected! Tilt your phone sideways for full screen!', 2.6);
       } else {
         showToast(targetMode === 'portrait' ? '📱 Portrait Game Mode selected!' : '🖥️ Landscape Game Mode selected!', 1.8);
@@ -2809,30 +2819,35 @@
     btn.addEventListener('click', toggleRotateView);
   });
 
-  // Startup Auto-Detection: Phone ALWAYS matches its physical orientation on start (vertical phone = true Portrait!)
-  function detectInitialOrientation() {
-    const isPhysicallyPortrait = window.innerHeight > window.innerWidth;
+  // Auto-sync mobile screen to physical orientation (re-checks after 100ms & 300ms because mobile browsers lag updating innerWidth/Height!)
+  let lastPhysicalPortrait = isPhysicalPortrait();
+  function syncPhysicalPhoneOrientation(forceSync = false) {
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const nowPortrait = isPhysicalPortrait();
     if (isTouch) {
-      applyOrientationMode(isPhysicallyPortrait ? 'portrait' : 'landscape', false);
-    } else if (userChosenOrient) {
-      applyOrientationMode(userChosenOrient, false);
+      if (forceSync || nowPortrait !== lastPhysicalPortrait) {
+        lastPhysicalPortrait = nowPortrait;
+        userChosenOrient = null;
+        applyOrientationMode(nowPortrait ? 'portrait' : 'landscape', false, false);
+      } else {
+        resizeGameCanvas();
+      }
+    } else if (forceSync) {
+      applyOrientationMode(userChosenOrient || (nowPortrait ? 'portrait' : 'landscape'), false, Boolean(userChosenOrient));
     } else {
-      applyOrientationMode(isPhysicallyPortrait ? 'portrait' : 'landscape', false);
+      resizeGameCanvas();
     }
   }
 
-  // Responsive Resize & Physical Phone Auto-Rotation Handlers
   function handleOrientationResize() {
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      const nowPortrait = window.innerHeight > window.innerWidth;
-      applyOrientationMode(nowPortrait ? 'portrait' : 'landscape', false);
-    } else {
-      requestAnimationFrame(resizeGameCanvas);
-      setTimeout(resizeGameCanvas, 150);
-    }
+    syncPhysicalPhoneOrientation(true);
+    setTimeout(() => syncPhysicalPhoneOrientation(true), 120);
+    setTimeout(() => syncPhysicalPhoneOrientation(true), 320);
   }
-  window.addEventListener('resize', resizeGameCanvas);
+
+  window.addEventListener('resize', () => {
+    syncPhysicalPhoneOrientation(false);
+  });
   window.addEventListener('orientationchange', handleOrientationResize);
   if (screen.orientation && screen.orientation.addEventListener) {
     screen.orientation.addEventListener('change', handleOrientationResize);
@@ -2841,7 +2856,7 @@
   if (portraitMQ && portraitMQ.addEventListener) {
     portraitMQ.addEventListener('change', handleOrientationResize);
   }
-  detectInitialOrientation();
+  syncPhysicalPhoneOrientation(true);
 
   document.getElementById('btnToggleTouch').addEventListener('click', () => {
     const activePad = activeGameMode === 'jeep'
