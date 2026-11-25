@@ -2740,40 +2740,97 @@
 
   applyControllerConfig();
 
-  // Rotatable Portrait / Landscape View Toggle + Auto-Orientation Listeners
-  function toggleRotateView() {
-    const currentlyPortrait =
-      document.body.classList.contains('view-portrait') ||
-      (!document.body.classList.contains('view-landscape') && window.innerHeight > window.innerWidth);
-    const goPortrait = !currentlyPortrait;
+  // Rotatable Portrait / Landscape View Selection (Pre-Game Picker + Mid-Game Rotate + Auto-Detect!)
+  const ORIENT_STORAGE_KEY = 'kalye_raketero_orient_v1';
+  let userChosenOrient = null; // null (auto) | 'portrait' | 'landscape'
+  try {
+    const savedO = localStorage.getItem(ORIENT_STORAGE_KEY);
+    if (savedO === 'portrait' || savedO === 'landscape') userChosenOrient = savedO;
+  } catch (_) {}
 
-    document.body.classList.toggle('view-portrait', goPortrait);
-    document.body.classList.toggle('view-landscape', !goPortrait);
+  function syncOrientButtons(isPortrait) {
+    const btnP = document.getElementById('btnChoosePortrait');
+    const btnL = document.getElementById('btnChooseLandscape');
+    if (btnP) btnP.classList.toggle('active', isPortrait);
+    if (btnL) btnL.classList.toggle('active', !isPortrait);
+  }
 
-    // Attempt native mobile orientation lock if supported (non-blocking)
-    if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock(goPortrait ? 'portrait' : 'landscape').catch(() => {});
+  function applyOrientationMode(targetMode, tryNativeLock = false) {
+    const isPortrait = targetMode === 'portrait';
+    document.body.classList.toggle('view-portrait', isPortrait);
+    document.body.classList.toggle('view-landscape', !isPortrait);
+    syncOrientButtons(isPortrait);
+
+    if (tryNativeLock) {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      if (isTouch && screen.orientation && screen.orientation.lock) {
+        if (!isPortrait && document.documentElement.requestFullscreen && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen()
+            .then(() => screen.orientation.lock('landscape').catch(() => {}))
+            .catch(() => screen.orientation.lock('landscape').catch(() => {}));
+        } else {
+          screen.orientation.lock(isPortrait ? 'portrait' : 'landscape').catch(() => {});
+        }
+      }
     }
 
-    showToast(goPortrait ? '📱 Switched to Portrait View!' : '🖥️ Switched to Landscape View!', 1.8);
     requestAnimationFrame(() => {
       resizeGameCanvas();
-      setTimeout(resizeGameCanvas, 120);
+      setTimeout(resizeGameCanvas, 150);
     });
   }
+
+  function setPreferredOrientation(targetMode, notify = true) {
+    userChosenOrient = targetMode;
+    try { localStorage.setItem(ORIENT_STORAGE_KEY, targetMode); } catch (_) {}
+    applyOrientationMode(targetMode, true);
+    if (notify) {
+      const isPhonePortrait = window.innerHeight > window.innerWidth && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+      if (targetMode === 'landscape' && isPhonePortrait) {
+        showToast('🖥️ Landscape selected! Tilt your phone sideways for full screen!', 2.6);
+      } else {
+        showToast(targetMode === 'portrait' ? '📱 Portrait Game Mode selected!' : '🖥️ Landscape Game Mode selected!', 1.8);
+      }
+    }
+  }
+
+  function toggleRotateView() {
+    const currentlyPortrait = document.body.classList.contains('view-portrait');
+    setPreferredOrientation(currentlyPortrait ? 'landscape' : 'portrait', true);
+  }
+
+  document.querySelectorAll('.orient-choice-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setPreferredOrientation(btn.dataset.orient === 'portrait' ? 'portrait' : 'landscape', true);
+    });
+  });
 
   document.querySelectorAll('.btn-rotate-view').forEach((btn) => {
     btn.addEventListener('click', toggleRotateView);
   });
 
-  // Touch Controls Toggle + Responsive Resize & Auto-Rotation Handlers
-  function handleOrientationResize() {
-    // If physical device rotates naturally, clear forced mismatch so auto-rotation feels effortless
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      document.body.classList.remove('view-portrait', 'view-landscape');
+  // Startup Auto-Detection: Phone ALWAYS matches its physical orientation on start (vertical phone = true Portrait!)
+  function detectInitialOrientation() {
+    const isPhysicallyPortrait = window.innerHeight > window.innerWidth;
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouch) {
+      applyOrientationMode(isPhysicallyPortrait ? 'portrait' : 'landscape', false);
+    } else if (userChosenOrient) {
+      applyOrientationMode(userChosenOrient, false);
+    } else {
+      applyOrientationMode(isPhysicallyPortrait ? 'portrait' : 'landscape', false);
     }
-    requestAnimationFrame(resizeGameCanvas);
-    setTimeout(resizeGameCanvas, 150);
+  }
+
+  // Responsive Resize & Physical Phone Auto-Rotation Handlers
+  function handleOrientationResize() {
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      const nowPortrait = window.innerHeight > window.innerWidth;
+      applyOrientationMode(nowPortrait ? 'portrait' : 'landscape', false);
+    } else {
+      requestAnimationFrame(resizeGameCanvas);
+      setTimeout(resizeGameCanvas, 150);
+    }
   }
   window.addEventListener('resize', resizeGameCanvas);
   window.addEventListener('orientationchange', handleOrientationResize);
@@ -2784,7 +2841,7 @@
   if (portraitMQ && portraitMQ.addEventListener) {
     portraitMQ.addEventListener('change', handleOrientationResize);
   }
-  resizeGameCanvas();
+  detectInitialOrientation();
 
   document.getElementById('btnToggleTouch').addEventListener('click', () => {
     const activePad = activeGameMode === 'jeep'

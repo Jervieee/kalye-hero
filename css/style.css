@@ -2834,3 +2834,98 @@ body.ctrl-theme-stealth .joystick-knob {
 .ctrl-modal-footer button {
   flex: 1;
 }
+
+/* ==================== PRE-GAME PORTRAIT / LANDSCAPE PICKER & TRUE PORTRAIT FIX ==================== */
+.pregame-orient-box {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.84);
+  border: 2.5px solid #38bdf8;
+  border-radius: 14px;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+.orient-label {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7dd3fc;
+  letter-spacing: 0.4px;
+  text-align: center;
+}
+
+.orient-toggle-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.orient-choice-btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 2.5px solid #334155;
+  background: #1e293b;
+  color: #cbd5e1;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #09090b;
+  transition: transform 0.1s, border-color 0.14s, background 0.14s;
+}
+
+.orient-choice-btn.active {
+  background: linear-gradient(180deg, #0284c7 0%, #1d4ed8 100%);
+  border-color: #fde047;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #111827, 0 0 12px rgba(56, 189, 248, 0.45);
+}
+
+.orient-choice-btn:active {
+  transform: translateY(2px);
+}
+
+/* Ensure phones held in portrait ALWAYS stack cleanly in Portrait (never stuck in 2-col landscape!) */
+@media (max-width: 1024px) and (orientation: portrait) {
+  body:not(.view-landscape) .landing-content {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 6px 4px;
+  }
+  body:not(.view-landscape) .landing-main {
+    align-items: center;
+    gap: 8px;
+  }
+  body:not(.view-landscape) .title-hero-card {
+    width: min(170px, 44vw);
+    transform: rotate(0deg);
+  }
+  body:not(.view-landscape) .touch-controls {
+    bottom: auto !important;
+  }
+}
+
+body.view-portrait .touch-controls {
+  bottom: auto !important;
+}
+
+/* Explicit Landscape Widescreen Mode when chosen on a tall portrait screen */
+body.view-landscape .game-frame {
+  width: min(1120px, 100vw);
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 100dvh;
+  display: block;
+}
+
+@media (max-width: 960px) and (orientation: landscape) {
+  body.view-landscape .game-frame {
+    width: 100vw;
+    height: 100dvh;
+    aspect-ratio: auto;
+  }
+}

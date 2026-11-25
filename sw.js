@@ -1,16 +1,16 @@
-const CACHE_NAME = 'kalye-hero-v16';
+const CACHE_NAME = 'kalye-hero-v17';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest?v=16',
-  './css/style.css?v=16',
+  './manifest.webmanifest?v=17',
+  './css/style.css?v=17',
   './js/audio.js?v=14',
   './js/sprites.js?v=14',
   './js/levels.js?v=10',
   './js/jeep_ride.js?v=10',
   './js/karenderya.js?v=11',
   './js/vendor.js?v=13',
-  './js/game.js?v=16',
+  './js/game.js?v=17',
   './assets/kalye_raketero_logo.jpg',
   './assets/hero_chibi.jpg',
   './assets/hero_jeep_jersey.jpg',
