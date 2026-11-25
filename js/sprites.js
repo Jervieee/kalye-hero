@@ -1513,10 +1513,23 @@ const Sprites = (() => {
     ctx.restore();
   }
 
-  // ==================== PH STREET PARALLAX BACKGROUND ====================
-  function drawBackground(ctx, width, height, camX, theme, time) {
-    // 1. Sky gradient by stage theme
-    const sky = ctx.createLinearGradient(0, 0, 0, height);
+  // ==================== PH STREET PARALLAX BACKGROUND (OFFSCREEN CACHED FOR 60FPS!) ====================
+  let bgSkyCanvas = null;
+  let bgSkyKey = '';
+  const skylineTileCache = Object.create(null);
+  const buildingSpriteCache = Object.create(null);
+  let nightLampSprite = null;
+
+  function getSkyCanvas(width, height, theme) {
+    const key = `${width}x${height}_${theme}`;
+    if (bgSkyCanvas && bgSkyKey === key) return bgSkyCanvas;
+    if (!bgSkyCanvas) bgSkyCanvas = document.createElement('canvas');
+    bgSkyCanvas.width = width;
+    bgSkyCanvas.height = height;
+    bgSkyKey = key;
+    const sctx = bgSkyCanvas.getContext('2d', { alpha: false });
+
+    const sky = sctx.createLinearGradient(0, 0, 0, height);
     if (theme === 'sunset') {
       sky.addColorStop(0, '#4c1d95');
       sky.addColorStop(0.38, '#ea580c');
@@ -1527,98 +1540,150 @@ const Sprites = (() => {
       sky.addColorStop(0.55, '#1e1b4b');
       sky.addColorStop(1, '#312e81');
     } else if (theme === 'malacanang') {
-      // Grand Ceremonial Manila Sky over Malacañang!
       sky.addColorStop(0, '#1d4ed8');
       sky.addColorStop(0.42, '#38bdf8');
       sky.addColorStop(0.82, '#fde68a');
       sky.addColorStop(1, '#fef3c7');
     } else if (theme === 'pasig') {
-      // Pasig River Golden Afternoon Sky!
       sky.addColorStop(0, '#0369a1');
       sky.addColorStop(0.48, '#38bdf8');
       sky.addColorStop(0.85, '#fed7aa');
       sky.addColorStop(1, '#fef08a');
     } else if (theme === 'ilocos') {
-      // Ilocos Norte Bright Coastal Windmill Sky!
       sky.addColorStop(0, '#1e40af');
       sky.addColorStop(0.45, '#60a5fa');
       sky.addColorStop(0.82, '#fde68a');
       sky.addColorStop(1, '#fef3c7');
     } else if (theme === 'pangasinan') {
-      // Pangasinan Tropical Beach Sky!
       sky.addColorStop(0, '#0284c7');
       sky.addColorStop(0.5, '#38bdf8');
       sky.addColorStop(0.88, '#a5f3fc');
       sky.addColorStop(1, '#fef9c3');
     } else if (theme === 'kagubatan') {
-      // Mystical Philippine Jungle Twilight!
       sky.addColorStop(0, '#052e16');
       sky.addColorStop(0.45, '#064e3b');
       sky.addColorStop(0.82, '#115e59');
       sky.addColorStop(1, '#1e293b');
     } else {
-      // Sunny Manila Kalye
       sky.addColorStop(0, '#2563eb');
       sky.addColorStop(0.45, '#38bdf8');
       sky.addColorStop(0.85, '#bae6fd');
       sky.addColorStop(1, '#fef9c3');
     }
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, width, height);
+    sctx.fillStyle = sky;
+    sctx.fillRect(0, 0, width, height);
 
-    // Sun or Moon + stars
     if (theme === 'night') {
-      ctx.fillStyle = '#fef9c3';
-      ctx.beginPath();
-      ctx.arc(width - 140, 92, 34, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#090d1f';
-      ctx.beginPath();
-      ctx.arc(width - 126, 86, 30, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Twinkling stars
-      for (let i = 0; i < 36; i++) {
-        const sx = ((i * 173) % width);
+      sctx.fillStyle = '#fef9c3';
+      sctx.beginPath();
+      sctx.arc(width - 140, 92, 34, 0, Math.PI * 2);
+      sctx.fill();
+      sctx.fillStyle = '#090d1f';
+      sctx.beginPath();
+      sctx.arc(width - 126, 86, 30, 0, Math.PI * 2);
+      sctx.fill();
+      // Static crisp starfield baked into sky!
+      for (let i = 0; i < 32; i++) {
+        const sx = (i * 173) % width;
         const sy = 25 + ((i * 71) % 190);
-        const alpha = 0.4 + Math.sin(time * 3 + i) * 0.4;
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-        ctx.fillRect(sx, sy, 2.5, 2.5);
+        sctx.fillStyle = i % 3 === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)';
+        sctx.fillRect(sx, sy, 2.5, 2.5);
       }
-    } else {
+    } else if (theme !== 'kagubatan') {
       const sunY = theme === 'sunset' ? 185 : 95;
-      const sunGrad = ctx.createRadialGradient(width - 160, sunY, 10, width - 160, sunY, 95);
+      const sunGrad = sctx.createRadialGradient(width - 160, sunY, 10, width - 160, sunY, 95);
       sunGrad.addColorStop(0, '#fef08a');
       sunGrad.addColorStop(0.45, 'rgba(253, 224, 71, 0.55)');
       sunGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
-      ctx.fillStyle = sunGrad;
-      ctx.beginPath();
-      ctx.arc(width - 160, sunY, 95, 0, Math.PI * 2);
-      ctx.fill();
+      sctx.fillStyle = sunGrad;
+      sctx.beginPath();
+      sctx.arc(width - 160, sunY, 95, 0, Math.PI * 2);
+      sctx.fill();
+    }
+    return bgSkyCanvas;
+  }
 
-      // Cartoon puffy clouds
-      const cloudScroll = (camX * 0.12) % 360;
-      for (let x = -cloudScroll; x < width + 220; x += 260) {
-        drawCloud(ctx, x, 70 + (Math.abs(Math.floor(x / 260)) % 2) * 35, theme === 'sunset' ? '#fed7aa' : '#ffffff');
+  function getSkylineTile(theme) {
+    const key = theme === 'night' ? 'night' : theme === 'sunset' ? 'sunset' : 'day';
+    if (skylineTileCache[key]) return skylineTileCache[key];
+    // Seamless 5-building repeatable skyline strip (700px wide) — replaces ~470 fillRects per frame!
+    const tileW = 700;
+    const tileH = 340;
+    const c = document.createElement('canvas');
+    c.width = tileW;
+    c.height = tileH;
+    const tctx = c.getContext('2d');
+    const farColor = key === 'night' ? '#131633' : key === 'sunset' ? '#7c2d12' : '#60a5fa';
+    const farWin = key === 'night' ? '#fde047' : key === 'sunset' ? '#fdba74' : '#dbeafe';
+    for (let i = 0; i < 5; i++) {
+      const bx = i * 140;
+      const bh = 130 + ((i * 37) % 5) * 36;
+      const by = tileH - 40 - bh;
+      tctx.fillStyle = farColor;
+      tctx.fillRect(bx, by, 108, bh + 40);
+      tctx.fillStyle = farWin;
+      for (let wy = by + 16; wy < tileH - 60; wy += 24) {
+        for (let wx = bx + 14; wx < bx + 94; wx += 22) {
+          if ((wx + wy) % 3 !== 0) tctx.fillRect(wx, wy, 10, 12);
+        }
+      }
+    }
+    skylineTileCache[key] = c;
+    return c;
+  }
+
+  function getNightLampSprite() {
+    if (nightLampSprite) return nightLampSprite;
+    const c = document.createElement('canvas');
+    c.width = 170;
+    c.height = 170;
+    const lctx = c.getContext('2d');
+    const lamp = lctx.createRadialGradient(85, 85, 4, 85, 85, 85);
+    lamp.addColorStop(0, 'rgba(254, 240, 138, 0.9)');
+    lamp.addColorStop(0.35, 'rgba(251, 191, 36, 0.25)');
+    lamp.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    lctx.fillStyle = lamp;
+    lctx.beginPath();
+    lctx.arc(85, 85, 85, 0, Math.PI * 2);
+    lctx.fill();
+    nightLampSprite = c;
+    return c;
+  }
+
+  function getMidgroundBuildingSprite(seed, theme) {
+    const isSariSari = seed % 2 === 0;
+    const subVar = isSariSari ? (seed % 4 === 0 ? 's0' : 's1') : (seed % 3 === 0 ? 'b0' : 'b1');
+    const key = `${theme === 'night' ? 'n' : 'd'}_${subVar}`;
+    if (buildingSpriteCache[key]) return buildingSpriteCache[key];
+    const c = document.createElement('canvas');
+    c.width = 230;
+    c.height = 235;
+    const bctx = c.getContext('2d');
+    drawMidgroundBuilding(bctx, 20, 228, seed, theme);
+    buildingSpriteCache[key] = c;
+    return c;
+  }
+
+  function drawBackground(ctx, width, height, camX, theme, time) {
+    // 1. Blit Cached Sky + Sun/Moon in ONE fast drawImage!
+    ctx.drawImage(getSkyCanvas(width, height, theme), 0, 0);
+
+    // Light puffy clouds for daytime/sunset themes
+    if (theme !== 'night' && theme !== 'kagubatan') {
+      const cloudScroll = ((camX * 0.12) % 260 + 260) % 260;
+      const cloudColor = theme === 'sunset' ? '#fed7aa' : '#ffffff';
+      for (let x = -cloudScroll - 90; x < width + 90; x += 260) {
+        drawCloud(ctx, x, 70 + (Math.abs(Math.floor((x + camX * 0.12) / 260)) % 2) * 35, cloudColor);
       }
     }
 
-    // 2. Distant Manila Skyline & LRT Viaduct (0.18x parallax)
-    const farScroll = camX * 0.18;
-    const farColor = theme === 'night' ? '#131633' : theme === 'sunset' ? '#7c2d12' : '#60a5fa';
-    const farWin = theme === 'night' ? '#fde047' : theme === 'sunset' ? '#fdba74' : '#dbeafe';
-    for (let i = -1; i < 12; i++) {
-      const bx = i * 140 - (farScroll % 140);
-      const bh = 130 + ((Math.abs(i * 37) % 5) * 36);
-      const by = height - 120 - bh;
-      ctx.fillStyle = farColor;
-      ctx.fillRect(bx, by, 108, bh + 40);
-      // Windows
-      ctx.fillStyle = farWin;
-      for (let wy = by + 16; wy < height - 140; wy += 24) {
-        for (let wx = bx + 14; wx < bx + 94; wx += 22) {
-          if ((wx + wy) % 3 !== 0) ctx.fillRect(wx, wy, 10, 12);
-        }
+    // 2. Blit Cached Distant Manila Skyline Strip (0.18x parallax — 1-2 drawImage calls instead of 470 fillRects!)
+    if (theme !== 'kagubatan' && theme !== 'pangasinan') {
+      const tile = getSkylineTile(theme);
+      const farOff = ((camX * 0.18) % tile.width + tile.width) % tile.width;
+      const tileY = height - 80 - tile.height;
+      for (let bx = -farOff; bx < width; bx += tile.width) {
+        ctx.drawImage(tile, Math.round(bx), tileY);
       }
     }
 
@@ -1644,68 +1709,79 @@ const Sprites = (() => {
       return;
     }
 
+    // Blit Cached Sari-Sari Store / Shophouse Sprites (Strictly Viewport-Culled!)
     const midScroll = camX * 0.38;
     const shopSpacing = 320;
-    const startIdx = Math.floor(midScroll / shopSpacing) - 1;
-    for (let i = startIdx; i < startIdx + 6; i++) {
-      const sx = i * shopSpacing - midScroll;
-      drawMidgroundBuilding(ctx, sx, height - 110, Math.abs(i), theme);
+    const startIdx = Math.floor((midScroll - 220) / shopSpacing);
+    const endIdx = Math.ceil((midScroll + width + 40) / shopSpacing);
+    for (let i = startIdx; i <= endIdx; i++) {
+      const sx = Math.round(i * shopSpacing - midScroll);
+      const spr = getMidgroundBuildingSprite(Math.abs(i), theme);
+      ctx.drawImage(spr, sx - 20, height - 110 - 228);
     }
 
-    // 4. Overhead Meralco Utility Poles, Sagging Wires & Fiesta Banderitas! (0.68x parallax)
+    // 4. Overhead Meralco Utility Poles, Sagging Wires & Batched Fiesta Banderitas! (0.68x parallax, Culled!)
     const poleSpacing = 340;
     const poleScroll = camX * 0.68;
-    const pStart = Math.floor(poleScroll / poleSpacing) - 1;
+    const pStart = Math.floor((poleScroll - 60) / poleSpacing);
+    const pEnd = Math.ceil((poleScroll + width + 60) / poleSpacing);
     const polePositions = [];
-    for (let i = pStart; i < pStart + 6; i++) {
+    for (let i = pStart; i <= pEnd; i++) {
       const px = i * poleSpacing - poleScroll;
       polePositions.push(px);
       drawUtilityPole(ctx, px, height - 92, theme);
     }
 
-    // Sagging tangled electric wires + colorful Filipino Fiesta Banderitas between poles
-    const flagColors = ['#ef4444', '#facc15', '#3b82f6', '#10b981', '#ec4899', '#f97316'];
+    // Wires & Batched Fiesta Banderitas (6 color fills instead of 110 individual strokes!)
+    const topY = height - 355;
+    ctx.strokeStyle = theme === 'night' ? '#334155' : '#1e293b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
     for (let i = 0; i < polePositions.length - 1; i++) {
       const x1 = polePositions[i];
       const x2 = polePositions[i + 1];
-      const topY = height - 355;
+      const mx = (x1 + x2) * 0.5;
+      ctx.moveTo(x1, topY);
+      ctx.quadraticCurveTo(mx, topY + 26, x2, topY);
+      ctx.moveTo(x1, topY + 14);
+      ctx.quadraticCurveTo(mx, topY + 44, x2, topY + 14);
+    }
+    ctx.stroke();
 
-      // Electric wires
-      ctx.strokeStyle = theme === 'night' ? '#334155' : '#1e293b';
-      ctx.lineWidth = 2;
-      for (let w = 0; w < 2; w++) {
-        ctx.beginPath();
-        ctx.moveTo(x1, topY + w * 14);
-        ctx.quadraticCurveTo((x1 + x2) / 2, topY + 26 + w * 18, x2, topY + w * 14);
-        ctx.stroke();
-      }
-
-      // Fiesta banderitas string
-      const bY = topY + 38;
-      ctx.strokeStyle = '#111827';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
+    const bY = topY + 38;
+    ctx.strokeStyle = '#111827';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for (let i = 0; i < polePositions.length - 1; i++) {
+      const x1 = polePositions[i];
+      const x2 = polePositions[i + 1];
       ctx.moveTo(x1, bY);
-      ctx.quadraticCurveTo((x1 + x2) / 2, bY + 42, x2, bY);
-      ctx.stroke();
+      ctx.quadraticCurveTo((x1 + x2) * 0.5, bY + 42, x2, bY);
+    }
+    ctx.stroke();
 
-      const steps = 11;
-      for (let f = 1; f < steps; f++) {
-        const t = f / steps;
-        const fx = x1 + (x2 - x1) * t;
-        const fy = bY + 4 * t * (1 - t) * 42;
-        const flutter = Math.sin(time * 5 + f + i) * 2.5;
-        ctx.fillStyle = flagColors[(f + i) % flagColors.length];
-        ctx.strokeStyle = INK;
-        ctx.lineWidth = 1.3;
-        ctx.beginPath();
-        ctx.moveTo(fx - 7, fy);
-        ctx.lineTo(fx + 7, fy + 1);
-        ctx.lineTo(fx + flutter, fy + 16);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
+    const flagColors = ['#ef4444', '#facc15', '#3b82f6', '#10b981', '#ec4899', '#f97316'];
+    const steps = 10;
+    for (let c = 0; c < flagColors.length; c++) {
+      ctx.fillStyle = flagColors[c];
+      ctx.beginPath();
+      for (let i = 0; i < polePositions.length - 1; i++) {
+        const x1 = polePositions[i];
+        const x2 = polePositions[i + 1];
+        for (let f = 1; f < steps; f++) {
+          if ((f + i) % flagColors.length !== c) continue;
+          const t = f / steps;
+          const fx = x1 + (x2 - x1) * t;
+          if (fx < -12 || fx > width + 12) continue;
+          const fy = bY + 4 * t * (1 - t) * 42;
+          const flutter = Math.sin(time * 5 + f + i) * 2.2;
+          ctx.moveTo(fx - 7, fy);
+          ctx.lineTo(fx + 7, fy + 1);
+          ctx.lineTo(fx + flutter, fy + 15);
+          ctx.closePath();
+        }
       }
+      ctx.fill();
     }
   }
 
@@ -1721,12 +1797,13 @@ const Sprites = (() => {
       ctx.fillRect(rx + 24, groundY - 22, 30, 3);
     }
 
-    // Iconic Malacañang Palace White Neoclassical Wings & Grand Portico (0.35x parallax)
+    // Iconic Malacañang Palace White Neoclassical Wings & Grand Portico (0.35x parallax, Culled!)
     const palaceSpacing = 540;
     const pScroll = camX * 0.35;
-    const startIdx = Math.floor(pScroll / palaceSpacing) - 1;
+    const startIdx = Math.floor((pScroll - 500) / palaceSpacing);
+    const endIdx = Math.ceil((pScroll + width + 60) / palaceSpacing);
 
-    for (let i = startIdx; i < startIdx + 4; i++) {
+    for (let i = startIdx; i <= endIdx; i++) {
       const px = i * palaceSpacing - pScroll;
       const py = groundY - 235;
       const pw = 450;
@@ -1831,28 +1908,30 @@ const Sprites = (() => {
       ctx.fill();
     }
 
-    // Ornate Wrought-Iron Malacañang Perimeter Fence + Heritage Manila Globe Lamps (0.65x parallax)
+    // Ornate Wrought-Iron Malacañang Perimeter Fence (Batched paths!)
     const fenceScroll = camX * 0.65;
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, groundY - 58, width, 5);
     ctx.fillRect(0, groundY - 14, width, 14);
+    ctx.fillStyle = '#0f172a';
     for (let fx = -(fenceScroll % 24); fx < width + 24; fx += 24) {
-      ctx.fillStyle = '#0f172a';
       ctx.fillRect(fx, groundY - 62, 4, 62);
-      // Gold spear finial on fence bars
-      ctx.fillStyle = '#facc15';
-      ctx.beginPath();
+    }
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    for (let fx = -(fenceScroll % 24); fx < width + 24; fx += 24) {
       ctx.moveTo(fx + 2, groundY - 70);
       ctx.lineTo(fx - 2, groundY - 61);
       ctx.lineTo(fx + 6, groundY - 61);
       ctx.closePath();
-      ctx.fill();
     }
+    ctx.fill();
 
-    // Classic Green Manila Heritage Streetlamps + J.P. Laurel St Sign
+    // Classic Green Manila Heritage Streetlamps + J.P. Laurel St Sign (Culled!)
     const lampSpacing = 360;
-    const lStart = Math.floor(fenceScroll / lampSpacing) - 1;
-    for (let i = lStart; i < lStart + 6; i++) {
+    const lStart = Math.floor((fenceScroll - 80) / lampSpacing);
+    const lEnd = Math.ceil((fenceScroll + width + 80) / lampSpacing);
+    for (let i = lStart; i <= lEnd; i++) {
       const lx = i * lampSpacing - fenceScroll;
       ctx.fillStyle = '#14532d';
       ctx.strokeStyle = INK;
@@ -2176,16 +2255,9 @@ const Sprites = (() => {
     ctx.fillRect(x - 28, groundY - 270, 56, 8);
     ctx.strokeRect(x - 28, groundY - 270, 56, 8);
 
-    // Street lamp glow at night
+    // Street lamp glow at night (Blit cached radial glow sprite — zero per-frame gradient allocations!)
     if (theme === 'night') {
-      const lamp = ctx.createRadialGradient(x + 22, groundY - 252, 4, x + 22, groundY - 252, 85);
-      lamp.addColorStop(0, 'rgba(254, 240, 138, 0.9)');
-      lamp.addColorStop(0.35, 'rgba(251, 191, 36, 0.25)');
-      lamp.addColorStop(1, 'rgba(251, 191, 36, 0)');
-      ctx.fillStyle = lamp;
-      ctx.beginPath();
-      ctx.arc(x + 22, groundY - 252, 85, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.drawImage(getNightLampSprite(), Math.round(x + 22 - 85), Math.round(groundY - 252 - 85));
     }
   }
 
@@ -2298,9 +2370,11 @@ const Sprites = (() => {
   }
 
   // ==================== STREET GROUND & PLATFORMS ====================
-  function drawPlatform(ctx, plat) {
+  function drawPlatform(ctx, plat, camX = 0, viewW = 1200) {
     ctx.save();
     const { x, y, w, h, style } = plat;
+    const visMinX = Math.max(x, camX - 64);
+    const visMaxX = Math.min(x + w, camX + viewW + 64);
 
     if (style === 'jeepney') {
       drawJeepneyPlatform(ctx, x, y, w, h, plat.route || 'CUBAO · QUIAPO', plat.color || '#ef4444');
@@ -2324,17 +2398,19 @@ const Sprites = (() => {
       // Malacañang Heritage Marble & Cobblestone Boulevard!
       ctx.fillStyle = '#fef3c7';
       ctx.fillRect(x, y, w, 16);
-      // Crimson & Gold Ceremonial Curb
-      for (let cx = x; cx < x + w; cx += 48) {
+      // Crimson & Gold Ceremonial Curb (Viewport-Culled!)
+      const startCurb = x + Math.floor((visMinX - x) / 48) * 48;
+      for (let cx = startCurb; cx < visMaxX; cx += 48) {
         ctx.fillStyle = Math.floor(cx / 48) % 2 === 0 ? '#dc2626' : '#facc15';
         ctx.fillRect(cx, y + 10, Math.min(48, x + w - cx), 8);
       }
       // Polished Heritage Stone Road
       ctx.fillStyle = '#475569';
-      ctx.fillRect(x, y + 18, w, h - 18);
-      // Decorative gold center dashes
+      ctx.fillRect(visMinX, y + 18, Math.max(0, visMaxX - visMinX), h - 18);
+      // Decorative gold center dashes (Viewport-Culled!)
       ctx.fillStyle = '#fde047';
-      for (let lx = x + 22; lx < x + w - 20; lx += 74) {
+      const startDash = x + 22 + Math.max(0, Math.floor((visMinX - (x + 22)) / 74)) * 74;
+      for (let lx = startDash; lx < Math.min(visMaxX, x + w - 20); lx += 74) {
         ctx.fillRect(lx, y + 44, 36, 6);
       }
       ctx.strokeStyle = INK;
@@ -2423,19 +2499,21 @@ const Sprites = (() => {
       ctx.fillStyle = '#cbd5e1';
       ctx.fillRect(x, y, w, 16);
 
-      // Alternating yellow-black street curb blocks
-      for (let cx = x; cx < x + w; cx += 48) {
+      // Alternating yellow-black street curb blocks (Viewport-Culled!)
+      const startCurb = x + Math.floor((visMinX - x) / 48) * 48;
+      for (let cx = startCurb; cx < visMaxX; cx += 48) {
         ctx.fillStyle = Math.floor(cx / 48) % 2 === 0 ? '#facc15' : '#1e293b';
         ctx.fillRect(cx, y + 10, Math.min(48, x + w - cx), 8);
       }
 
-      // Asphalt street body
+      // Asphalt street body (Viewport-Culled!)
       ctx.fillStyle = '#334155';
-      ctx.fillRect(x, y + 18, w, h - 18);
+      ctx.fillRect(visMinX, y + 18, Math.max(0, visMaxX - visMinX), h - 18);
 
-      // Road lane dashed line
+      // Road lane dashed line (Viewport-Culled!)
       ctx.fillStyle = '#f8fafc';
-      for (let lx = x + 20; lx < x + w - 20; lx += 76) {
+      const startDash = x + 20 + Math.max(0, Math.floor((visMinX - (x + 20)) / 76)) * 76;
+      for (let lx = startDash; lx < Math.min(visMaxX, x + w - 20); lx += 76) {
         ctx.fillRect(lx, y + 44, 38, 6);
       }
 

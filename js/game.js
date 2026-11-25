@@ -665,7 +665,14 @@
     SoundFX.startBGM();
   }
 
+  let customizerVisible = false;
+  const lastHud = {
+    hp: -1, maxHp: -1, energyPct: -1, energyLow: null,
+    weaponKey: '', knife: -1, coins: -1, cash: -1, score: -1, progPct: -1
+  };
+
   function hideAllOverlays() {
+    customizerVisible = false;
     titleOverlay.classList.add('hidden');
     if (selectGameOverlay) selectGameOverlay.classList.add('hidden');
     if (customizerOverlay) customizerOverlay.classList.add('hidden');
@@ -678,52 +685,81 @@
 
   function updateHUD() {
     if (!player) return;
-    // Hearts
-    let heartsStr = '';
-    for (let i = 0; i < player.maxHp; i++) {
-      heartsStr += i < player.hp ? '❤️' : '🖤';
-    }
-    hudHearts.textContent = heartsStr;
-
-    // Punch Energy Bar
-    const pct = Math.max(0, Math.min(100, Math.round((player.energy / player.maxEnergy) * 100)));
-    hudEnergyFill.style.width = `${pct}%`;
-    hudEnergyFill.classList.toggle('low', player.energy < PUNCH_COST);
-    hudEnergyText.textContent = `${pct}`;
-
-    // Weapon Badge
-    if (player.weapon && player.ammo > 0) {
-      weaponBadge.classList.add('armed');
-      if (player.weapon === 'pistol') {
-        weaponIcon.textContent = '🔫';
-        weaponName.textContent = 'STREET PISTOL';
-      } else {
-        weaponIcon.textContent = '💥';
-        weaponName.textContent = 'SPREAD BLASTER';
+    // Dirty-checked Hearts
+    if (lastHud.hp !== player.hp || lastHud.maxHp !== player.maxHp) {
+      lastHud.hp = player.hp;
+      lastHud.maxHp = player.maxHp;
+      let heartsStr = '';
+      for (let i = 0; i < player.maxHp; i++) {
+        heartsStr += i < player.hp ? '❤️' : '🖤';
       }
-      weaponAmmo.textContent = `AMMO: ${player.ammo}`;
-    } else {
-      weaponBadge.classList.remove('armed');
-      weaponIcon.textContent = '✊';
-      weaponName.textContent = 'FISTS ONLY';
-      weaponAmmo.textContent = 'Find a [?] Gun Box!';
+      hudHearts.textContent = heartsStr;
     }
 
-    // Boost Knife badge
-    if (knifeBadge && hudKnifeCount) {
-      knifeBadge.classList.toggle('hidden', !player.knifeAmmo || player.knifeAmmo <= 0);
-      hudKnifeCount.textContent = String(player.knifeAmmo || 0);
+    // Dirty-checked Punch Energy Bar
+    const pct = Math.max(0, Math.min(100, Math.round((player.energy / player.maxEnergy) * 100)));
+    if (lastHud.energyPct !== pct) {
+      lastHud.energyPct = pct;
+      hudEnergyFill.style.width = `${pct}%`;
+      hudEnergyText.textContent = `${pct}`;
+    }
+    const isLow = player.energy < PUNCH_COST;
+    if (lastHud.energyLow !== isLow) {
+      lastHud.energyLow = isLow;
+      hudEnergyFill.classList.toggle('low', isLow);
     }
 
-    // Coins, Cash & Score
-    hudCoins.textContent = String(coins);
-    if (hudCash) hudCash.textContent = `₱${cash.toLocaleString()}`;
-    hudScore.textContent = String(score).padStart(5, '0');
+    // Dirty-checked Weapon Badge
+    const wKey = player.weapon && player.ammo > 0 ? `${player.weapon}:${player.ammo}` : 'none';
+    if (lastHud.weaponKey !== wKey) {
+      lastHud.weaponKey = wKey;
+      if (player.weapon && player.ammo > 0) {
+        weaponBadge.classList.add('armed');
+        if (player.weapon === 'pistol') {
+          weaponIcon.textContent = '🔫';
+          weaponName.textContent = 'STREET PISTOL';
+        } else {
+          weaponIcon.textContent = '💥';
+          weaponName.textContent = 'SPREAD BLASTER';
+        }
+        weaponAmmo.textContent = `AMMO: ${player.ammo}`;
+      } else {
+        weaponBadge.classList.remove('armed');
+        weaponIcon.textContent = '✊';
+        weaponName.textContent = 'FISTS ONLY';
+        weaponAmmo.textContent = 'Find a [?] Gun Box!';
+      }
+    }
 
-    // Stage progress
+    // Dirty-checked Boost Knife badge
+    const kCount = player.knifeAmmo || 0;
+    if (knifeBadge && hudKnifeCount && lastHud.knife !== kCount) {
+      lastHud.knife = kCount;
+      knifeBadge.classList.toggle('hidden', kCount <= 0);
+      hudKnifeCount.textContent = String(kCount);
+    }
+
+    // Dirty-checked Coins, Cash & Score
+    if (lastHud.coins !== coins) {
+      lastHud.coins = coins;
+      hudCoins.textContent = String(coins);
+    }
+    if (hudCash && lastHud.cash !== cash) {
+      lastHud.cash = cash;
+      hudCash.textContent = `₱${cash.toLocaleString()}`;
+    }
+    if (lastHud.score !== score) {
+      lastHud.score = score;
+      hudScore.textContent = String(score).padStart(5, '0');
+    }
+
+    // Dirty-checked Stage progress (1% granularity to avoid micro-reflows!)
     if (level) {
-      const prog = Math.max(0, Math.min(100, (player.x / level.goalX) * 100));
-      hudProgress.style.width = `${prog}%`;
+      const prog = Math.max(0, Math.min(100, Math.round((player.x / level.goalX) * 100)));
+      if (lastHud.progPct !== prog) {
+        lastHud.progPct = prog;
+        hudProgress.style.width = `${prog}%`;
+      }
     }
   }
 
@@ -1180,9 +1216,9 @@
       p.vx = 0;
     }
 
-    // Solid blocks horizontal collision
+    // Solid blocks horizontal collision (skip far-off blocks!)
     for (const b of blocks) {
-      if (b.broken) continue;
+      if (b.broken || b.x > p.x + p.w + 4 || b.x + b.size < p.x - 4) continue;
       const bRect = { x: b.x, y: b.y, w: b.size, h: b.size };
       if (rectOverlap(p, bRect)) {
         if (p.vx > 0) p.x = b.x - p.w;
@@ -1229,9 +1265,9 @@
       }
     }
 
-    // Solid ? blocks & crates vertical collision (with classic Mario head-bonk!)
+    // Solid ? blocks & crates vertical collision (with classic Mario head-bonk, skip far-off blocks!)
     for (const b of blocks) {
-      if (b.broken) continue;
+      if (b.broken || b.x > p.x + p.w + 4 || b.x + b.size < p.x - 4) continue;
       const bRect = { x: b.x, y: b.y, w: b.size, h: b.size };
       if (!rectOverlap(p, bRect)) continue;
 
@@ -1710,7 +1746,6 @@
 
   // ==================== RENDER LOOP ====================
   function render() {
-    ctx.clearRect(0, 0, W, H);
     if (activeGameMode === 'jeep' && JeepRide.isActive()) {
       JeepRide.render(ctx, W);
       return;
@@ -1735,21 +1770,23 @@
       ctx.translate(sx, sy);
     }
 
-    // 1. PH Streets Multi-Layer Parallax Background
+    // 1. PH Streets Multi-Layer Parallax Background (Offscreen-Cached!)
     Sprites.drawBackground(ctx, W, H, camX, level.theme, worldTime);
 
     // 2. World Space Entities
     ctx.save();
     ctx.translate(-Math.round(camX), 0);
 
-    // Platforms (Streets, Jeepneys, Tricycles, Footbridges, Awnings)
+    // Platforms (Viewport-Culled Streets, Jeepneys, Tricycles, Footbridges, Awnings)
     for (const plat of platforms) {
       if (plat.x + plat.w < camX - 60 || plat.x > camX + W + 60) continue;
-      Sprites.drawPlatform(ctx, plat);
+      Sprites.drawPlatform(ctx, plat, camX, W);
     }
 
-    // Barangay / Malacañang Goal Flagpole
-    Sprites.drawGoalFlag(ctx, level.goalX, Levels.GROUND_Y, worldTime, goalCleared, level.theme);
+    // Barangay / Malacañang Goal Flagpole (Culled when offscreen!)
+    if (level.goalX >= camX - 200 && level.goalX <= camX + W + 200) {
+      Sprites.drawGoalFlag(ctx, level.goalX, Levels.GROUND_Y, worldTime, goalCleared, level.theme);
+    }
 
     // ? Blocks & Wooden Crates
     for (const b of blocks) {
@@ -1962,7 +1999,10 @@
   // ==================== 4-STEP UI FLOW (PLAY -> GAME -> PLAYER CUSTOMIZER -> LEVEL MAP) ====================
   function showFlowScreen(screenEl) {
     hideAllOverlays();
-    if (screenEl) screenEl.classList.remove('hidden');
+    if (screenEl) {
+      screenEl.classList.remove('hidden');
+      customizerVisible = screenEl === customizerOverlay;
+    }
   }
 
   function applyCustomPreset(presetKey) {
@@ -1988,7 +2028,7 @@
   }
 
   function renderPreviewHero() {
-    if (!previewCtx || !customizerOverlay || customizerOverlay.classList.contains('hidden')) return;
+    if (!customizerVisible || !previewCtx) return;
     previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
     previewCtx.save();
     previewCtx.translate(110, 192);

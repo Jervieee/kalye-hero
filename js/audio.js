@@ -38,19 +38,23 @@ const SoundFX = (() => {
     osc.stop(now + duration + 0.02);
   }
 
+  let sharedNoiseBuffer = null;
+
   function playNoise(duration, volume = 0.14, highpass = 600, delay = 0) {
     if (muted) return;
     const c = ensureContext();
     if (!c) return;
     const now = c.currentTime + delay;
-    const bufferSize = Math.floor(c.sampleRate * duration);
-    const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
+    if (!sharedNoiseBuffer || sharedNoiseBuffer.sampleRate !== c.sampleRate) {
+      const len = Math.floor(c.sampleRate * 0.5);
+      sharedNoiseBuffer = c.createBuffer(1, len, c.sampleRate);
+      const data = sharedNoiseBuffer.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
     }
     const noise = c.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = sharedNoiseBuffer;
 
     const filter = c.createBiquadFilter();
     filter.type = 'highpass';
