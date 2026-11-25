@@ -1,7 +1,7 @@
 {
-  "name": "KALYE HERO — PH Street Brawl & Run",
-  "short_name": "Kalye Hero",
-  "description": "Mario-inspired Philippine streets action platformer starring a chibi hero in a black shirt and maong pants battling street thieves with punch energy and obtainable guns.",
+  "name": "KALYE RAKETERO — PH Street Arcade",
+  "short_name": "Kalye Raketero",
+  "description": "4 Filipino Arcade Games in 1 App: Street Patrol (8 PH Levels), EDSA Jeep Ride, Karenderya Mania, and The Vendor (Balot Run & Pandesal Bike)!",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

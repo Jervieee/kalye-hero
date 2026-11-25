@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#131829" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Kalye Hero" />
-  <link rel="manifest" href="manifest.webmanifest?v=10" />
+  <meta name="apple-mobile-web-app-title" content="Kalye Raketero" />
+  <link rel="manifest" href="manifest.webmanifest?v=16" />
   <link rel="icon" type="image/png" href="assets/icon-192.png" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
-  <title>KALYE HERO — Street Patrol · Jeep · Karenderya · The Vendor</title>
+  <title>KALYE RAKETERO — Street Patrol · Jeep · Karenderya · The Vendor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=15" />
+  <link rel="stylesheet" href="css/style.css?v=16" />
 </head>
 <body>
   <div class="app-shell">
@@ -188,9 +188,9 @@
 
         <div class="landing-content">
           <div class="landing-hero-showcase">
-            <div class="title-hero-card">
-              <img src="assets/hero_chibi.jpg" alt="Kalye Hero Chibi" class="title-hero-img" onerror="this.style.display='none'" />
-              <div class="hero-tag">PH STREET ARCADE COLLECTION</div>
+            <div class="title-hero-card raketero-logo-card">
+              <img src="assets/kalye_raketero_logo.jpg" alt="Kalye Raketero In-Game Showcase" class="title-hero-img" onerror="this.src='assets/hero_chibi.jpg'" />
+              <div class="hero-tag">🥊 PATROL · 🚐 JEEP · 🍲 KARENDERYA · 🧺 VENDOR</div>
             </div>
           </div>
 
@@ -198,21 +198,23 @@
             <div class="fiesta-flags" aria-hidden="true">
               <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
             </div>
-            <p class="eyebrow">MARIO-INSPIRED PHILIPPINE ARCADE</p>
-            <h1 class="game-logo">
+            <p class="eyebrow">🇵🇭 4-IN-1 PHILIPPINE STREET ARCADE</p>
+            <h1 class="game-logo raketero-wordmark">
               <span class="logo-top">KALYE</span>
-              <span class="logo-bottom">HERO</span>
+              <span class="logo-bottom raketero-bottom">RAKETERO</span>
+              <span class="logo-ingame-strip" aria-hidden="true">🥊 BARIL &amp; PUNCH · 🚐 EDSA JEEP · 🍲 ULAM · 🥚 BALOT &amp; 🥖 PANDESAL</span>
             </h1>
             <p class="subtitle">
-              4 Filipino Arcade Games in 1 App: <strong>Street Patrol (8 PH Levels)</strong>, <strong>EDSA Jeep Ride</strong>, <strong>Karenderya Mania</strong> &amp; <strong>The Vendor</strong>!
+              Hustle across Metro Manila &amp; the Philippines: <strong>Street Patrol (8 PH Levels)</strong>, <strong>EDSA Jeep Ride</strong>, <strong>Karenderya Mania</strong> &amp; <strong>The Vendor</strong>!
             </p>
 
             <div class="landing-cta">
               <button class="btn-primary btn-hero-play pulse" id="btnPlayEntry">▶ PLAY</button>
               <div class="landing-secondary-row">
-                <button class="btn-secondary" id="btnHowTo">🎮 CONTROLS</button>
-                <button class="btn-secondary btn-rotate-view" id="btnRotateTitle">🔄 PORTRAIT / LANDSCAPE</button>
-                <button class="btn-install hidden" id="btnInstall">📲 INSTALL APP</button>
+                <button class="btn-secondary btn-open-ctrl" id="btnOpenControllerTitle">🎛️ CONTROLLER</button>
+                <button class="btn-secondary" id="btnHowTo">🎮 TIPS</button>
+                <button class="btn-secondary btn-rotate-view" id="btnRotateTitle">🔄 ROTATE</button>
+                <button class="btn-install hidden" id="btnInstall">📲 INSTALL</button>
               </div>
             </div>
 
@@ -500,6 +502,101 @@
         </div>
       </section>
 
+      <!-- CUSTOMIZABLE CONTROLLER MODAL (Touch Layout, Size, Opacity, Theme & Keybinds!) -->
+      <section class="overlay modal-overlay hidden" id="controllerOverlay">
+        <div class="modal-card ctrl-modal-card">
+          <div class="ctrl-modal-head">
+            <h2>🎛️ CUSTOMIZE CONTROLLER</h2>
+            <p class="modal-sub">Tune your touch gamepad &amp; keyboard keys—saved automatically!</p>
+          </div>
+
+          <div class="ctrl-settings-body">
+            <!-- Live Mini Preview -->
+            <div class="ctrl-live-preview" id="ctrlLivePreview">
+              <div class="ctrl-prev-move">
+                <div class="ctrl-prev-joy">◀ ● ▶</div>
+                <div class="ctrl-prev-dpad"><span>◀</span><span>▶</span></div>
+              </div>
+              <div class="ctrl-prev-actions">
+                <span class="prev-btn p-act1">✊</span>
+                <span class="prev-btn p-act2">🔫</span>
+                <span class="prev-btn p-jump">▲</span>
+              </div>
+            </div>
+
+            <div class="ctrl-row">
+              <label>🕹️ MOVEMENT PAD</label>
+              <div class="ctrl-pills" data-cset="moveType">
+                <button class="ctrl-pill active" data-val="joystick">Slide Joystick</button>
+                <button class="ctrl-pill" data-val="dpad">◀ ▶ Arrow Buttons</button>
+              </div>
+            </div>
+
+            <div class="ctrl-row">
+              <label>✋ HAND LAYOUT</label>
+              <div class="ctrl-pills" data-cset="handedness">
+                <button class="ctrl-pill active" data-val="right">Right-Handed</button>
+                <button class="ctrl-pill" data-val="left">Left-Handed (Mirror)</button>
+              </div>
+            </div>
+
+            <div class="ctrl-row">
+              <label>📏 BUTTON SIZE</label>
+              <div class="ctrl-pills" data-cset="scale">
+                <button class="ctrl-pill" data-val="0.85">Small</button>
+                <button class="ctrl-pill active" data-val="1">Medium</button>
+                <button class="ctrl-pill" data-val="1.18">Large</button>
+              </div>
+            </div>
+
+            <div class="ctrl-row">
+              <label>👁️ OPACITY</label>
+              <div class="ctrl-pills" data-cset="opacity">
+                <button class="ctrl-pill" data-val="0.58">58% Ghost</button>
+                <button class="ctrl-pill" data-val="0.82">82% Clear</button>
+                <button class="ctrl-pill active" data-val="1">100% Solid</button>
+              </div>
+            </div>
+
+            <div class="ctrl-row">
+              <label>⬆️ PAD HEIGHT (LANDSCAPE)</label>
+              <div class="ctrl-pills" data-cset="bottom">
+                <button class="ctrl-pill active" data-val="14">Low</button>
+                <button class="ctrl-pill" data-val="30">Mid</button>
+                <button class="ctrl-pill" data-val="52">High</button>
+              </div>
+            </div>
+
+            <div class="ctrl-row">
+              <label>🎨 CONTROLLER THEME</label>
+              <div class="ctrl-pills" data-cset="theme">
+                <button class="ctrl-pill active" data-val="classic">Classic</button>
+                <button class="ctrl-pill" data-val="fiesta">🇵🇭 Fiesta</button>
+                <button class="ctrl-pill" data-val="neon">⚡ Neon</button>
+                <button class="ctrl-pill" data-val="stealth">🖤 Stealth</button>
+              </div>
+            </div>
+
+            <div class="ctrl-keybinds-box">
+              <div class="ctrl-kb-title">⌨️ KEYBOARD KEYBINDS <small>(Click any key to rebind)</small></div>
+              <div class="ctrl-kb-grid">
+                <button class="kb-bind-btn" data-bind="left"><span>Move Left</span><kbd id="kbVal_left">A</kbd></button>
+                <button class="kb-bind-btn" data-bind="right"><span>Move Right</span><kbd id="kbVal_right">D</kbd></button>
+                <button class="kb-bind-btn" data-bind="jump"><span>Jump / Up</span><kbd id="kbVal_jump">Space</kbd></button>
+                <button class="kb-bind-btn" data-bind="down"><span>Lane Down</span><kbd id="kbVal_down">S</kbd></button>
+                <button class="kb-bind-btn" data-bind="punch"><span>Punch / Sell</span><kbd id="kbVal_punch">J</kbd></button>
+                <button class="kb-bind-btn" data-bind="shoot"><span>Shoot / Horn</span><kbd id="kbVal_shoot">K</kbd></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrl-modal-footer">
+            <button class="btn-ghost" id="btnResetController">↺ RESET DEFAULTS</button>
+            <button class="btn-primary" id="btnCloseController">✓ SAVE &amp; CLOSE</button>
+          </div>
+        </div>
+      </section>
+
       <!-- PAUSE OVERLAY -->
       <section class="overlay modal-overlay hidden" id="pauseOverlay">
         <div class="modal-card small-modal">
@@ -507,6 +604,7 @@
           <p class="modal-sub">Catch your breath at the sari-sari store!</p>
           <div class="modal-actions">
             <button class="btn-primary" id="btnResume">▶ RESUME</button>
+            <button class="btn-secondary btn-open-ctrl" id="btnOpenControllerPause">🎛️ CUSTOMIZE CONTROLLER</button>
             <button class="btn-secondary" id="btnRestartPause">↻ RESTART</button>
             <button class="btn-ghost" id="btnMapFromPause">🗺️ LEVEL MAP</button>
             <button class="btn-ghost" id="btnQuitTitle">🏠 MAIN MENU</button>
@@ -544,13 +642,17 @@
         </div>
       </section>
 
-      <!-- STREET PATROL Touch Controls (Forward/Backward-ONLY Horizontal Joystick!) -->
+      <!-- STREET PATROL Touch Controls (Joystick OR Arrow Buttons — Customizable!) -->
       <div class="touch-controls hidden" id="touchControls">
         <div class="joystick-zone">
           <div class="joystick-track-h" id="streetJoystick" aria-label="Forward and Backward Joystick">
             <span class="joy-h-arrow joy-h-left">◀</span>
             <span class="joy-h-arrow joy-h-right">▶</span>
             <div class="joystick-knob" id="streetJoyKnob"></div>
+          </div>
+          <div class="dpad-arrows-h" id="streetDpad">
+            <button class="touch-btn dpad-arrow-btn" data-key="left">◀<small>BACK</small></button>
+            <button class="touch-btn dpad-arrow-btn" data-key="right">▶<small>GO</small></button>
           </div>
         </div>
         <div class="touch-actions">
@@ -560,13 +662,17 @@
         </div>
       </div>
 
-      <!-- THE JEEP RIDE (EDSA) Touch Controls (Forward/Backward-ONLY Horizontal Joystick + UP/DOWN Lane + STOP/BEEP!) -->
+      <!-- THE JEEP RIDE (EDSA) Touch Controls (Joystick OR Arrow Buttons + UP/DOWN + STOP/BEEP!) -->
       <div class="touch-controls jeep-touch hidden" id="jeepTouchControls">
         <div class="joystick-zone">
           <div class="joystick-track-h jeep-joy" id="jeepJoystick" aria-label="Forward and Backward Joystick">
             <span class="joy-h-arrow joy-h-left">◀</span>
             <span class="joy-h-arrow joy-h-right">▶</span>
             <div class="joystick-knob" id="jeepJoyKnob"></div>
+          </div>
+          <div class="dpad-arrows-h" id="jeepDpad">
+            <button class="touch-btn dpad-arrow-btn" data-jeep="left">◀<small>SLOW</small></button>
+            <button class="touch-btn dpad-arrow-btn" data-jeep="right">▶<small>GAS</small></button>
           </div>
         </div>
         <div class="touch-actions jeep-right-pad">
@@ -578,13 +684,17 @@
           <button class="touch-btn horn-btn" data-jeep="horn">📯<small>BEEP</small></button>
         </div>
       </div>
-      <!-- THE VENDOR Touch Controls (Forward/Backward Horizontal Joystick + Balot Jump OR Pandesal Sell/Shout!) -->
+      <!-- THE VENDOR Touch Controls (Joystick OR Arrow Buttons + Balot Jump OR Pandesal Sell/Shout!) -->
       <div class="touch-controls vendor-touch hidden" id="vendorTouchControls">
         <div class="joystick-zone">
           <div class="joystick-track-h jeep-joy" id="vendorJoystick" aria-label="Vendor Horizontal Joystick">
             <span class="joy-h-arrow joy-h-left">◀</span>
             <span class="joy-h-arrow joy-h-right">▶</span>
             <div class="joystick-knob" id="vendorJoyKnob"></div>
+          </div>
+          <div class="dpad-arrows-h" id="vendorDpad">
+            <button class="touch-btn dpad-arrow-btn" data-vendor="left">◀<small>LEFT</small></button>
+            <button class="touch-btn dpad-arrow-btn" data-vendor="right">▶<small>RIGHT</small></button>
           </div>
         </div>
         <div class="touch-actions" id="vendorBalotBtns">
@@ -599,12 +709,13 @@
 
     <!-- Bottom Quick Controls Bar (desktop reference) -->
     <footer class="controls-bar" id="controlsBar">
-      <span><kbd>A</kbd><kbd>D</kbd> Forward / Backward</span>
-      <span><kbd>W</kbd> / <kbd>Space</kbd> Double Jump / Stop</span>
-      <span><kbd>J</kbd> ⚡ Punch / 🔪 Knife</span>
-      <span><kbd>K</kbd> 🔫 Shoot / 📯 Horn</span>
+      <span><kbd>A</kbd><kbd>D</kbd> Move</span>
+      <span><kbd>W</kbd> / <kbd>Space</kbd> Jump / Stop</span>
+      <span><kbd>J</kbd> ⚡ Punch / Sell</span>
+      <span><kbd>K</kbd> 🔫 Shoot / Horn</span>
       <span><kbd>P</kbd> Pause</span>
-      <button class="touch-toggle btn-rotate-view" id="btnRotateFooter">🔄 Rotate View</button>
+      <button class="touch-toggle btn-open-ctrl" id="btnControllerFooter">🎛️ Controller</button>
+      <button class="touch-toggle btn-rotate-view" id="btnRotateFooter">🔄 Rotate</button>
       <button class="touch-toggle" id="btnToggleTouch">📱 Touch Pad</button>
     </footer>
   </div>
@@ -615,6 +726,6 @@
   <script src="js/jeep_ride.js?v=10"></script>
   <script src="js/karenderya.js?v=11"></script>
   <script src="js/vendor.js?v=13"></script>
-  <script src="js/game.js?v=15"></script>
+  <script src="js/game.js?v=16"></script>
 </body>
 </html>

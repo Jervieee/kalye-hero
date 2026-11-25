@@ -115,6 +115,40 @@
 
   const STORAGE_KEY = 'kalye_hero_high_score_v1';
   const FARE_STORAGE_KEY = 'kalye_hero_best_fare_v1';
+  const CTRL_STORAGE_KEY = 'kalye_raketero_ctrl_v1';
+
+  const DEFAULT_CTRL = {
+    moveType: 'joystick', // 'joystick' | 'dpad'
+    handedness: 'right',  // 'right' | 'left'
+    scale: 1,             // 0.85 | 1 | 1.18
+    opacity: 1,           // 0.58 | 0.82 | 1
+    bottom: 14,           // 14 | 30 | 52
+    theme: 'classic',     // 'classic' | 'fiesta' | 'neon' | 'stealth'
+    keys: {
+      left: 'KeyA',
+      right: 'KeyD',
+      jump: 'Space',
+      down: 'KeyS',
+      punch: 'KeyJ',
+      shoot: 'KeyK'
+    }
+  };
+  let ctrlConfig = {
+    ...DEFAULT_CTRL,
+    keys: { ...DEFAULT_CTRL.keys }
+  };
+  try {
+    const savedCtrl = JSON.parse(localStorage.getItem(CTRL_STORAGE_KEY) || 'null');
+    if (savedCtrl) {
+      ctrlConfig = {
+        ...DEFAULT_CTRL,
+        ...savedCtrl,
+        keys: { ...DEFAULT_CTRL.keys, ...(savedCtrl.keys || {}) }
+      };
+    }
+  } catch (_) {}
+  let listeningBindAction = null;
+  const controllerOverlay = document.getElementById('controllerOverlay');
 
   // Physics Constants
   const GRAVITY = 1760;
@@ -679,6 +713,7 @@
     if (customizerOverlay) customizerOverlay.classList.add('hidden');
     if (levelMapOverlay) levelMapOverlay.classList.add('hidden');
     howToOverlay.classList.add('hidden');
+    if (controllerOverlay) controllerOverlay.classList.add('hidden');
     pauseOverlay.classList.add('hidden');
     stageClearOverlay.classList.add('hidden');
     gameOverOverlay.classList.add('hidden');
@@ -1913,8 +1948,70 @@
   }
 
   // ==================== INPUT & UI BINDINGS ====================
+  function formatKeyCode(code) {
+    if (!code) return '?';
+    if (code.startsWith('Key')) return code.slice(3);
+    if (code.startsWith('Digit')) return code.slice(5);
+    if (code === 'Space') return 'Space';
+    if (code.startsWith('Arrow')) return code.replace('Arrow', 'Arr');
+    return code.slice(0, 6);
+  }
+
+  function applyControllerConfig() {
+    document.documentElement.style.setProperty('--ctrl-scale', String(ctrlConfig.scale));
+    document.documentElement.style.setProperty('--ctrl-opacity', String(ctrlConfig.opacity));
+    document.documentElement.style.setProperty('--ctrl-bottom', `${ctrlConfig.bottom}px`);
+
+    document.body.classList.toggle('ctrl-dpad', ctrlConfig.moveType === 'dpad');
+    document.body.classList.toggle('ctrl-left', ctrlConfig.handedness === 'left');
+    document.body.classList.remove('ctrl-theme-classic', 'ctrl-theme-fiesta', 'ctrl-theme-neon', 'ctrl-theme-stealth');
+    document.body.classList.add(`ctrl-theme-${ctrlConfig.theme || 'classic'}`);
+
+    // Sync Customizer UI pills & live preview
+    document.querySelectorAll('.ctrl-pills').forEach((group) => {
+      const prop = group.dataset.cset;
+      group.querySelectorAll('.ctrl-pill').forEach((btn) => {
+        btn.classList.toggle('active', String(ctrlConfig[prop]) === String(btn.dataset.val));
+      });
+    });
+
+    const prev = document.getElementById('ctrlLivePreview');
+    if (prev) {
+      prev.classList.toggle('is-dpad', ctrlConfig.moveType === 'dpad');
+      prev.classList.toggle('mirror', ctrlConfig.handedness === 'left');
+      prev.style.opacity = String(ctrlConfig.opacity);
+    }
+
+    ['left', 'right', 'jump', 'down', 'punch', 'shoot'].forEach((act) => {
+      const kEl = document.getElementById(`kbVal_${act}`);
+      if (kEl) kEl.textContent = formatKeyCode(ctrlConfig.keys[act]);
+    });
+
+    try {
+      localStorage.setItem(CTRL_STORAGE_KEY, JSON.stringify(ctrlConfig));
+    } catch (_) {}
+  }
+
+  function matchBind(code, action, fallbacks = []) {
+    return code === ctrlConfig.keys[action] || fallbacks.includes(code);
+  }
+
   window.addEventListener('keydown', (e) => {
     const code = e.code;
+
+    // Interactive Keyboard Rebinding Capture!
+    if (listeningBindAction) {
+      e.preventDefault();
+      if (code !== 'Escape') {
+        ctrlConfig.keys[listeningBindAction] = code;
+        applyControllerConfig();
+        showToast(`⌨️ Bound ${listeningBindAction.toUpperCase()} → ${formatKeyCode(code)}`, 1.8);
+      }
+      listeningBindAction = null;
+      document.querySelectorAll('.kb-bind-btn').forEach((b) => b.classList.remove('listening'));
+      return;
+    }
+
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(code)) {
       e.preventDefault();
     }
@@ -1947,37 +2044,37 @@
       }
     } else if (activeGameMode === 'vendor' && mode === 'playing') {
       if (VendorGame.getSubMode() === 'balot') {
-        if ((code === 'KeyA' || code === 'ArrowLeft') && !e.repeat) VendorGame.balotMoveLane(-1);
-        if ((code === 'KeyD' || code === 'ArrowRight') && !e.repeat) VendorGame.balotMoveLane(1);
-        if ((code === 'KeyW' || code === 'ArrowUp' || code === 'Space') && !e.repeat) VendorGame.balotJump();
+        if (matchBind(code, 'left', ['ArrowLeft']) && !e.repeat) VendorGame.balotMoveLane(-1);
+        if (matchBind(code, 'right', ['ArrowRight']) && !e.repeat) VendorGame.balotMoveLane(1);
+        if (matchBind(code, 'jump', ['KeyW', 'ArrowUp']) && !e.repeat) VendorGame.balotJump();
       } else {
-        if (code === 'KeyA' || code === 'ArrowLeft') vendorKeys.joyX = -0.8;
-        if (code === 'KeyD' || code === 'ArrowRight') vendorKeys.joyX = 0.8;
-        if (code === 'Space' || code === 'KeyJ') vendorKeys.brake = true;
-        if ((code === 'KeyK' || code === 'KeyH') && !e.repeat) VendorGame.pandesalShout();
+        if (matchBind(code, 'left', ['ArrowLeft'])) vendorKeys.joyX = -0.8;
+        if (matchBind(code, 'right', ['ArrowRight'])) vendorKeys.joyX = 0.8;
+        if (matchBind(code, 'punch', ['Space'])) vendorKeys.brake = true;
+        if (matchBind(code, 'shoot', ['KeyH']) && !e.repeat) VendorGame.pandesalShout();
       }
     } else if (activeGameMode === 'jeep' && mode === 'playing') {
-      if ((code === 'KeyW' || code === 'ArrowUp') && !e.repeat) JeepRide.moveLane(-1);
-      if ((code === 'KeyS' || code === 'ArrowDown') && !e.repeat) JeepRide.moveLane(1);
-      if (code === 'KeyD' || code === 'ArrowRight') jeepKeys.gas = true;
-      if (code === 'KeyA' || code === 'ArrowLeft' || code === 'Space') jeepKeys.brake = true;
-      if ((code === 'KeyJ' || code === 'KeyK' || code === 'KeyH' || code === 'KeyZ' || code === 'KeyX') && !e.repeat) {
+      if (matchBind(code, 'jump', ['KeyW', 'ArrowUp']) && code !== 'Space' && !e.repeat) JeepRide.moveLane(-1);
+      if (matchBind(code, 'down', ['ArrowDown']) && !e.repeat) JeepRide.moveLane(1);
+      if (matchBind(code, 'right', ['ArrowRight'])) jeepKeys.gas = true;
+      if (matchBind(code, 'left', ['ArrowLeft', 'Space'])) jeepKeys.brake = true;
+      if ((matchBind(code, 'shoot', ['KeyH', 'KeyZ', 'KeyX']) || matchBind(code, 'punch')) && !e.repeat) {
         JeepRide.honkHorn();
       }
     } else {
-      if (code === 'KeyA' || code === 'ArrowLeft') keys.left = true;
-      if (code === 'KeyD' || code === 'ArrowRight') keys.right = true;
+      if (matchBind(code, 'left', ['ArrowLeft'])) keys.left = true;
+      if (matchBind(code, 'right', ['ArrowRight'])) keys.right = true;
 
-      if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') {
+      if (matchBind(code, 'jump', ['KeyW', 'ArrowUp'])) {
         if (!keys.jump) keys.jumpPressed = true;
         keys.jump = true;
       }
 
-      if (code === 'KeyJ' || code === 'KeyZ' || code === 'KeyF') {
+      if (matchBind(code, 'punch', ['KeyZ', 'KeyF'])) {
         if (!e.repeat) keys.punchPressed = true;
       }
 
-      if (code === 'KeyK' || code === 'KeyX' || code === 'KeyG') {
+      if (matchBind(code, 'shoot', ['KeyX', 'KeyG'])) {
         if (!e.repeat) keys.shootPressed = true;
       }
     }
@@ -2003,10 +2100,10 @@
 
   window.addEventListener('keyup', (e) => {
     const code = e.code;
-    if (code === 'KeyA' || code === 'ArrowLeft') { keys.left = false; jeepKeys.brake = false; vendorKeys.joyX = 0; }
-    if (code === 'KeyD' || code === 'ArrowRight') { keys.right = false; jeepKeys.gas = false; vendorKeys.joyX = 0; }
-    if (code === 'KeyW' || code === 'ArrowUp' || code === 'Space') { keys.jump = false; jeepKeys.brake = false; vendorKeys.brake = false; }
-    if (code === 'KeyJ') vendorKeys.brake = false;
+    if (matchBind(code, 'left', ['ArrowLeft'])) { keys.left = false; jeepKeys.brake = false; vendorKeys.joyX = 0; }
+    if (matchBind(code, 'right', ['ArrowRight'])) { keys.right = false; jeepKeys.gas = false; vendorKeys.joyX = 0; }
+    if (matchBind(code, 'jump', ['KeyW', 'ArrowUp', 'Space'])) { keys.jump = false; jeepKeys.brake = false; vendorKeys.brake = false; }
+    if (matchBind(code, 'punch')) vendorKeys.brake = false;
   });
 
   // ==================== 4-STEP UI FLOW (PLAY -> GAME -> PLAYER CUSTOMIZER -> LEVEL MAP) ====================
@@ -2560,13 +2657,21 @@
     }
   );
 
-  // Vendor Right-Hand Touch Controls (Balot Jump OR Pandesal Sell & Shout!)
+  // Vendor Touch Controls (D-Pad Left/Right + Balot Jump OR Pandesal Sell & Shout!)
   if (vendorTouchControls) {
     vendorTouchControls.querySelectorAll('.touch-btn').forEach((btn) => {
       const action = btn.dataset.vendor;
       const press = (ev) => {
         ev.preventDefault();
         btn.classList.add('pressed');
+        if (action === 'left') {
+          if (VendorGame.getSubMode() === 'balot') VendorGame.balotMoveLane(-1);
+          else vendorKeys.joyX = -0.85;
+        }
+        if (action === 'right') {
+          if (VendorGame.getSubMode() === 'balot') VendorGame.balotMoveLane(1);
+          else vendorKeys.joyX = 0.85;
+        }
         if (action === 'jump') VendorGame.balotJump();
         if (action === 'sell') vendorKeys.brake = true;
         if (action === 'shout') VendorGame.pandesalShout();
@@ -2574,6 +2679,7 @@
       const release = (ev) => {
         ev.preventDefault();
         btn.classList.remove('pressed');
+        if (action === 'left' || action === 'right') vendorKeys.joyX = 0;
         if (action === 'sell') vendorKeys.brake = false;
       };
       btn.addEventListener('pointerdown', press);
@@ -2582,6 +2688,57 @@
       btn.addEventListener('pointerleave', release);
     });
   }
+
+  // Customizable Controller Modal Bindings
+  document.querySelectorAll('.btn-open-ctrl').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (controllerOverlay) controllerOverlay.classList.remove('hidden');
+      applyControllerConfig();
+    });
+  });
+
+  const btnCloseController = document.getElementById('btnCloseController');
+  if (btnCloseController) {
+    btnCloseController.addEventListener('click', () => {
+      listeningBindAction = null;
+      document.querySelectorAll('.kb-bind-btn').forEach((b) => b.classList.remove('listening'));
+      if (controllerOverlay) controllerOverlay.classList.add('hidden');
+    });
+  }
+
+  const btnResetController = document.getElementById('btnResetController');
+  if (btnResetController) {
+    btnResetController.addEventListener('click', () => {
+      listeningBindAction = null;
+      ctrlConfig = { ...DEFAULT_CTRL, keys: { ...DEFAULT_CTRL.keys } };
+      applyControllerConfig();
+      showToast('↺ Controller reset to defaults!', 1.8);
+    });
+  }
+
+  document.querySelectorAll('.ctrl-pills').forEach((group) => {
+    const prop = group.dataset.cset;
+    group.querySelectorAll('.ctrl-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = btn.dataset.val;
+        ctrlConfig[prop] = isNaN(Number(raw)) ? raw : Number(raw);
+        applyControllerConfig();
+      });
+    });
+  });
+
+  document.querySelectorAll('.kb-bind-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const act = btn.dataset.bind;
+      listeningBindAction = act;
+      document.querySelectorAll('.kb-bind-btn').forEach((b) => b.classList.remove('listening'));
+      btn.classList.add('listening');
+      const kEl = document.getElementById(`kbVal_${act}`);
+      if (kEl) kEl.textContent = 'KEY...';
+    });
+  });
+
+  applyControllerConfig();
 
   // Rotatable Portrait / Landscape View Toggle + Auto-Orientation Listeners
   function toggleRotateView() {
@@ -2640,13 +2797,15 @@
     syncTouchControlsVisibility();
   });
 
-  // Jeep Ride Right-Hand Touch Controls (UP / DOWN lane switches + STOP + BEEP!)
+  // Jeep Ride Touch Controls (D-Pad Gas/Slow + UP/DOWN lane switches + STOP + BEEP!)
   if (jeepTouchControls) {
     jeepTouchControls.querySelectorAll('.touch-btn').forEach((btn) => {
       const action = btn.dataset.jeep;
       const press = (ev) => {
         ev.preventDefault();
         btn.classList.add('pressed');
+        if (action === 'left') jeepKeys.joyX = -0.9;
+        if (action === 'right') jeepKeys.joyX = 0.9;
         if (action === 'up') JeepRide.moveLane(-1);
         if (action === 'down') JeepRide.moveLane(1);
         if (action === 'brake') jeepKeys.brake = true;
@@ -2655,6 +2814,7 @@
       const release = (ev) => {
         ev.preventDefault();
         btn.classList.remove('pressed');
+        if (action === 'left' || action === 'right') jeepKeys.joyX = 0;
         if (action === 'brake') jeepKeys.brake = false;
       };
       btn.addEventListener('pointerdown', press);

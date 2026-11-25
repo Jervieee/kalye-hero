@@ -2524,3 +2524,313 @@ body.view-portrait .map-detail-bar { flex-direction: column; align-items: stretc
   .adventure-map.karen-map { grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .city-picker-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
 }
+
+/* ==================== KALYE RAKETERO IN-GAME LOGO UPGRADE ==================== */
+.raketero-logo-card {
+  border: 4px solid #facc15;
+  box-shadow: 0 8px 0 #111827, 0 0 28px rgba(250, 204, 21, 0.35);
+}
+
+.raketero-wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 0.9;
+}
+
+.raketero-bottom {
+  font-size: clamp(38px, 6vw, 60px);
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #fef08a 0%, #fb923c 48%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #111827);
+}
+
+.logo-ingame-strip {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 2px solid #facc15;
+  color: #fef08a;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  box-shadow: 0 3px 0 #111827;
+}
+
+/* ==================== CUSTOMIZABLE CONTROLLER SYSTEM ==================== */
+:root {
+  --ctrl-scale: 1;
+  --ctrl-opacity: 1;
+  --ctrl-bottom: 14px;
+}
+
+.touch-controls {
+  bottom: var(--ctrl-bottom);
+  opacity: var(--ctrl-opacity);
+}
+
+.touch-controls .joystick-zone,
+.touch-controls .touch-actions {
+  transform: scale(var(--ctrl-scale));
+  transform-origin: bottom center;
+}
+
+body.ctrl-left .touch-controls {
+  flex-direction: row-reverse;
+}
+
+.dpad-arrows-h {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+body.ctrl-dpad .joystick-track-h {
+  display: none;
+}
+
+body.ctrl-dpad .dpad-arrows-h {
+  display: flex;
+}
+
+.dpad-arrow-btn {
+  width: 66px;
+  height: 62px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
+  color: #fde047;
+  border: 3px solid #facc15;
+}
+
+/* Controller Color Themes */
+body.ctrl-theme-fiesta .touch-btn {
+  border-color: #fde047;
+  box-shadow: 0 4px 0 #111827, 0 0 12px rgba(250, 204, 21, 0.35);
+}
+body.ctrl-theme-fiesta .joystick-track-h {
+  background: linear-gradient(90deg, #1d4ed8 0%, #dc2626 100%);
+  border-color: #fde047;
+}
+
+body.ctrl-theme-neon .touch-btn {
+  background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+  border-color: #22d3ee;
+  color: #22d3ee;
+  box-shadow: 0 4px 0 #09090b, 0 0 14px rgba(34, 211, 238, 0.55);
+}
+body.ctrl-theme-neon .touch-btn.jump-btn,
+body.ctrl-theme-neon .touch-btn.stop-btn {
+  border-color: #f472b6;
+  color: #f9a8d4;
+  box-shadow: 0 4px 0 #09090b, 0 0 14px rgba(244, 114, 182, 0.55);
+}
+body.ctrl-theme-neon .joystick-track-h {
+  background: #090d1f;
+  border-color: #22d3ee;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.45);
+}
+body.ctrl-theme-neon .joystick-knob {
+  background: radial-gradient(circle at 35% 30%, #67e8f9 0%, #06b6d4 60%, #0e7490 100%);
+}
+
+body.ctrl-theme-stealth .touch-btn {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+body.ctrl-theme-stealth .joystick-track-h {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: #475569;
+}
+body.ctrl-theme-stealth .joystick-knob {
+  background: radial-gradient(circle at 35% 30%, #94a3b8 0%, #475569 65%, #1e293b 100%);
+}
+
+/* Controller Customizer Modal */
+.ctrl-modal-card {
+  max-width: 540px;
+  width: 94%;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.ctrl-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  overflow-y: auto;
+  padding-right: 4px;
+  text-align: left;
+}
+
+.ctrl-live-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #0b1120 0%, #1e293b 100%);
+  border: 2.5px solid #334155;
+  min-height: 68px;
+}
+
+.ctrl-live-preview.mirror {
+  flex-direction: row-reverse;
+}
+
+.ctrl-prev-joy {
+  padding: 8px 18px;
+  border-radius: 99px;
+  background: #1e293b;
+  border: 2.5px solid #facc15;
+  color: #fde047;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ctrl-prev-dpad {
+  display: none;
+  gap: 6px;
+}
+
+.ctrl-prev-dpad span {
+  width: 38px;
+  height: 36px;
+  border-radius: 10px;
+  background: #1e293b;
+  border: 2.5px solid #facc15;
+  color: #fde047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.ctrl-live-preview.is-dpad .ctrl-prev-joy { display: none; }
+.ctrl-live-preview.is-dpad .ctrl-prev-dpad { display: flex; }
+
+.ctrl-prev-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.prev-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2.5px solid #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: #2563eb;
+  color: #fff;
+}
+.prev-btn.p-act1 { background: #f59e0b; }
+.prev-btn.p-jump { background: #10b981; }
+
+.ctrl-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ctrl-row label {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  color: #fde047;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.ctrl-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ctrl-pill {
+  flex: 1 1 auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 2px solid #334155;
+  background: #0f172a;
+  color: #cbd5e1;
+  font-family: 'Fredoka', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.12s;
+}
+
+.ctrl-pill.active {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #fde047;
+  color: #ffffff;
+}
+
+.ctrl-keybinds-box {
+  background: rgba(15, 23, 42, 0.72);
+  border: 2px solid #334155;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.ctrl-kb-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 11.5px;
+  color: #7dd3fc;
+  margin-bottom: 6px;
+}
+
+.ctrl-kb-title small {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.ctrl-kb-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.kb-bind-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: 2px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.kb-bind-btn.listening {
+  border-color: #fde047;
+  background: #713f12;
+  color: #fef08a;
+}
+
+.ctrl-modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.ctrl-modal-footer button {
+  flex: 1;
+}
