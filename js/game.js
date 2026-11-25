@@ -9,6 +9,7 @@
   let manualTouchOverride = null;
   function isMobileViewport() {
     return (
+      document.body.classList.contains('view-portrait') ||
       'ontouchstart' in window ||
       navigator.maxTouchPoints > 0 ||
       window.innerWidth <= 960 ||
@@ -1918,6 +1919,18 @@
       e.preventDefault();
     }
 
+    if (selectGameOverlay && !selectGameOverlay.classList.contains('hidden') && !e.repeat) {
+      const quickGames = { Digit1: 'street', Digit2: 'jeep', Digit3: 'karenderya', Digit4: 'vendor' };
+      if (quickGames[code]) {
+        selectedGameMode = quickGames[code];
+        if (selectedGameMode === 'jeep') applyCustomPreset('jersey');
+        else if (selectedGameMode === 'karenderya') applyCustomPreset('manong');
+        else applyCustomPreset('classic');
+        showFlowScreen(customizerOverlay);
+        return;
+      }
+    }
+
     if (activeGameMode === 'karenderya' && mode === 'playing') {
       if (!e.repeat) {
         if (code === 'Digit1') Karenderya.interactDishByIndex(0);
@@ -2570,9 +2583,50 @@
     });
   }
 
-  // Touch Controls Toggle + Responsive Resize Handlers
+  // Rotatable Portrait / Landscape View Toggle + Auto-Orientation Listeners
+  function toggleRotateView() {
+    const currentlyPortrait =
+      document.body.classList.contains('view-portrait') ||
+      (!document.body.classList.contains('view-landscape') && window.innerHeight > window.innerWidth);
+    const goPortrait = !currentlyPortrait;
+
+    document.body.classList.toggle('view-portrait', goPortrait);
+    document.body.classList.toggle('view-landscape', !goPortrait);
+
+    // Attempt native mobile orientation lock if supported (non-blocking)
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock(goPortrait ? 'portrait' : 'landscape').catch(() => {});
+    }
+
+    showToast(goPortrait ? '📱 Switched to Portrait View!' : '🖥️ Switched to Landscape View!', 1.8);
+    requestAnimationFrame(() => {
+      resizeGameCanvas();
+      setTimeout(resizeGameCanvas, 120);
+    });
+  }
+
+  document.querySelectorAll('.btn-rotate-view').forEach((btn) => {
+    btn.addEventListener('click', toggleRotateView);
+  });
+
+  // Touch Controls Toggle + Responsive Resize & Auto-Rotation Handlers
+  function handleOrientationResize() {
+    // If physical device rotates naturally, clear forced mismatch so auto-rotation feels effortless
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      document.body.classList.remove('view-portrait', 'view-landscape');
+    }
+    requestAnimationFrame(resizeGameCanvas);
+    setTimeout(resizeGameCanvas, 150);
+  }
   window.addEventListener('resize', resizeGameCanvas);
-  window.addEventListener('orientationchange', () => setTimeout(resizeGameCanvas, 120));
+  window.addEventListener('orientationchange', handleOrientationResize);
+  if (screen.orientation && screen.orientation.addEventListener) {
+    screen.orientation.addEventListener('change', handleOrientationResize);
+  }
+  const portraitMQ = window.matchMedia && window.matchMedia('(orientation: portrait)');
+  if (portraitMQ && portraitMQ.addEventListener) {
+    portraitMQ.addEventListener('change', handleOrientationResize);
+  }
   resizeGameCanvas();
 
   document.getElementById('btnToggleTouch').addEventListener('click', () => {
